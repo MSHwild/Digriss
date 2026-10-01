@@ -1,7 +1,7 @@
 package kr.maeshil.digriss
 
 import kr.maeshil.digriss.weapon.BloodHoeSkill
-import kr.maeshil.digriss.weapon.ForestAxeSkill
+import kr.maeshil.digriss.weapon.FrostAxeSkill
 import kr.maeshil.digriss.weapon.HellSwordSkill
 import kr.maeshil.digriss.weapon.OceanSpearSkill
 import kr.maeshil.digriss.weapon.SlashSwordSkill
@@ -25,7 +25,7 @@ class WeaponSkillListener(private val plugin: Digriss) : Listener {
         "piercing_slash" to SlashSwordSkill(plugin),
         "aoe_lifesteal" to BloodHoeSkill(),
         "single_lifesteal" to VampireSwordSkill(plugin),
-        "cone_slow" to ForestAxeSkill(),
+        "cone_slow" to FrostAxeSkill(),
         "dash_strike" to OceanSpearSkill(),
         "void_cut" to VoidSwordSkill()
     )

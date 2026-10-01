@@ -24,7 +24,7 @@ object RankTiers {
         RankTier("디그리스", "&2&l", 500)
     )
 
-    const val DIGRISS_MAX_SCORE = 8000L + 2000L // 디그리스 상한 = 진입점수 + 2000
+    val DIGRISS_MAX_SCORE = tiers.last().minScore + 2000L // 디그리스 상한 = 진입점수 + 2000
 
     fun getTier(score: Long): RankTier {
         return tiers.lastOrNull { score >= it.minScore } ?: tiers.first()

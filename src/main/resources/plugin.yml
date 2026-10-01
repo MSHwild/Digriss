@@ -25,7 +25,7 @@ commands:
     usage: /초기화
   dc:
     description: DC 재화 확인 및 지급
-    usage: /랭크 [지급|차감|설정 <닉네임> <수량>]
+    usage: /dc [지급|차감 <닉네임> <수량>]
   직업:
     description: 직업 확인
   직업설정:
