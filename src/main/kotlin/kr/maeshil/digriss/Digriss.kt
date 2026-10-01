@@ -102,6 +102,7 @@ class Digriss : JavaPlugin() {
         if (::rankManager.isInitialized) rankManager.save()
         if (::killEffectManager.isInitialized) killEffectManager.save()
         if (::soulManager.isInitialized) soulManager.save()
+        if (::jobManager.isInitialized) jobManager.save()
         if (::nationManager.isInitialized) nationManager.disable()
         logger.info("Digriss 플러그인이 비활성화되었습니다.")
     }
