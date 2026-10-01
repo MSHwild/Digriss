@@ -52,9 +52,8 @@ class ManaManager(private val plugin: JavaPlugin) : Listener {
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        val uuid = event.player.uniqueId
         removeBar(event.player)
-        mana.remove(uuid) // 메모리 누수 방지: 데이터 제거
+        // 마나는 지우지 않음: 지우면 재접속 시 최대치로 차서 마나 회복 꼼수가 됨
     }
 
     fun startRegen() {
