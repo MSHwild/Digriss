@@ -23,9 +23,6 @@ commands:
   초기화:
     description: op전용 모든 플레이어 초기화
     usage: /초기화
-  강화:
-    description: 손에 든 아이템 강화
-    usage: /강화
   dc:
     description: DC 재화 확인 및 지급
     usage: /랭크 [지급|차감|설정 <닉네임> <수량>]
