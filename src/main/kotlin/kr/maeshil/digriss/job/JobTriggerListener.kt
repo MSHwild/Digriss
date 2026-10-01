@@ -1,12 +1,15 @@
 package kr.maeshil.digriss.job
 
 import kr.maeshil.digriss.manager.JobSkillManager
+import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerDropItemEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import kr.maeshil.digriss.jobManager.AssassinStealthManager
 import kr.maeshil.digriss.jobManager.ReaperChargeManager
 
 class JobTriggerListener(
@@ -27,7 +30,7 @@ class JobTriggerListener(
         e.isCancelled = true // 아이템 드랍 취소, 스킬로 대체
 
         if (!skillManager.isReady(player.uniqueId)) {
-            player.sendMessage("§c스킬 쿨타임: ${skillManager.getRemaining(player.uniqueId)}초")
+            ActionBarManager.showTemp(player, "§c스킬 쿨타임: ${skillManager.getRemaining(player.uniqueId)}초", 1.0)
             return
         }
 
@@ -45,5 +48,13 @@ class JobTriggerListener(
         if (job == JobType.REAPER) {
             ReaperChargeManager.spawnOrb(plugin, killer, e.entity.location)
         }
+    }
+
+    // 접속 종료 시 스킬 상태 정리 (사신 무체화 중 나가도 장비/무적 상태 복구)
+    @EventHandler
+    fun onQuit(e: PlayerQuitEvent) {
+        ReaperSkill.restore(e.player)
+        AssassinStealthManager.consume(e.player.uniqueId)
+        ActionBarManager.remove(e.player)
     }
 }

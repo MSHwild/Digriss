@@ -44,7 +44,7 @@ class WeaponSkillListener(private val plugin: Digriss) : Listener {
         val remain = weaponData.cooldown * 1000L - (now - last)
 
         if (remain > 0) {
-            player.sendActionBar("${ChatColor.RED}쿨타임: ${"%.1f".format(remain / 1000.0)}초")
+            ActionBarManager.showTemp(player, "${ChatColor.RED}쿨타임: ${"%.1f".format(remain / 1000.0)}초", 1.0)
             return
         }
 

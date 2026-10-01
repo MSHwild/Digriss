@@ -1,7 +1,7 @@
 package kr.maeshil.digriss.nation
 
 import kr.maeshil.digriss.Digriss
-import net.kyori.adventure.text.Component
+import kr.maeshil.digriss.ActionBarManager
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -96,10 +96,12 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         plugin.server.scheduler.runTaskTimer(plugin, Runnable { saveNations() }, 6000L, 6000L)
         startDailyTaxTask()
 
-        // 액션바 + 국가 레벨 효과 (1초마다)
+        // 영토 표시는 ActionBarManager가 다른 액션바와 합쳐서 출력
+        ActionBarManager.addProvider { territoryText(it) }
+
+        // 국가 레벨 효과 (1초마다)
         plugin.server.scheduler.runTaskTimer(plugin, Runnable {
             for (player in Bukkit.getOnlinePlayers()) {
-                updatePlayerActionBar(player)
                 applyLevelEffects(player)
             }
         }, 20L, 20L)
@@ -364,28 +366,16 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
 
     // ───────────────────────── 액션바 ─────────────────────────
 
-    private fun sendActionBar(player: Player, message: String) {
-        try {
-            player.sendActionBar(Component.text(message))
-        } catch (e: Exception) {
-            player.spigot().sendMessage(
-                net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                net.md_5.bungee.api.chat.TextComponent(message)
-            )
-        }
-    }
-
-    private fun updatePlayerActionBar(player: Player) {
+    fun territoryText(player: Player): String {
         val ownerNation = Nation.chunkClaims[chunkKeyOf(player.location)]
         val myNation = playerNations[player.uniqueId]
 
-        val message = when {
+        return when {
             ownerNation == null -> "§f소속 국가 : 무소속"
             ownerNation == myNation -> "§a소속 국가 : $ownerNation(내 국가)"
             myNation != null && isAtWar(myNation, ownerNation) -> "§4소속 국가 : $ownerNation(전쟁 중)"
             else -> "§c소속 국가 : $ownerNation"
         }
-        sendActionBar(player, message)
     }
 
     // ───────────────────────── 명령어 → GUI ─────────────────────────
