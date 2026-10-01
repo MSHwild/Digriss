@@ -113,6 +113,9 @@ class Digriss : JavaPlugin() {
         getCommand("랭킹")?.setExecutor(RankCommand(this))
         getCommand("킬이펙트")?.setExecutor(KillEffectCommand(effectGUI))
 
+        // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
+        Bukkit.getScheduler().runTaskTimer(this, Runnable { saveAll() }, 6000L, 6000L)
+
         // 스코어보드 주기적 갱신 (1초마다)
         Bukkit.getScheduler().runTaskTimer(this, Runnable {
             Bukkit.getOnlinePlayers().forEach { scoreboardManager.update(it) }
@@ -124,12 +127,18 @@ class Digriss : JavaPlugin() {
     override fun onDisable() {
         ReaperSkill.restoreAll() // 무체화 중 리로드/종료 시 장비 복구
         HandlerList.unregisterAll(this)
-        if (::rankManager.isInitialized) rankManager.save()
-        if (::killEffectManager.isInitialized) killEffectManager.save()
-        if (::soulManager.isInitialized) soulManager.save()
-        if (::jobManager.isInitialized) jobManager.save()
+        saveAll()
         if (::nationManager.isInitialized) nationManager.disable()
         if (::manaManager.isInitialized) manaManager.cleanup()
         logger.info("Digriss 플러그인이 비활성화되었습니다.")
+    }
+
+    // DC는 변경 즉시 저장되고 웹훅이 dc.yml을 직접 수정하므로 여기서 저장하지 않음 (덮어쓰기 방지)
+    private fun saveAll() {
+        if (::soulManager.isInitialized) soulManager.save()
+        if (::rankManager.isInitialized) rankManager.save()
+        if (::kdManager.isInitialized) kdManager.save()
+        if (::killEffectManager.isInitialized) killEffectManager.save()
+        if (::jobManager.isInitialized) jobManager.save()
     }
 }
