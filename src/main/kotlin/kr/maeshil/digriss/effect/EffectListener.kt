@@ -1,0 +1,48 @@
+package kr.maeshil.digriss.effect
+
+import kr.maeshil.digriss.Digriss
+import net.md_5.bungee.api.ChatColor
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.inventory.InventoryClickEvent
+
+class EffectListener(private val plugin: Digriss, private val gui: EffectGUI) : Listener {
+
+    @EventHandler
+    fun onClick(event: InventoryClickEvent) {
+        if (event.view.title != gui.title) return
+        event.isCancelled = true
+
+        val player = event.whoClicked as? Player ?: return
+        val slot = event.slot
+        val effect = EffectRegistry.effects.getOrNull(slot) ?: return
+
+        val manager = plugin.killEffectManager
+        val owned = manager.hasEffect(player, effect.id)
+        val equipped = manager.getEquipped(player)?.id == effect.id
+
+        when {
+            equipped -> {
+                manager.unequip(player)
+                player.sendMessage("${ChatColor.GRAY}[${effect.displayName.replace("&", "§")}${ChatColor.GRAY}] 장착 해제했습니다.")
+            }
+            owned -> {
+                manager.equip(player, effect.id)
+                player.sendMessage("${ChatColor.GREEN}[${effect.displayName.replace("&", "§")}${ChatColor.GREEN}] 장착했습니다.")
+            }
+            else -> {
+                val souls = plugin.soulManager.getSouls(player)
+                if (souls < effect.price) {
+                    player.sendMessage("${ChatColor.RED}영혼이 부족합니다. (보유: $souls / 필요: ${effect.price})")
+                    return
+                }
+                plugin.soulManager.removeSouls(player, effect.price)
+                manager.buyEffect(player, effect.id)
+                player.sendMessage("${ChatColor.GREEN}[${effect.displayName.replace("&", "§")}${ChatColor.GREEN}] 구매 완료!")
+            }
+        }
+
+        gui.open(player)
+    }
+}

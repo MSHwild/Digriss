@@ -1,0 +1,40 @@
+name: Digriss
+version: '${version}'
+main: kr.maeshil.digriss.Digriss
+api-version: '1.21.1'
+load: POSTWORLD
+commands:
+  영혼:
+    description: 영혼 관리 명령어
+    usage: /영혼 <지급|차감|설정> <닉네임> <수량>
+    permission: digriss.admin
+  랭킹:
+    description: 랭킹 확인
+    usage: /랭킹
+  어트리뷰트:
+    description: 손에 든 아이템의 어트리뷰트 정보를 확인합니다.
+    usage: /어트리뷰트
+  랭크:
+    description: 자신의 랭크를 확인합니다
+    usage: /랭크
+  킬이펙트:
+    description: 킬 이펙트 상점 열기
+    usage: /킬이펙트
+  초기화:
+    description: op전용 모든 플레이어 초기화
+    usage: /초기화
+  강화:
+    description: 손에 든 아이템 강화
+    usage: /강화
+  dc:
+    description: DC 재화 확인 및 지급
+    usage: /랭크 [지급|차감|설정 <닉네임> <수량>]
+  직업:
+    description: 직업 확인
+  직업설정:
+    description: 직업설정
+  국가:
+    description: 국가를 생성 및 관리 합니다
+    aliases:
+      - rnrrk
+      - nation

@@ -1,0 +1,69 @@
+package kr.maeshil.digriss
+
+import kr.maeshil.digriss.Digriss
+import net.md_5.bungee.api.ChatColor
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
+
+class Event(private val plugin: Digriss) : Listener {
+
+    private val killStreaks = mutableMapOf<String, Int>()
+
+    @EventHandler
+    fun onJoin(event: PlayerJoinEvent) {
+        val player = event.player
+        //plugin.scoreboardManager.setJoinTime(player)
+        event.joinMessage = "${ChatColor.YELLOW}[+] ${ChatColor.GOLD}${player.name}${ChatColor.YELLOW}님이 입장했습니다."
+    }
+
+    @EventHandler
+    fun onQuit(event: PlayerQuitEvent) {
+        val player = event.player
+        event.quitMessage = "${ChatColor.GRAY}[-] ${ChatColor.DARK_GRAY}${player.name}${ChatColor.GRAY}님이 퇴장했습니다."
+    }
+
+    @EventHandler
+    fun onDeath(event: PlayerDeathEvent) {
+        val victim = event.entity
+        val killer = victim.killer
+
+        event.deathMessage = if (killer != null) {
+            "${ChatColor.RED}☠ ${ChatColor.GOLD}${victim.name}${ChatColor.RED}님이 ${ChatColor.GOLD}${killer.name}${ChatColor.RED}님에게 처치당했습니다."
+        } else {
+            "${ChatColor.RED}☠ ${ChatColor.GOLD}${victim.name}${ChatColor.RED}님이 사망했습니다."
+        }
+
+        killStreaks[victim.name] = 0
+        plugin.kdManager.addDeath(victim)
+        plugin.rankManager.onDeath(victim)
+
+        if (killer != null) {
+            val newStreak = (killStreaks[killer.name] ?: 0) + 1
+            killStreaks[killer.name] = newStreak
+
+            plugin.soulManager.addSouls(killer, 10)
+            plugin.kdManager.addKill(killer)
+            plugin.rankManager.onKill(killer, victim, newStreak)
+
+            // 킬이펙트 재생
+            plugin.killEffectManager.getEquipped(killer)?.let { effect ->
+                kr.maeshil.digriss.effect.EffectPlayer.play(effect, victim.location)
+            }
+
+            killer.sendMessage("${ChatColor.GREEN}처치 성공! 영혼 +10 | 현재 킬스트릭: ${ChatColor.YELLOW}$newStreak")
+
+            if (newStreak % 5 == 0) {
+                killer.world.players.forEach {
+                    it.sendMessage("${ChatColor.LIGHT_PURPLE}${killer.name}${ChatColor.YELLOW}님이 ${newStreak}킬스트릭을 달성했습니다!")
+                }
+            }
+        }
+    }
+
+    fun getKillStreak(playerName: String): Int = killStreaks[playerName] ?: 0
+
+
+}

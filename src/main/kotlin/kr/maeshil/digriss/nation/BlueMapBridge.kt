@@ -1,0 +1,137 @@
+package kr.maeshil.digriss.nation
+
+import de.bluecolored.bluemap.api.BlueMapAPI
+import de.bluecolored.bluemap.api.markers.MarkerSet
+import de.bluecolored.bluemap.api.markers.POIMarker
+import de.bluecolored.bluemap.api.markers.ShapeMarker
+import de.bluecolored.bluemap.api.math.Color
+import de.bluecolored.bluemap.api.math.Shape
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import kotlin.math.absoluteValue
+
+object BlueMapBridge {
+
+    private const val POI_SET_ID = "nation_markers"
+    private const val TERRITORY_SET_ID = "nation_territory"
+
+    // 🌟 BlueMap Color 생성자 (ARGB Int 패킹 방식 사용 - 클래스 충돌 100% 방지)
+    // 🌟 16진수 ARGB/RGBA 정수 패킹 방식을 사용하여 생성자 타입 충돌 완전 해결
+    private fun colorFor(nationName: String): Color {
+        val hash = nationName.hashCode().absoluteValue
+        val hue = (hash % 360) / 360f
+        val rgb = java.awt.Color.HSBtoRGB(hue, 0.65f, 0.9f)
+        val r = (rgb shr 16) and 0xFF
+        val g = (rgb shr 8) and 0xFF
+        val b = rgb and 0xFF
+        val a = (255 * 0.45f).toInt() // 알파 (투명도)
+
+        // BlueMap Color(int red, int green, int blue, int alpha) 대신
+        // (r, g, b, a)를 하나의 Int 패킹 값으로 전달
+        val argb = (a shl 24) or (r shl 16) or (g shl 8) or b
+        return Color(argb)
+    }
+
+    private fun lineColorFor(nationName: String): Color {
+        val hash = nationName.hashCode().absoluteValue
+        val hue = (hash % 360) / 360f
+        val rgb = java.awt.Color.HSBtoRGB(hue, 0.65f, 0.9f)
+        val r = (rgb shr 16) and 0xFF
+        val g = (rgb shr 8) and 0xFF
+        val b = rgb and 0xFF
+
+        val argb = (255 shl 24) or (r shl 16) or (g shl 8) or b
+        return Color(argb)
+    }
+
+    // 📍 1. 국가 깃발/아이콘 POI 마커 추가 (Y=64 고정)
+    fun addNationMarker(nationName: String, loc: Location) {
+        BlueMapAPI.getInstance().ifPresent { api ->
+            val world = loc.world ?: return@ifPresent
+            api.getWorld(world).ifPresent { blueWorld ->
+                blueWorld.maps.forEach { map ->
+                    val markerSet = map.markerSets.computeIfAbsent(POI_SET_ID) {
+                        MarkerSet.builder()
+                            .label("국가 목록")
+                            .toggleable(true)
+                            .defaultHidden(false)
+                            .build()
+                    }
+
+                    val marker = POIMarker.builder()
+                        .label("🏛️ $nationName")
+                        .position(loc.x, 64.0, loc.z)
+                        .build()
+
+                    markerSet.markers[nationName] = marker
+                }
+            }
+        }
+    }
+
+    fun removeNationMarker(nationName: String) {
+        BlueMapAPI.getInstance().ifPresent { api ->
+            api.maps.forEach { map ->
+                map.markerSets[POI_SET_ID]?.markers?.remove(nationName)
+            }
+        }
+    }
+
+    // 🗺️ 2. 국가 영토 사각형 표시 (Y=64 고정 및 depthTestEnabled(false))
+    fun updateTerritory(nation: Nations, worldName: String) {
+        BlueMapAPI.getInstance().ifPresent { api ->
+            val bukkitWorld = Bukkit.getWorld(worldName) ?: return@ifPresent
+            api.getWorld(bukkitWorld).ifPresent { blueWorld ->
+                blueWorld.maps.forEach { map ->
+                    val territorySet = map.markerSets.computeIfAbsent(TERRITORY_SET_ID) {
+                        MarkerSet.builder()
+                            .label("국가 영토")
+                            .toggleable(true)
+                            .defaultHidden(false)
+                            .build()
+                    }
+
+                    territorySet.markers.keys.removeIf { it.startsWith("${nation.name}_chunk_") }
+
+                    val fillColor = colorFor(nation.name)
+                    val lineColor = lineColorFor(nation.name)
+
+                    nation.claims
+                        .filter { it.startsWith("$worldName,") }
+                        .forEach { chunkKey ->
+                            val parts = chunkKey.split(",")
+                            if (parts.size < 3) return@forEach
+                            val cx = parts[1].toIntOrNull() ?: return@forEach
+                            val cz = parts[2].toIntOrNull() ?: return@forEach
+
+                            val minX = cx * 16.0
+                            val minZ = cz * 16.0
+                            val maxX = minX + 16.0
+                            val maxZ = minZ + 16.0
+
+                            val shape = Shape.createRect(minX, minZ, maxX, maxZ)
+
+                            val marker = ShapeMarker.builder()
+                                .label("${nation.name} 영토 (${cx}, ${cz})")
+                                .shape(shape, 64.0f)
+                                .fillColor(fillColor)
+                                .lineColor(lineColor)
+                                .lineWidth(3)
+                                .depthTestEnabled(false)
+                                .build()
+
+                            territorySet.markers["${nation.name}_chunk_${cx}_${cz}"] = marker
+                        }
+                }
+            }
+        }
+    }
+
+    fun removeTerritory(nationName: String) {
+        BlueMapAPI.getInstance().ifPresent { api ->
+            api.maps.forEach { map ->
+                map.markerSets[TERRITORY_SET_ID]?.markers?.keys?.removeIf { it.startsWith("${nationName}_chunk_") }
+            }
+        }
+    }
+}

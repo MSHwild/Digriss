@@ -1,0 +1,11 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IntelliJ
+.idea/
+*.iml
+
+# run-paper 테스트 서버
+run/
