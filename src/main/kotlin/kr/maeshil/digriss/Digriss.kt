@@ -77,7 +77,6 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(WeaponSkillListener(this), this)
         Bukkit.getPluginManager().registerEvents(SkillListener(this, manaManager), this)
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
-        Bukkit.getPluginManager().registerEvents(manaManager, this)
 
         // 명령어 등록
         getCommand("영혼")?.setExecutor(SoulCommand(this))
@@ -104,6 +103,7 @@ class Digriss : JavaPlugin() {
         if (::soulManager.isInitialized) soulManager.save()
         if (::jobManager.isInitialized) jobManager.save()
         if (::nationManager.isInitialized) nationManager.disable()
+        if (::manaManager.isInitialized) manaManager.cleanup()
         logger.info("Digriss 플러그인이 비활성화되었습니다.")
     }
 }

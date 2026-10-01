@@ -1,6 +1,7 @@
 package kr.maeshil.digriss.manager
 
 import org.bukkit.Bukkit
+import org.bukkit.NamespacedKey
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -25,6 +26,13 @@ class ManaManager(private val plugin: JavaPlugin) : Listener {
     init {
         // 이벤트 리스너 등록
         Bukkit.getPluginManager().registerEvents(this, plugin)
+
+        // 이전 실행에서 정리되지 못한 마나 보스바 제거 (리로드 시 중복 방지)
+        Bukkit.getBossBars().asSequence()
+            .filter { it.key.namespace == plugin.name.lowercase() && it.key.key.startsWith("mana_") }
+            .map { it.key }
+            .toList()
+            .forEach { key -> Bukkit.getBossBar(key)?.removeAll(); Bukkit.removeBossBar(key) }
 
         // 객체 생성 시 마나 회복 루프 자동 시작
         startRegen()
@@ -84,7 +92,8 @@ class ManaManager(private val plugin: JavaPlugin) : Listener {
 
     private fun updateBar(player: Player, current: Int) {
         val bar = bars.getOrPut(player.uniqueId) {
-            val newBar = Bukkit.createBossBar("마나", BarColor.BLUE, BarStyle.SOLID)
+            // 키가 있는 보스바라서 리로드 후에도 찾아서 지울 수 있음
+            val newBar = Bukkit.createBossBar(barKey(player.uniqueId), "마나", BarColor.BLUE, BarStyle.SOLID)
             newBar.addPlayer(player)
             newBar
         }
@@ -92,13 +101,16 @@ class ManaManager(private val plugin: JavaPlugin) : Listener {
         bar.setTitle("마나 $current / $maxMana")
     }
 
+    private fun barKey(uuid: UUID) = NamespacedKey(plugin, "mana_$uuid")
+
     fun removeBar(player: Player) {
-        bars[player.uniqueId]?.removeAll()
-        bars.remove(player.uniqueId)
+        bars.remove(player.uniqueId)?.removeAll()
+        Bukkit.removeBossBar(barKey(player.uniqueId))
     }
 
     // 플러그인 종료(onDisable) 시 호출하여 잔여 BossBar 정리
     fun cleanup() {
+        bars.keys.forEach { Bukkit.removeBossBar(barKey(it)) }
         bars.values.forEach { it.removeAll() }
         bars.clear()
         mana.clear()
