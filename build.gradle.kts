@@ -12,6 +12,9 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
+    // 외부 플러그인 jar (Vault, ItemsAdder, BlueMap) — 프로젝트 libs 폴더에 같이 보관
+    compileOnly(fileTree("libs") { include("*.jar") })
 }
 
 kotlin {
