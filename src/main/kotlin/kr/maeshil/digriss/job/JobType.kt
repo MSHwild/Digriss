@@ -12,7 +12,8 @@ enum class JobType(
     LIFE_PRIEST("치유사", Material.TOTEM_OF_UNDYING, listOf("§7지속 힐과 광역 회복의 힐러")),
     TRACKER("정찰병", Material.SPYGLASS, listOf("§7은신 정찰과 위치 핑의 척후병")),
     BLOOD_WARRIOR("광전사", Material.IRON_PICKAXE, listOf("§7근접 광역 피해와 넉백의 타격대")),
-    REAPER("사신", Material.WITHER_SKELETON_SKULL, listOf("§7영혼을 거둬 무체화하는 자"));
+    REAPER("사신", Material.WITHER_SKELETON_SKULL, listOf("§7영혼을 거둬 무체화하는 자")),
+    WEAPON_SMITH("무기 기술자", Material.ANVIL, listOf("§7무기를 다루는 기술자", "§8(스킬 준비 중)"));
 
     companion object {
         fun fromDisplayName(name: String): JobType? = entries.find { it.displayName == name }
