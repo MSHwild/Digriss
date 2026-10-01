@@ -78,7 +78,8 @@ class RankManager(private val plugin: Digriss) {
         return if (index == -1) sorted.size + 1 else index + 1
     }
 
-    fun onKill(killer: Player, victim: Player, killStreak: Int) {
+    // 얻은 랭크 점수를 돌려줌 (킬 보상 알림용)
+    fun onKill(killer: Player, victim: Player, killStreak: Int): Long {
         val killerScore = getScore(killer)
         val victimScore = getScore(victim)
 
@@ -115,6 +116,7 @@ class RankManager(private val plugin: Digriss) {
         killer.sendMessage("${ChatColor.GREEN}랭크 점수 +$finalGain")
 
         checkPromotion(killer)
+        return finalGain
     }
 
     fun onDeath(victim: Player) {
