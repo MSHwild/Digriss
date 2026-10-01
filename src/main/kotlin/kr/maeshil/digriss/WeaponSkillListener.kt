@@ -19,6 +19,21 @@ class WeaponSkillListener(private val plugin: Digriss) : Listener {
 
     private val cooldowns = mutableMapOf<Pair<UUID, String>, Long>()
 
+    init {
+        // 손에 든 무기의 스킬 쿨타임을 액션바에 상시 표시 (무기를 안 들면 표시 안 함)
+        ActionBarManager.addProvider { player ->
+            val weapon = ItemAttributeUtil.getWeaponData(player.inventory.itemInMainHand) ?: return@addProvider null
+            val remain = remainingMillis(player.uniqueId, weapon)
+            if (remain > 0) "${ChatColor.RED}⏳ ${weapon.displayName} ${"%.1f".format(remain / 1000.0)}초"
+            else "${ChatColor.GREEN}⚔ ${weapon.displayName} 준비 완료"
+        }
+    }
+
+    private fun remainingMillis(uuid: UUID, weapon: WeaponData): Long {
+        val last = cooldowns[uuid to weapon.id] ?: return 0L
+        return weapon.cooldown * 1000L - (System.currentTimeMillis() - last)
+    }
+
     // 스킬타입 -> 실제 실행 클래스 매핑
     private val skillMap: Map<String, WeaponSkill> = mapOf(
         "fire_explosion" to HellSwordSkill(),
@@ -40,13 +55,9 @@ class WeaponSkillListener(private val plugin: Digriss) : Listener {
 
         val key = player.uniqueId to weaponData.id
         val now = System.currentTimeMillis()
-        val last = cooldowns[key] ?: 0L
-        val remain = weaponData.cooldown * 1000L - (now - last)
 
-        if (remain > 0) {
-            ActionBarManager.showTemp(player, "${ChatColor.RED}쿨타임: ${"%.1f".format(remain / 1000.0)}초", 1.0)
-            return
-        }
+        // 쿨타임 중이면 액션바에 이미 남은 시간이 떠 있으므로 그냥 무시
+        if (remainingMillis(player.uniqueId, weaponData) > 0) return
 
         val skill = skillMap[weaponData.skillType] ?: return
 
