@@ -36,6 +36,7 @@ class Event(private val plugin: Digriss) : Listener {
             "${ChatColor.RED}☠ ${ChatColor.GOLD}${victim.name}${ChatColor.RED}님이 사망했습니다."
         }
 
+        val victimStreak = killStreaks[victim.name] ?: 0
         killStreaks[victim.name] = 0
         plugin.kdManager.addDeath(victim)
         plugin.rankManager.onDeath(victim)
@@ -45,10 +46,22 @@ class Event(private val plugin: Digriss) : Listener {
             killStreaks[killer.name] = newStreak
 
             plugin.soulManager.addSouls(killer, 10)
+
+            // 5킬스트릭 이상인 상대를 잡으면 전체 공지 + 보너스 영혼 (스트릭 x 2)
+            var bonus = 0L
+            if (victimStreak >= 5 && killer != victim) {
+                bonus = victimStreak * 2L
+                plugin.soulManager.addSouls(killer, bonus)
+                plugin.server.broadcastMessage(
+                    "${ChatColor.RED}⚔ ${ChatColor.GOLD}${killer.name}${ChatColor.RED}님이 " +
+                        "${ChatColor.GOLD}${victim.name}${ChatColor.RED}님의 ${ChatColor.YELLOW}${victimStreak}킬스트릭${ChatColor.RED}을 끊었습니다! " +
+                        "${ChatColor.AQUA}(보너스 영혼 +$bonus)"
+                )
+            }
             plugin.kdManager.addKill(killer)
             val rankGain = plugin.rankManager.onKill(killer, victim, newStreak)
             val streakText = if (newStreak >= 2) "  §6🔥 ${newStreak}킬스트릭" else ""
-            ActionBarManager.showTemp(killer, "§a+$rankGain 랭크점수  §b+10 영혼$streakText", 2.0)
+            ActionBarManager.showTemp(killer, "§a+$rankGain 랭크점수  §b+${10 + bonus} 영혼$streakText", 2.0)
 
             // 킬이펙트 재생
             plugin.killEffectManager.getEquipped(killer)?.let { effect ->
