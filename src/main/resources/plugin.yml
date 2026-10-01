@@ -3,35 +3,46 @@ version: '${version}'
 main: kr.maeshil.digriss.Digriss
 api-version: '1.21.1'
 load: POSTWORLD
+# 이 플러그인들보다 나중에 켜져야 연동이 정상 동작함 (없어도 서버는 켜짐)
+softdepend: [Vault, ItemsAdder, BlueMap]
 commands:
   영혼:
-    description: 영혼 관리 명령어
+    description: 플레이어의 영혼을 지급/차감/설정합니다 (관리자)
     usage: /영혼 <지급|차감|설정> <닉네임> <수량>
     permission: digriss.admin
   랭킹:
-    description: 랭킹 확인
+    description: 서버 랭킹을 확인합니다
     usage: /랭킹
   어트리뷰트:
-    description: 손에 든 아이템의 어트리뷰트 정보를 확인합니다.
+    description: 손에 든 아이템의 어트리뷰트 정보를 확인합니다
     usage: /어트리뷰트
   랭크:
     description: 자신의 랭크를 확인합니다
     usage: /랭크
   킬이펙트:
-    description: 킬 이펙트 상점 열기
+    description: 킬 이펙트 상점을 엽니다
     usage: /킬이펙트
   초기화:
-    description: op전용 모든 플레이어 초기화
+    description: 모든 플레이어 데이터를 초기화합니다 (관리자)
     usage: /초기화
+    permission: digriss.admin
   dc:
-    description: DC 재화 확인 및 지급
+    description: DC 재화를 확인합니다 (관리자는 지급/차감 가능)
     usage: /dc [지급|차감 <닉네임> <수량>]
   직업:
-    description: 직업 확인
+    description: 직업 구매 상점을 엽니다
+    usage: /직업
   직업설정:
-    description: 직업설정
+    description: 구매한 직업 아이템을 장착하거나 해제합니다
+    usage: /직업설정
   국가:
-    description: 국가를 생성 및 관리 합니다
+    description: 국가 메뉴를 엽니다 (생성, 관리, 전쟁)
+    usage: /국가
     aliases:
       - rnrrk
       - nation
+
+permissions:
+  digriss.admin:
+    description: 디그리스 관리자 명령어 사용 권한
+    default: op
