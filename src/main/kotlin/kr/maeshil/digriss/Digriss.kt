@@ -14,6 +14,9 @@ import kr.maeshil.digriss.job.JobListener
 import kr.maeshil.digriss.job.JobManager
 import kr.maeshil.digriss.job.JobPurchaseCommand
 import kr.maeshil.digriss.job.JobSkillRegistry
+import kr.maeshil.digriss.job.JobType
+import kr.maeshil.digriss.jobManager.AssassinStealthManager
+import kr.maeshil.digriss.jobManager.ReaperChargeManager
 import kr.maeshil.digriss.job.ReaperSkill
 import kr.maeshil.digriss.job.JobTriggerListener
 import kr.maeshil.digriss.jobManager.AssassinListener
@@ -74,8 +77,17 @@ class Digriss : JavaPlugin() {
         ActionBarManager.addProvider { player ->
             val job = jobManager.getJob(player.uniqueId) ?: return@addProvider null
             JobSkillRegistry.get(job) ?: return@addProvider null
-            val remain = jobSkillManager.getRemaining(player.uniqueId)
-            if (remain > 0) "§e⏳ ${job.displayName} ${remain}초" else "§b✦ ${job.displayName} 준비 완료"
+            val uuid = player.uniqueId
+            val remain = jobSkillManager.getRemaining(uuid)
+            val reaperActive = ReaperSkill.remainingSeconds(uuid)
+            when {
+                reaperActive != null -> "§b👻 무체화 중 ${"%.1f".format(reaperActive)}초"
+                job == JobType.SHADOW_ASSASSIN && AssassinStealthManager.isActive(uuid) -> "§5👁 은신 중 (기습 대기)"
+                remain > 0 -> "§e⏳ ${job.displayName} ${remain}초"
+                job == JobType.REAPER && !ReaperChargeManager.isCharged(uuid) -> "§7☠ 사신 · 영혼 없음"
+                job == JobType.REAPER -> "§b☠ 사신 · 영혼 충전됨"
+                else -> "§b✦ ${job.displayName} 준비 완료"
+            }
         }
 
         scoreboardManager = ScoreboardManager(soulManager, kdManager, rankManager, killEffectManager, jobManager, nationManager,dcManager)

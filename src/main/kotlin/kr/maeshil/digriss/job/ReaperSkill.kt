@@ -27,6 +27,7 @@ class ReaperSkill : JobSkill {
 
         player.isInvulnerable = true
         active.add(uuid)
+        endsAt[uuid] = System.currentTimeMillis() + (invulnDurationSeconds * 1000).toLong()
         player.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, durationTicks.toInt() + 1, 0, false, false))
         player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, durationTicks.toInt() + 1, 1, false, false))
         player.sendMessage("§b무체화 발동! (${invulnDurationSeconds}초)")
@@ -66,11 +67,20 @@ class ReaperSkill : JobSkill {
 
     companion object {
         private val active = HashSet<UUID>()
+        private val endsAt = HashMap<UUID, Long>()
         private val stashes = HashMap<UUID, Stash>()
+
+        // 무체화 남은 시간(초), 무체화 중이 아니면 null
+        fun remainingSeconds(uuid: UUID): Double? {
+            if (uuid !in active) return null
+            val remain = (endsAt[uuid] ?: return null) - System.currentTimeMillis()
+            return (remain / 1000.0).coerceAtLeast(0.0)
+        }
 
         // 무체화 해제 + 빼둔 장비 복구 (종료 타이머, 접속 종료, 플러그인 종료 시 호출)
         fun restore(player: Player) {
             if (!active.remove(player.uniqueId)) return
+            endsAt.remove(player.uniqueId)
             player.isInvulnerable = false
 
             val stash = stashes.remove(player.uniqueId) ?: return
