@@ -13,6 +13,7 @@ import kr.maeshil.digriss.job.JobConfirmCommand
 import kr.maeshil.digriss.job.JobListener
 import kr.maeshil.digriss.job.JobManager
 import kr.maeshil.digriss.job.JobPurchaseCommand
+import kr.maeshil.digriss.job.JobSkillRegistry
 import kr.maeshil.digriss.job.ReaperSkill
 import kr.maeshil.digriss.job.JobTriggerListener
 import kr.maeshil.digriss.jobManager.AssassinListener
@@ -68,6 +69,14 @@ class Digriss : JavaPlugin() {
 
         nationManager = Nation_D(this)
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
+
+        // 직업 스킬(Shift+Q) 쿨타임 상시 표시 (스킬이 있는 직업만)
+        ActionBarManager.addProvider { player ->
+            val job = jobManager.getJob(player.uniqueId) ?: return@addProvider null
+            JobSkillRegistry.get(job) ?: return@addProvider null
+            val remain = jobSkillManager.getRemaining(player.uniqueId)
+            if (remain > 0) "§e⏳ ${job.displayName} ${remain}초" else "§b✦ ${job.displayName} 준비 완료"
+        }
 
         scoreboardManager = ScoreboardManager(soulManager, kdManager, rankManager, killEffectManager, jobManager, nationManager,dcManager)
 
