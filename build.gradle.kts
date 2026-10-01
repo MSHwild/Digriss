@@ -12,14 +12,6 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
-    // IntelliJ 라이브러리로만 등록돼 있던 외부 플러그인 jar (Vault, ItemsAdder, BlueMap)
-    val home = System.getProperty("user.home")
-    compileOnly(files(
-        "$home/Desktop/plugin/Vault.jar",
-        "$home/Desktop/plugin/ItemsAdder_4.0.17.jar",
-        "$home/Downloads/bluemap-5.14-paper.jar"
-    ))
 }
 
 kotlin {
