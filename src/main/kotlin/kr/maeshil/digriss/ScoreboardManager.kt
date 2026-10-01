@@ -87,6 +87,31 @@ class ScoreboardManager(
             objective.getScore(uniqueLine).score = index
         }
 
+        updateNameColors(player, scoreboard)
         player.scoreboard = scoreboard
+    }
+
+    // 보는 사람 기준으로 이름 색 표시: 같은 국가 초록, 전쟁 중인 국가 빨강, 나머지 기본
+    // (각 플레이어가 자기 스코어보드를 쓰므로 사람마다 다르게 보임, 머리 위 이름표 + TAB 목록에 적용)
+    private fun updateNameColors(viewer: Player, scoreboard: Scoreboard) {
+        val ally = scoreboard.getTeam("dg_ally")
+            ?: scoreboard.registerNewTeam("dg_ally").apply { color = org.bukkit.ChatColor.GREEN }
+        val enemy = scoreboard.getTeam("dg_enemy")
+            ?: scoreboard.registerNewTeam("dg_enemy").apply { color = org.bukkit.ChatColor.RED }
+
+        val myNation = nationManager.getNationName(viewer.uniqueId)
+        val wars = nationManager.warsOfPlayer(viewer.uniqueId)
+
+        Bukkit.getOnlinePlayers().forEach { other ->
+            val otherNation = nationManager.getNationName(other.uniqueId)
+            when {
+                myNation != null && otherNation == myNation -> ally.addEntry(other.name)
+                otherNation != null && otherNation in wars -> enemy.addEntry(other.name)
+                else -> {
+                    ally.removeEntry(other.name)
+                    enemy.removeEntry(other.name)
+                }
+            }
+        }
     }
 }
