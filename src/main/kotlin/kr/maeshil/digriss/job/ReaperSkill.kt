@@ -7,6 +7,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import java.util.UUID
 
 class ReaperSkill : JobSkill {
     override val baseCooldownSeconds = 20
@@ -22,30 +23,65 @@ class ReaperSkill : JobSkill {
 
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss")!!
         val durationTicks = (invulnDurationSeconds * 20).toLong()
+        val uuid = player.uniqueId
 
         player.isInvulnerable = true
+        active.add(uuid)
         player.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, durationTicks.toInt() + 1, 0, false, false))
         player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, durationTicks.toInt() + 1, 1, false, false))
         player.sendMessage("§b무체화 발동! (${invulnDurationSeconds}초)")
 
         // 드랍 취소로 인한 아이템 자동 복구가 끝난 다음 틱에 캡처해야 정확함
         Bukkit.getScheduler().runTask(plugin, Runnable {
+            // 그 1틱 사이에 나갔거나 이미 복구됐으면 장비를 건드리지 않음
+            if (!player.isOnline || uuid !in active) return@Runnable
+
             val heldSlot = player.inventory.heldItemSlot
-            val mainHand = player.inventory.getItem(heldSlot)?.clone() ?: ItemStack(Material.AIR)
-            val offHand = player.inventory.itemInOffHand.clone()
-            val armor = player.inventory.armorContents.map { it?.clone() }.toTypedArray()
+            val stash = Stash(
+                heldSlot,
+                player.inventory.getItem(heldSlot)?.clone() ?: ItemStack(Material.AIR),
+                player.inventory.itemInOffHand.clone(),
+                player.inventory.armorContents.map { it?.clone() }.toTypedArray()
+            )
 
             player.inventory.setItem(heldSlot, ItemStack(Material.AIR))
             player.inventory.setItemInOffHand(ItemStack(Material.AIR))
             player.inventory.armorContents = arrayOfNulls(4)
 
-            Bukkit.getScheduler().runTaskLater(plugin, Runnable {
-                player.isInvulnerable = false
-                player.inventory.setItem(heldSlot, mainHand)
-                player.inventory.setItemInOffHand(offHand)
-                player.inventory.armorContents = armor
+            stash.taskId = Bukkit.getScheduler().runTaskLater(plugin, Runnable {
+                restore(player)
                 player.sendMessage("§7무체화가 종료되었습니다.")
-            }, durationTicks - 1) // 이미 1틱 지난 만큼 보정
+            }, durationTicks - 1).taskId // 이미 1틱 지난 만큼 보정
+            stashes[uuid] = stash
         })
+    }
+
+    private class Stash(
+        val heldSlot: Int,
+        val mainHand: ItemStack,
+        val offHand: ItemStack,
+        val armor: Array<ItemStack?>,
+        var taskId: Int = -1
+    )
+
+    companion object {
+        private val active = HashSet<UUID>()
+        private val stashes = HashMap<UUID, Stash>()
+
+        // 무체화 해제 + 빼둔 장비 복구 (종료 타이머, 접속 종료, 플러그인 종료 시 호출)
+        fun restore(player: Player) {
+            if (!active.remove(player.uniqueId)) return
+            player.isInvulnerable = false
+
+            val stash = stashes.remove(player.uniqueId) ?: return
+            if (stash.taskId != -1) Bukkit.getScheduler().cancelTask(stash.taskId)
+            player.inventory.setItem(stash.heldSlot, stash.mainHand)
+            player.inventory.setItemInOffHand(stash.offHand)
+            player.inventory.armorContents = stash.armor
+        }
+
+        fun restoreAll() {
+            Bukkit.getOnlinePlayers().forEach { restore(it) }
+        }
     }
 }
