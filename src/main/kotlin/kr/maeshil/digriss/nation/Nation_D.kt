@@ -106,6 +106,13 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
             }
         }, 20L, 20L)
 
+        // 영토 경계를 넘으면 화면 가운데 타이틀 표시 (0.5초마다 확인)
+        plugin.server.scheduler.runTaskTimer(plugin, Runnable {
+            for (player in Bukkit.getOnlinePlayers()) {
+                checkTerritoryEntry(player)
+            }
+        }, 10L, 10L)
+
         plugin.logger.info("국가 시스템이 활성화되었습니다.")
     }
 
@@ -365,6 +372,31 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
     }
 
     // ───────────────────────── 액션바 ─────────────────────────
+
+    // 플레이어별 마지막으로 있던 영토 (""는 무소속 땅)
+    private val lastTerritory = HashMap<UUID, String>()
+
+    private fun checkTerritoryEntry(player: Player) {
+        val owner = Nation.chunkClaims[chunkKeyOf(player.location)] ?: ""
+        val previous = lastTerritory.put(player.uniqueId, owner)
+        // 처음 확인(접속 직후)이거나 같은 영토 안이면 표시 안 함
+        if (previous == null || previous == owner) return
+
+        val myNation = playerNations[player.uniqueId]
+        val (title, subtitle) = when {
+            owner.isEmpty() -> "§7무소속 지역" to "§8누구의 영토도 아닙니다"
+            owner == myNation -> "§a$owner" to "§2내 국가 영토"
+            myNation != null && isAtWar(myNation, owner) -> "§4⚔ $owner ⚔" to "§c전쟁 중인 국가의 영토입니다"
+            else -> "§c$owner" to "§7다른 국가의 영토"
+        }
+        player.sendTitle(title, subtitle, 5, 30, 10)
+    }
+
+    // 플레이어 국가가 전쟁 중인 상대 국가 목록 (스코어보드 표시용)
+    fun warsOfPlayer(uuid: UUID): List<String> {
+        val myNation = playerNations[uuid] ?: return emptyList()
+        return warsOf(myNation)
+    }
 
     fun territoryText(player: Player): String {
         val ownerNation = Nation.chunkClaims[chunkKeyOf(player.location)]
@@ -783,6 +815,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
     fun onQuit(event: PlayerQuitEvent) {
         pendingCreate.remove(event.player.uniqueId)
         teleporting.remove(event.player.uniqueId)
+        lastTerritory.remove(event.player.uniqueId)
     }
 
     // ───────────────────────── 국가 로직 ─────────────────────────

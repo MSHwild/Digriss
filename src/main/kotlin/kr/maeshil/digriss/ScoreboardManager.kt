@@ -51,6 +51,12 @@ class ScoreboardManager(
         val soul = soulManager.getSouls(player)
         val rank = rankManager.getTier(player)
         val nation = nationManager.getNationName(uuid) ?: "§8없음"
+        val wars = nationManager.warsOfPlayer(uuid)
+        val warText = when {
+            wars.isEmpty() -> "§8없음"
+            wars.size <= 2 -> "§c" + wars.joinToString(", ")
+            else -> "§c${wars[0]} 외 ${wars.size - 1}개국"
+        }
         val equippedEffect = killEffectManager.getEquipped(player)
         val job = jobManager.getJob(uuid)
         val online = Bukkit.getOnlinePlayers().size
@@ -68,6 +74,7 @@ class ScoreboardManager(
             " §e✦ §7직업 §8» §e§l${job?.displayName ?: "§8없음"}",
             "",
             " §a✦ §7국가 §8» §a$nation",
+            " §4⚔ §7전쟁 §8» $warText",
             " §c✦ §7이펙트 §8» §c${equippedEffect?.displayName ?: "§8없음"}",
             "§8§m――――――――――――§r",
             " §f접속자 §8» §f§l$online§7명",
