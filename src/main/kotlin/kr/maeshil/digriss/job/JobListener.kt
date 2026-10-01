@@ -30,7 +30,7 @@ class JobListener(
                 }
                 soulManager.removeSouls(player, JOB_PURCHASE_COST.toLong())
                 player.inventory.addItem(jobManager.createJobItem(job))
-                player.sendMessage("§a${job.displayName} 직업 아이템을 구매했습니다. /직업확정 으로 장착하세요.")
+                player.sendMessage("§a${job.displayName} 직업 아이템을 구매했습니다. /직업설정 으로 장착하세요.")
                 player.closeInventory()
             }
 

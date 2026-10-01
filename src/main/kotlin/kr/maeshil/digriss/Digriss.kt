@@ -83,7 +83,6 @@ class Digriss : JavaPlugin() {
         getCommand("영혼")?.setExecutor(SoulCommand(this))
         getCommand("직업")?.setExecutor(JobPurchaseCommand(jobManager))
         getCommand("직업설정")?.setExecutor(JobConfirmCommand(jobManager))
-        getCommand("직업확정")?.setExecutor(JobConfirmCommand(jobManager))
         getCommand("초기화")?.setExecutor(ResetCommand(this))
         getCommand("dc")?.setExecutor(DCCommand(this))
         getCommand("랭크")?.setExecutor(MyRankCommand(rankManager))
