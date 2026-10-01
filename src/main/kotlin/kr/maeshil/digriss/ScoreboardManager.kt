@@ -4,6 +4,7 @@ import kr.maeshil.digriss.effect.KillEffectManager
 import kr.maeshil.digriss.job.JobManager
 import kr.maeshil.digriss.manager.DCManager
 import kr.maeshil.digriss.manager.KDManager
+import kr.maeshil.digriss.manager.RankTiers
 import kr.maeshil.digriss.manager.RankManager
 import kr.maeshil.digriss.manager.SoulManager
 import kr.maeshil.digriss.nation.Nation_D
@@ -91,27 +92,29 @@ class ScoreboardManager(
         player.scoreboard = scoreboard
     }
 
-    // 보는 사람 기준으로 이름 색 표시: 같은 국가 초록, 전쟁 중인 국가 빨강, 나머지 기본
-    // (각 플레이어가 자기 스코어보드를 쓰므로 사람마다 다르게 보임, 머리 위 이름표 + TAB 목록에 적용)
+    // 보는 사람 기준 이름표: [랭크] 접두사 + 관계 색 (같은 국가 초록, 전쟁 중인 국가 빨강, 나머지 흰색)
+    // 각 플레이어가 자기 스코어보드를 쓰므로 사람마다 다르게 보임 (머리 위 이름표 + TAB 목록)
     private fun updateNameColors(viewer: Player, scoreboard: Scoreboard) {
-        val ally = scoreboard.getTeam("dg_ally")
-            ?: scoreboard.registerNewTeam("dg_ally").apply { color = org.bukkit.ChatColor.GREEN }
-        val enemy = scoreboard.getTeam("dg_enemy")
-            ?: scoreboard.registerNewTeam("dg_enemy").apply { color = org.bukkit.ChatColor.RED }
-
         val myNation = nationManager.getNationName(viewer.uniqueId)
         val wars = nationManager.warsOfPlayer(viewer.uniqueId)
 
         Bukkit.getOnlinePlayers().forEach { other ->
             val otherNation = nationManager.getNationName(other.uniqueId)
-            when {
-                myNation != null && otherNation == myNation -> ally.addEntry(other.name)
-                otherNation != null && otherNation in wars -> enemy.addEntry(other.name)
-                else -> {
-                    ally.removeEntry(other.name)
-                    enemy.removeEntry(other.name)
-                }
+            val (relation, color) = when {
+                myNation != null && otherNation == myNation -> "ally" to org.bukkit.ChatColor.GREEN
+                otherNation != null && otherNation in wars -> "enemy" to org.bukkit.ChatColor.RED
+                else -> "none" to org.bukkit.ChatColor.WHITE
             }
+            val tierIndex = RankTiers.tiers.indexOf(rankManager.getTier(other))
+            val tier = RankTiers.tiers[tierIndex]
+
+            // 팀 하나 = (관계, 랭크) 조합. 한 이름은 한 팀에만 속하므로 addEntry 시 이전 팀에서 자동으로 빠짐
+            val teamName = "dg_${relation}_$tierIndex"
+            val team = scoreboard.getTeam(teamName) ?: scoreboard.registerNewTeam(teamName).apply {
+                this.color = color
+                prefix = ChatColor.translateAlternateColorCodes('&', "${tier.color}[${tier.name}] ")
+            }
+            if (!team.hasEntry(other.name)) team.addEntry(other.name)
         }
     }
 }
