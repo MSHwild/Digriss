@@ -2,6 +2,7 @@ package kr.maeshil.digriss.nation
 
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.ActionBarManager
+import kr.maeshil.digriss.alliance.AllianceGUI
 import kr.maeshil.digriss.quest.QuestType
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
@@ -541,21 +542,29 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         inv.setItem(24, item(Material.LODESTONE, "§b§l신호기 이동",
             "§7현재 위치로 신호기를 옮깁니다.", "§7기존 신호기는 제거됩니다.", "", leaderOnly))
 
-        inv.setItem(29, item(Material.PLAYER_HEAD, "§a§l국가원 초대",
+        inv.setItem(28, item(Material.PLAYER_HEAD, "§a§l국가원 초대",
             "§7접속 중인 무소속 유저를 초대합니다.", "", "§a클릭하여 선택"))
 
         val incoming = warRequests[nationName]?.size ?: 0
-        inv.setItem(31, item(Material.NETHERITE_SWORD, "§c§l전쟁 관리",
+        inv.setItem(30, item(Material.NETHERITE_SWORD, "§c§l전쟁 관리",
             "§7전쟁 선포 / 수락 / 휴전을 관리합니다.",
             "§7진행 중인 전쟁 §f${enemies.size}개",
             if (incoming > 0) "§e받은 전쟁 선포 §c${incoming}건!" else "§7받은 전쟁 선포 없음",
             "", "§a클릭하여 열기"))
 
+        val allies = plugin.allianceManager.alliesOf(nationName)
+        val allyRequests = Nation.nations.keys.count { plugin.allianceManager.hasRequest(nationName, it) }
+        inv.setItem(32, item(Material.LIGHT_BLUE_BANNER, "§b§l연합 관리",
+            "§7다른 국가와 연합을 맺거나 해제합니다.",
+            "§7연합국 §f${if (allies.isEmpty()) "없음" else allies.joinToString(", ")}",
+            if (allyRequests > 0) "§e받은 연합 요청 §b${allyRequests}건!" else "§7받은 연합 요청 없음",
+            "", "§a클릭하여 열기"))
+
         if (isLeader) {
-            inv.setItem(33, item(Material.TNT, "§c§l국가 해체",
+            inv.setItem(34, item(Material.TNT, "§c§l국가 해체",
                 "§7국가와 모든 영토가 사라집니다.", "", "§c클릭하여 진행"))
         } else {
-            inv.setItem(33, item(Material.OAK_DOOR, "§c§l국가 탈퇴",
+            inv.setItem(34, item(Material.OAK_DOOR, "§c§l국가 탈퇴",
                 "§7현재 국가에서 탈퇴합니다.", "", "§c클릭하여 탈퇴"))
         }
 
@@ -765,9 +774,10 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
                 20 -> { player.closeInventory(); centerTP(player) }
                 22 -> { player.closeInventory(); setNationSpawn(player) }
                 24 -> { player.closeInventory(); setNationBeacon(player) }
-                29 -> later { openInviteMenu(player) }
-                31 -> later { openWarMenu(player) }
-                33 -> {
+                28 -> later { openInviteMenu(player) }
+                30 -> later { openWarMenu(player) }
+                32 -> later { AllianceGUI.open(player, plugin) }
+                34 -> {
                     val nation = nations[playerNations[player.uniqueId]] ?: return
                     if (nation.leader == player.uniqueId) {
                         later { openConfirmDissolveMenu(player) }
