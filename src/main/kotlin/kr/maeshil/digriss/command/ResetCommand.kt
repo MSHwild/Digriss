@@ -51,6 +51,7 @@ class ResetCommand(private val plugin: Digriss) : CommandExecutor {
         plugin.killEffectManager.resetAll()
         plugin.dcManager.resetAll()
         plugin.nationManager.resetAll()
+        plugin.questManager.resetAll()
 
         return resetMoney()
     }

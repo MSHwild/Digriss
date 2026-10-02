@@ -35,6 +35,13 @@ commands:
   직업설정:
     description: 구매한 직업 아이템을 장착하거나 해제합니다
     usage: /직업설정
+  퀘스트:
+    description: 일일 퀘스트 창을 엽니다
+    usage: /퀘스트
+  퀘스트관리:
+    description: 플레이어의 오늘 퀘스트를 초기화합니다 (관리자)
+    usage: /퀘스트관리 초기화 <닉네임>
+    permission: digriss.admin
   국가:
     description: 국가 메뉴를 엽니다 (생성, 관리, 전쟁)
     usage: /국가

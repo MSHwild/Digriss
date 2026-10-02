@@ -34,6 +34,12 @@ class QuestManager(private val plugin: Digriss) {
     private var weeklyMoney = 0.0
     private var weeklyDC = 1L
 
+    // 연속 출석(연속 완료) 보너스 설정
+    private var streakSoulsPerDay = 0L
+    private var streakMoneyPerDay = 0.0
+    var streakMaxDays = 10
+        private set
+
     // 플레이어 킬: 같은 상대를 10분 안에 다시 죽이면 진행 제외 (킬러 -> (피해자 -> 시각))
     private val recentKills = HashMap<UUID, HashMap<UUID, Long>>()
     private val repeatKillWindowMs = 10 * 60 * 1000L
@@ -87,6 +93,9 @@ class QuestManager(private val plugin: Digriss) {
         weeklySouls = config.getLong("weekly-bonus.souls", 0)
         weeklyMoney = config.getDouble("weekly-bonus.money", 0.0)
         weeklyDC = config.getLong("weekly-bonus.dc", 1)
+        streakSoulsPerDay = config.getLong("streak-bonus.souls-per-day", 2)
+        streakMoneyPerDay = config.getDouble("streak-bonus.money-per-day", 500.0)
+        streakMaxDays = config.getInt("streak-bonus.max-days", 10).coerceAtLeast(1)
 
         QuestDifficulty.entries.forEach { d ->
             if (result.values.none { it.difficulty == d && !it.warOnly }) {
@@ -246,12 +255,40 @@ class QuestManager(private val plugin: Digriss) {
         )
         ActionBarManager.showTemp(player, "§6✔ 퀘스트 완료: §f${def.name}", 3.0)
 
+        // 그날 첫 완료면 연속 출석 갱신 + 보너스
+        if (pd.streakLast != pd.dateKey) {
+            pd.streak = currentStreak(pd) + 1
+            pd.streakLast = pd.dateKey
+            giveStreakBonus(player, pd.streak)
+        }
+
         // 주간 보너스: 이번 주에 퀘스트를 완료한 날짜 기록
         pd.weekDays.add(pd.dateKey)
         if (!pd.weeklyClaimed && pd.weekDays.size >= weeklyRequiredDays) {
             pd.weeklyClaimed = true
             giveWeeklyBonus(player)
         }
+    }
+
+    // 놓친 날 하루마다 절반으로 줄어든 현재 연속 일수 (0으로 초기화하지 않음)
+    fun currentStreak(pd: PlayerQuestData): Int {
+        if (pd.streakLast.isEmpty()) return 0
+        val last = runCatching { LocalDate.parse(pd.streakLast) }.getOrNull() ?: return 0
+        val missed = java.time.temporal.ChronoUnit.DAYS.between(last, todayDate()) - 1
+        if (missed <= 0) return pd.streak
+        return pd.streak shr missed.coerceAtMost(31).toInt()
+    }
+
+    fun streakBonusSouls(streak: Int): Long = streakSoulsPerDay * streak.coerceAtMost(streakMaxDays)
+    fun streakBonusMoney(streak: Int): Double = streakMoneyPerDay * streak.coerceAtMost(streakMaxDays)
+
+    private fun giveStreakBonus(player: Player, streak: Int) {
+        val souls = streakBonusSouls(streak)
+        val money = streakBonusMoney(streak)
+        if (souls <= 0 && money <= 0) return
+        giveSouls(player, souls)
+        giveMoney(player, money)
+        player.sendMessage("§e[연속 출석 ${streak}일] §f추가 보상 §b영혼 $souls §6${formatMoney(money)}원")
     }
 
     private fun giveWeeklyBonus(player: Player) {
@@ -295,11 +332,17 @@ class QuestManager(private val plugin: Digriss) {
 
     // ───────────────────────── 초기화 ─────────────────────────
 
-    // 해당 플레이어의 오늘 퀘스트를 새로 뽑음 (주간 기록은 유지)
-    fun resetToday(player: Player) {
-        players[player.uniqueId]?.dateKey = ""
-        ensureToday(player)
+    // 해당 플레이어의 오늘 퀘스트를 초기화 (주간·연속 기록은 유지). 오프라인이면 다음 접속 때 새로 뽑힘
+    fun resetToday(uuid: UUID): Boolean {
+        val pd = players[uuid] ?: return false
+        pd.dateKey = ""
+        pd.rerolled = false
+        pd.quests.clear()
+        Bukkit.getPlayer(uuid)?.let { ensureToday(it) } ?: save(uuid)
+        return true
     }
+
+    val weeklyRequired get() = weeklyRequiredDays
 
     // /초기화: player-quests.yml을 비움
     fun resetAll() {
@@ -319,7 +362,9 @@ class QuestManager(private val plugin: Digriss) {
             dateKey = s.getString("date", "")!!,
             rerolled = s.getBoolean("rerolled"),
             weekKey = s.getString("week", "")!!,
-            weeklyClaimed = s.getBoolean("weekly-claimed")
+            weeklyClaimed = s.getBoolean("weekly-claimed"),
+            streak = s.getInt("streak"),
+            streakLast = s.getString("streak-last", "")!!
         )
         pd.weekDays.addAll(s.getStringList("week-days"))
         s.getConfigurationSection("quests")?.let { qs ->
@@ -350,6 +395,8 @@ class QuestManager(private val plugin: Digriss) {
         data.set("$key.week", pd.weekKey)
         data.set("$key.week-days", pd.weekDays.toList())
         data.set("$key.weekly-claimed", pd.weeklyClaimed)
+        data.set("$key.streak", pd.streak)
+        data.set("$key.streak-last", pd.streakLast)
     }
 
     fun saveAll() {

@@ -27,6 +27,8 @@ import kr.maeshil.digriss.manager.ManaManager
 import kr.maeshil.digriss.manager.RankManager
 import kr.maeshil.digriss.manager.SoulManager
 import kr.maeshil.digriss.nation.Nation_D
+import kr.maeshil.digriss.quest.QuestAdminCommand
+import kr.maeshil.digriss.quest.QuestCommand
 import kr.maeshil.digriss.quest.QuestListener
 import kr.maeshil.digriss.quest.QuestManager
 import kr.maeshil.digriss.skill.SkillListener
@@ -108,7 +110,7 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(WeaponSkillListener(this), this)
         Bukkit.getPluginManager().registerEvents(SkillListener(this, manaManager), this)
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
-        Bukkit.getPluginManager().registerEvents(QuestListener(questManager), this)
+        Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
 
         // 명령어 등록
         getCommand("영혼")?.setExecutor(SoulCommand(this))
@@ -119,6 +121,8 @@ class Digriss : JavaPlugin() {
         getCommand("랭크")?.setExecutor(MyRankCommand(rankManager))
         getCommand("랭킹")?.setExecutor(RankCommand(this))
         getCommand("킬이펙트")?.setExecutor(KillEffectCommand(effectGUI))
+        getCommand("퀘스트")?.setExecutor(QuestCommand(questManager))
+        getCommand("퀘스트관리")?.setExecutor(QuestAdminCommand(questManager))
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
         Bukkit.getScheduler().runTaskTimer(this, Runnable { saveAll() }, 6000L, 6000L)

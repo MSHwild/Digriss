@@ -90,6 +90,13 @@ quests:
     name: "[전쟁] 적국 영토에서 2킬"
     war-only: true
 
+# 연속 출석: 하루 첫 퀘스트 완료 시 (연속 일수 x 값) 추가 지급, max-days일까지만 증가
+# 하루를 놓치면 0이 아니라 절반으로 줄어듭니다
+streak-bonus:
+  souls-per-day: 2
+  money-per-day: 500
+  max-days: 10
+
 # 한 주(월요일 시작)에 required-days일 이상 퀘스트를 1개 이상 완료하면 1회 지급
 # DC는 여기서만 지급되며 plugins/Digriss/quest-dc.log에 기록됩니다
 weekly-bonus:

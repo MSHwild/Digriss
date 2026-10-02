@@ -12,5 +12,7 @@ class PlayerQuestData(
     var rerolled: Boolean = false,
     var weekKey: String = "",                       // 이번 주 월요일 날짜
     val weekDays: MutableSet<String> = mutableSetOf(), // 이번 주에 퀘스트를 1개 이상 완료한 날짜들
-    var weeklyClaimed: Boolean = false
+    var weeklyClaimed: Boolean = false,
+    var streak: Int = 0,                            // 연속 완료 일수
+    var streakLast: String = ""                     // 마지막으로 연속 완료가 기록된 날짜
 )
