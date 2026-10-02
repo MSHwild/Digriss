@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.bundle
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -25,6 +26,7 @@ class BundleCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter
     private fun list(sender: CommandSender) {
         if (sender is Player) {
             BundleGUI.openList(sender, plugin)
+            Sounds.open(sender)
             return
         }
         // 콘솔: 채팅으로 목록 출력 (판매 종료 포함)

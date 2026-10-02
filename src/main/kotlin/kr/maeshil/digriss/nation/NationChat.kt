@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.nation
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -57,7 +58,10 @@ class NationChat(private val plugin: Digriss) : Listener, CommandExecutor {
             .flatMap { it.members }
             .distinct()
             .mapNotNull { Bukkit.getPlayer(it) }
-            .forEach { it.sendMessage(formatted) }
+            .forEach {
+                it.sendMessage(formatted)
+                if (it != player) Sounds.chat(it)
+            }
         plugin.logger.info(formatted.replace(Regex("§."), ""))
     }
 }

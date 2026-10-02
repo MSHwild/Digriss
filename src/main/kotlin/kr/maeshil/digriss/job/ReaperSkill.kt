@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.jobManager.ReaperChargeManager
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -30,6 +31,7 @@ class ReaperSkill : JobSkill {
         endsAt[uuid] = System.currentTimeMillis() + (invulnDurationSeconds * 1000).toLong()
         player.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, durationTicks.toInt() + 1, 0, false, false))
         player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, durationTicks.toInt() + 1, 1, false, false))
+        Sounds.play(player, org.bukkit.Sound.ENTITY_VEX_CHARGE, 1f, 0.6f)
         player.sendMessage("§b무체화 발동! (${invulnDurationSeconds}초)")
 
         // 드랍 취소로 인한 아이템 자동 복구가 끝난 다음 틱에 캡처해야 정확함
@@ -52,6 +54,7 @@ class ReaperSkill : JobSkill {
             stash.taskId = Bukkit.getScheduler().runTaskLater(plugin, Runnable {
                 restore(player)
                 player.sendMessage("§7무체화가 종료되었습니다.")
+                Sounds.play(player, org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.6f, 1.2f)
             }, durationTicks - 1).taskId // 이미 1틱 지난 만큼 보정
             stashes[uuid] = stash
         })

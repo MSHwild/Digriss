@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.nation.Nation
 import kr.maeshil.digriss.nation.NationStorageHolder
@@ -38,6 +39,7 @@ class NationStorageManager(private val plugin: Digriss) {
             return
         }
         player.openInventory(inventoryOf(name))
+        Sounds.play(player, org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.7f, 1.0f)
     }
 
     private fun inventoryOf(name: String): Inventory {

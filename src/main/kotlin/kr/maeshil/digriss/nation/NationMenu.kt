@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.nation
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.alliance.AllianceGUI
 import kr.maeshil.digriss.manager.NationManager
@@ -344,12 +345,15 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         event.isCancelled = true
         if (event.clickedInventory != event.view.topInventory) return
         val player = event.whoClicked as? Player ?: return
+        val clicked = event.currentItem
+        if (clicked != null && clicked.type != Material.GRAY_STAINED_GLASS_PANE && !clicked.type.isAir) Sounds.click(player)
 
         when (holder.type) {
             MenuType.NO_NATION -> when (event.slot) {
                 11 -> {
                     player.closeInventory()
                     core.startCreate(player)
+                    Sounds.notify(player)
                     player.sendMessage("${ChatColor.GOLD}건국할 국가 이름을 채팅으로 입력하세요. (취소: '취소' 입력)")
                 }
                 15 -> {

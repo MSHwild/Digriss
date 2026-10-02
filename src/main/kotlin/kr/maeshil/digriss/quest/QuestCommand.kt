@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.quest
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.QuestManager
 import org.bukkit.Bukkit
@@ -13,6 +14,7 @@ class QuestCommand(private val questManager: QuestManager) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val player = sender as? Player ?: return true
         QuestGUI.open(player, questManager)
+        Sounds.open(player)
         return true
     }
 }

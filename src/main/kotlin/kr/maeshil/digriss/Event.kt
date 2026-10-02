@@ -1,5 +1,6 @@
 package kr.maeshil.digriss
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import net.md_5.bungee.api.ChatColor
 import org.bukkit.event.EventHandler
@@ -61,6 +62,7 @@ class Event(private val plugin: Digriss) : Listener {
             if (victimStreak >= 5 && !repeated) {
                 bonus = victimStreak * 2L
                 plugin.soulManager.addSouls(killer, bonus)
+                Sounds.all(org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.4f, 1.2f)
                 plugin.server.broadcastMessage(
                     "${ChatColor.RED}⚔ ${ChatColor.GOLD}${killer.name}${ChatColor.RED}님이 " +
                         "${ChatColor.GOLD}${victim.name}${ChatColor.RED}님의 ${ChatColor.YELLOW}${victimStreak}킬스트릭${ChatColor.RED}을 끊었습니다! " +
@@ -80,9 +82,11 @@ class Event(private val plugin: Digriss) : Listener {
             }
 
             if (repeated) killer.sendMessage("${ChatColor.GRAY}같은 상대를 5분 안에 다시 처치해 영혼을 얻지 못했습니다.")
+            Sounds.play(killer, org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 0.8f)
             killer.sendMessage("${ChatColor.GREEN}처치 성공! 영혼 +$baseSouls | 현재 킬스트릭: ${ChatColor.YELLOW}$newStreak")
 
             if (newStreak % 5 == 0) {
+                killer.world.players.forEach { Sounds.play(it, org.bukkit.Sound.ENTITY_BLAZE_SHOOT, 0.6f, 0.8f) }
                 killer.world.players.forEach {
                     it.sendMessage("${ChatColor.LIGHT_PURPLE}${killer.name}${ChatColor.YELLOW}님이 ${newStreak}킬스트릭을 달성했습니다!")
                 }

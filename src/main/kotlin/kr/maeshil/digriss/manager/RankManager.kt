@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -111,19 +112,23 @@ class RankManager(private val plugin: Digriss) {
 
         val finalGain = (baseScore * rankMultiplier * streakMultiplier * repeatMultiplier).toLong().coerceAtLeast(5)
 
+        val before = getTier(killer)
         val newScore = RankTiers.capScore(getScore(killer) + finalGain)
         scores[killer.uniqueId] = newScore
         killer.sendMessage("${ChatColor.GREEN}랭크 점수 +$finalGain")
 
         checkPromotion(killer)
+        announceTierChange(killer, before)
         return finalGain
     }
 
     fun onDeath(victim: Player) {
+        val before = getTier(victim)
         val current = getScore(victim)
         val penalty = (current * 0.05).toLong().coerceIn(10, 100)
         scores[victim.uniqueId] = (current - penalty).coerceAtLeast(0)
         victim.sendMessage("${ChatColor.RED}랭크 점수 -$penalty")
+        announceTierChange(victim, before)
     }
 
     private fun checkPromotion(player: Player) {
@@ -139,8 +144,25 @@ class RankManager(private val plugin: Digriss) {
     }
 
     fun addScore(player: OfflinePlayer, amount: Long) {
+        val before = getTier(player)
         val newScore = RankTiers.capScore(getScore(player) + amount)
         scores[player.uniqueId] = newScore
+        player.player?.let { announceTierChange(it, before) }
+    }
+
+    // 랭크 단계가 바뀌었으면 화면 타이틀 + 소리 (승급은 전체 공지)
+    private fun announceTierChange(player: Player, before: RankTier) {
+        val after = getTier(player)
+        if (after == before) return
+        val color = ChatColor.translateAlternateColorCodes('&', after.color)
+        if (after.minScore > before.minScore) {
+            player.sendTitle("${color}${after.name}", "§f랭크 승급!", 5, 50, 15)
+            Sounds.bigReward(player)
+            Bukkit.broadcastMessage("§6🎖 ${player.name}§e님이 ${color}${after.name}§e 랭크로 승급했습니다!")
+        } else {
+            player.sendTitle("${color}${after.name}", "§7랭크 강등", 5, 40, 15)
+            Sounds.play(player, org.bukkit.Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.4f, 0.6f)
+        }
     }
 
     fun removeScore(player: OfflinePlayer, amount: Long): Boolean {

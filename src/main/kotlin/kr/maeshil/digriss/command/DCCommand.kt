@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.command
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import net.md_5.bungee.api.ChatColor
 import org.bukkit.Bukkit
@@ -30,6 +31,7 @@ class DCCommand(private val plugin: Digriss) : CommandExecutor {
 
             if (args[0] == "지급") {
                 plugin.dcManager.addDC(target, amount)
+                target.player?.let { it.sendMessage("§3DC ${amount}개를 받았습니다!"); Sounds.reward(it) }
                 plugin.adminLogManager.log(sender, "DC 지급 → ${target.name} $amount")
                 sender.sendMessage("${ChatColor.GREEN}${target.name}님에게 DC $amount 지급했습니다.")
             } else {

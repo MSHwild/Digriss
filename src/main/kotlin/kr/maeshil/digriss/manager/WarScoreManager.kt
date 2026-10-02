@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.nation.Nation
 import org.bukkit.Bukkit
@@ -89,6 +90,7 @@ class WarScoreManager(private val plugin: Digriss) {
             Bukkit.getPlayer(it)?.sendMessage("§4⚔ 전쟁 점수 §c$victimNation $theirs §7: §a$mine $killerNation")
         }
         killer.sendMessage("§b전쟁 킬 보너스 영혼 +$KILL_BONUS_SOULS")
+        Sounds.play(killer, org.bukkit.Sound.ENTITY_ARROW_HIT_PLAYER, 0.8f, 1.0f)
     }
 
     // 휴전 시 정산: 점수가 높은 국가가 패배국 금고의 10%를 가져감. 금고가 바뀌었으면 true
@@ -141,6 +143,7 @@ class WarScoreManager(private val plugin: Digriss) {
             val total = base + personal
             if (total <= 0) continue
             plugin.rankManager.addScore(Bukkit.getOfflinePlayer(uuid), total)
+            Bukkit.getPlayer(uuid)?.let { if (nationPart > 0) Sounds.bigReward(it) else Sounds.reward(it) }
             Bukkit.getPlayer(uuid)?.sendMessage(
                 "§d[전쟁 $result] §f랭크 점수 §a+$total §7(국가 결과 $base + 내 기여 $personal, 전쟁 킬 ${kills}회)"
             )

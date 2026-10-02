@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.menu
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -47,6 +48,7 @@ class MainMenu(private val plugin: Digriss) : Listener {
         if (!e.player.isSneaking) return
         e.isCancelled = true
         open(e.player)
+        Sounds.open(e.player)
     }
 
     fun open(player: Player) {
@@ -95,10 +97,12 @@ class MainMenu(private val plugin: Digriss) : Listener {
         val player = e.whoClicked as? Player ?: return
 
         if (e.rawSlot == 31) {
+            Sounds.click(player)
             player.closeInventory()
             return
         }
         val button = bySlot[e.rawSlot] ?: return
+        Sounds.click(player)
         player.closeInventory()
         // 클릭 이벤트 안에서 바로 다른 창을 열지 않고 다음 틱에 명령어 실행 (권한 확인도 명령어 쪽에서 그대로 적용)
         Bukkit.getScheduler().runTask(plugin, Runnable { if (player.isOnline) player.performCommand(button.command) })

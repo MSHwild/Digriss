@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.help
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.manager.HelpCategory
 import org.bukkit.Bukkit
@@ -44,12 +45,13 @@ class HelpCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter, 
             return true
         }
 
-        if (sender is Player) openGUI(sender)
+        if (sender is Player) { openGUI(sender); Sounds.open(sender) }
         else help.categories.forEach { sender.sendMessage("- ${it.name}") }
         return true
     }
 
     private fun show(sender: CommandSender, category: HelpCategory) {
+        if (sender is Player) Sounds.open(sender)
         sender.sendMessage("")
         category.lines.forEach { sender.sendMessage(it) }
     }
@@ -111,7 +113,9 @@ class HelpCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter, 
         val player = e.player
         if (player.hasPlayedBefore() || help.firstJoin.isEmpty()) return
         Bukkit.getScheduler().runTaskLater(plugin, Runnable {
-            if (player.isOnline) help.firstJoin.forEach { player.sendMessage(it) }
+            if (!player.isOnline) return@Runnable
+            help.firstJoin.forEach { player.sendMessage(it) }
+            Sounds.bigReward(player)
         }, 60L)
     }
 

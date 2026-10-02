@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.nation.Nation
 import org.bukkit.Bukkit
@@ -52,11 +53,11 @@ class AllianceManager(private val plugin: Digriss) {
     // 두 국가 모두 연합 한도에 여유가 있는지 확인, 아니면 안내 후 false
     private fun checkLimit(player: Player, me: String, target: String): Boolean {
         if (alliesOf(me).size >= MAX_ALLIES) {
-            player.sendMessage("§c연합은 최대 ${MAX_ALLIES}개국까지 맺을 수 있습니다. 기존 연합을 해제하세요.")
+            deny(player, "§c연합은 최대 ${MAX_ALLIES}개국까지 맺을 수 있습니다. 기존 연합을 해제하세요.")
             return false
         }
         if (alliesOf(target).size >= MAX_ALLIES) {
-            player.sendMessage("§c'$target' 국가는 이미 연합 한도(${MAX_ALLIES}개국)에 도달했습니다.")
+            deny(player, "§c'$target' 국가는 이미 연합 한도(${MAX_ALLIES}개국)에 도달했습니다.")
             return false
         }
         return true
@@ -70,11 +71,11 @@ class AllianceManager(private val plugin: Digriss) {
     private fun leaderNation(player: Player): String? {
         val name = plugin.nationManager.getNationName(player.uniqueId)
         if (name == null) {
-            player.sendMessage("§c소속된 국가가 없습니다.")
+            deny(player, "§c소속된 국가가 없습니다.")
             return null
         }
         if (Nation.nations[name]?.leader != player.uniqueId) {
-            player.sendMessage("§c국가 지도자만 연합을 관리할 수 있습니다.")
+            deny(player, "§c국가 지도자만 연합을 관리할 수 있습니다.")
             return null
         }
         return name
@@ -83,28 +84,30 @@ class AllianceManager(private val plugin: Digriss) {
     fun request(player: Player, target: String) {
         val me = leaderNation(player) ?: return
         if (me == target || Nation.nations[target] == null) return
-        if (areAllied(me, target)) return player.sendMessage("§c이미 연합 중입니다.")
-        if (plugin.nationManager.isAtWarBetween(me, target)) return player.sendMessage("§c전쟁 중인 국가와는 연합할 수 없습니다. 먼저 휴전하세요.")
+        if (areAllied(me, target)) return deny(player, "§c이미 연합 중입니다.")
+        if (plugin.nationManager.isAtWarBetween(me, target)) return deny(player, "§c전쟁 중인 국가와는 연합할 수 없습니다. 먼저 휴전하세요.")
         if (!checkLimit(player, me, target)) return
 
         // 상대도 나에게 요청해 둔 상태면 바로 성사
         if (hasRequest(me, target)) return form(me, target)
 
         if (!requests.getOrPut(target) { mutableSetOf() }.add(me)) {
-            return player.sendMessage("§c이미 연합을 요청했습니다. 상대의 수락을 기다리는 중입니다.")
+            return deny(player, "§c이미 연합을 요청했습니다. 상대의 수락을 기다리는 중입니다.")
         }
         player.sendMessage("§a'$target' 국가에 연합을 요청했습니다.")
+        Sounds.success(player)
+        Sounds.nation(target) { Sounds.notify(it) }
         notifyNation(target, "§b🤝 '$me' 국가가 연합을 요청했습니다! §7/연합 에서 수락 또는 거절하세요.")
     }
 
     fun accept(player: Player, from: String) {
         val me = leaderNation(player) ?: return
-        if (!hasRequest(me, from)) return player.sendMessage("§c해당 국가의 연합 요청이 없습니다.")
+        if (!hasRequest(me, from)) return deny(player, "§c해당 국가의 연합 요청이 없습니다.")
         if (Nation.nations[from] == null) {
             requests[me]?.remove(from)
-            return player.sendMessage("§c해당 국가는 더 이상 존재하지 않습니다.")
+            return deny(player, "§c해당 국가는 더 이상 존재하지 않습니다.")
         }
-        if (plugin.nationManager.isAtWarBetween(me, from)) return player.sendMessage("§c전쟁 중인 국가와는 연합할 수 없습니다. 먼저 휴전하세요.")
+        if (plugin.nationManager.isAtWarBetween(me, from)) return deny(player, "§c전쟁 중인 국가와는 연합할 수 없습니다. 먼저 휴전하세요.")
         if (!checkLimit(player, me, from)) return
         form(from, me)
     }
@@ -127,6 +130,7 @@ class AllianceManager(private val plugin: Digriss) {
         if (!alliances.remove(key(me, target))) return
         save()
         Bukkit.broadcastMessage("§7💔 [연합 해제] '$me' 국가가 '$target' 국가와의 연합을 해제했습니다.")
+        listOf(me, target).forEach { n -> Sounds.nation(n) { Sounds.play(it, org.bukkit.Sound.BLOCK_GLASS_BREAK, 0.8f, 0.8f) } }
     }
 
     private fun form(a: String, b: String) {
@@ -135,6 +139,12 @@ class AllianceManager(private val plugin: Digriss) {
         requests[b]?.remove(a)
         save()
         Bukkit.broadcastMessage("§b🤝 [연합] '$a' 국가와 '$b' 국가가 연합을 맺었습니다!")
+        listOf(a, b).forEach { n -> Sounds.nation(n) { Sounds.bigReward(it) } }
+    }
+
+    private fun deny(player: Player, message: String) {
+        player.sendMessage(message)
+        Sounds.fail(player)
     }
 
     private fun notifyNation(name: String, message: String) {

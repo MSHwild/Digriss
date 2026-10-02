@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.quest.ActiveQuest
@@ -172,10 +173,12 @@ class QuestManager(private val plugin: Digriss) {
         val pd = ensureToday(player)
         val quest = pd.quests.getOrNull(index) ?: return false
         if (pd.rerolled) {
+            Sounds.fail(player)
             player.sendMessage("§c오늘은 이미 리롤을 사용했습니다.")
             return false
         }
         if (quest.done) {
+            Sounds.fail(player)
             player.sendMessage("§c완료한 퀘스트는 리롤할 수 없습니다.")
             return false
         }
@@ -183,6 +186,7 @@ class QuestManager(private val plugin: Digriss) {
         val difficulty = def?.difficulty ?: QuestDifficulty.entries[index.coerceIn(0, 2)]
         val next = drawFor(player, difficulty, pd.quests.map { it.id }.toSet())
         if (next == null) {
+            Sounds.fail(player)
             player.sendMessage("§c교체할 수 있는 다른 퀘스트가 없습니다.")
             return false
         }
@@ -192,6 +196,7 @@ class QuestManager(private val plugin: Digriss) {
         pd.rerolled = true
         save(player.uniqueId)
         player.sendMessage("§a퀘스트가 교체되었습니다: ${next.difficulty.color}${next.name}")
+        Sounds.play(player, org.bukkit.Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.8f, 1.2f)
         return true
     }
 
@@ -269,6 +274,7 @@ class QuestManager(private val plugin: Digriss) {
                 "§7- 보상: §b영혼 ${def.souls}" + (if (def.money > 0) " §6${formatMoney(def.money)}원" else "")
         )
         ActionBarManager.showTemp(player, "§6✔ 퀘스트 완료: §f${def.name}", 3.0)
+        Sounds.reward(player)
 
         // 그날 첫 완료면 연속 출석 갱신 + 보너스
         if (pd.streakLast != pd.dateKey) {
@@ -318,6 +324,7 @@ class QuestManager(private val plugin: Digriss) {
                 "§b영혼 $weeklySouls §6${formatMoney(weeklyMoney)}원 §3DC $weeklyDC"
         )
         ActionBarManager.showTemp(player, "§d★ 주간 보너스 획득!", 3.0)
+        Sounds.bigReward(player)
     }
 
     // DC는 실결제 재화라 무료 지급 내역을 별도 로그로 남김 (시각|UUID|닉네임|DC)

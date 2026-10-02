@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.command
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -38,6 +39,7 @@ class SoulCommand(private val plugin: Digriss) : CommandExecutor {
         when (action) {
             "지급" -> {
                 plugin.soulManager.addSouls(target, amount)
+                target.player?.let { it.sendMessage("§b영혼 ${amount}개를 받았습니다!"); Sounds.reward(it) }
                 plugin.adminLogManager.log(sender, "영혼 지급 → ${target.name} $amount")
                 sender.sendMessage("${ChatColor.GREEN}${target.name}님에게 영혼 $amount 지급했습니다.")
             }

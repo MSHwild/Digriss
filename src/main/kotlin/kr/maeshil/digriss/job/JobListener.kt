@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.manager.SoulManager
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -28,10 +29,12 @@ class JobListener(
 
                 if (soulManager.getSouls(player) < JOB_PURCHASE_COST) {
                     player.sendMessage("§c영혼이 부족합니다. (필요: $JOB_PURCHASE_COST)")
+                    Sounds.fail(player)
                     return
                 }
                 soulManager.removeSouls(player, JOB_PURCHASE_COST.toLong())
                 player.inventory.addItem(jobManager.createJobItem(job))
+                Sounds.purchase(player)
                 player.sendMessage("§a${job.displayName} 직업 아이템을 구매했습니다. /직업설정 으로 장착하세요.")
                 player.closeInventory()
             }
@@ -63,11 +66,13 @@ class JobListener(
         if (job != null) {
             jobManager.setJob(player.uniqueId, job)
             player.sendMessage("§a${job.displayName} 직업으로 확정되었습니다.")
+            Sounds.equip(player)
         } else {
             // 중앙 슬롯이 비어있으면 직업 해제
             if (jobManager.hasJob(player.uniqueId)) {
                 jobManager.removeJob(player.uniqueId)
                 player.sendMessage("§c직업이 해제되었습니다.")
+                Sounds.click(player)
             }
         }
     }

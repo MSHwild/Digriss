@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.alliance
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
@@ -20,6 +21,7 @@ class AllianceCommand(private val plugin: Digriss) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val player = sender as? Player ?: return true
         AllianceGUI.open(player, plugin)
+        Sounds.open(player)
         return true
     }
 }
@@ -60,6 +62,7 @@ class AllianceListener(private val plugin: Digriss) : Listener {
         val player = e.whoClicked as? Player ?: return
         if (e.clickedInventory != e.view.topInventory) return
         val target = holder.slotNations[e.rawSlot] ?: return
+        Sounds.click(player)
 
         val alliance = plugin.allianceManager
         val myNation = plugin.nationManager.getNationName(player.uniqueId) ?: return

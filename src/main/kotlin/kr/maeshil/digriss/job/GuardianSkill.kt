@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
@@ -52,6 +53,7 @@ class GuardianSkill : JobSkill {
                     if (plugin.allianceManager.isFriendly(player, target)) continue
                     taunts[target.uniqueId] = Taunt(player.uniqueId, until)
                     target.addPotionEffect(PotionEffect(PotionEffectType.GLOWING, ticks, 0, false, false))
+                    Sounds.alert(target)
                     target.sendMessage("§c🛡 ${player.name}님에게 도발당했습니다! §7${durationSeconds}초간 다른 대상에게 주는 피해가 절반이 됩니다.")
                 }
                 is Mob -> target.target = player

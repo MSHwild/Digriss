@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.quest
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.manager.QuestManager
 import org.bukkit.Bukkit
 import org.bukkit.entity.Enemy
@@ -50,6 +51,7 @@ class QuestListener(private val plugin: JavaPlugin, private val questManager: Qu
         val player = e.whoClicked as? Player ?: return
         if (e.clickedInventory != e.view.topInventory) return
 
+        if (e.rawSlot == QuestGUI.REROLL_SLOT || (holder.rerollMode && e.rawSlot in QuestGUI.QUEST_SLOTS)) Sounds.click(player)
         when (e.rawSlot) {
             QuestGUI.REROLL_SLOT -> {
                 if (questManager.getData(player).rerolled) return

@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.nation
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.manager.NationManager
@@ -91,6 +92,14 @@ class NationTerritory(private val plugin: Digriss, private val core: NationManag
             else -> "§c$owner" to "§7다른 국가의 영토"
         }
         player.sendTitle(title, subtitle, 5, 30, 10)
+        when {
+            owner.isEmpty() -> Sounds.play(player, org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f, 1.0f)
+            owner == myNation || plugin.allianceManager.areAllied(myNation, owner) ->
+                Sounds.play(player, org.bukkit.Sound.BLOCK_NOTE_BLOCK_CHIME, 0.6f, 1.4f)
+            myNation != null && core.war.isAtWar(myNation, owner) ->
+                Sounds.play(player, org.bukkit.Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.3f, 1.2f)
+            else -> Sounds.play(player, org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 1.0f)
+        }
     }
 
     // 전쟁 중인 국가의 신호기 15블록 이내 방문 (퀘스트용)

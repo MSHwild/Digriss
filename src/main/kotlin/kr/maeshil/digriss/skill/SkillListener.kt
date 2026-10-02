@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.Sounds
 import dev.lone.itemsadder.api.CustomStack
 import kr.maeshil.digriss.manager.ManaManager
 import org.bukkit.entity.Player
@@ -33,6 +34,7 @@ class SkillListener(private val plugin: JavaPlugin, private val manaManager: Man
         val player = event.player
         if (!manaManager.hasEnoughMana(player, skill.manaCost)) {
             player.sendMessage("§b마나가 부족합니다. (필요: ${skill.manaCost})")
+            Sounds.cooldown(player)
             return
         }
 

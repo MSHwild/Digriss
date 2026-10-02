@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
@@ -36,6 +37,7 @@ class ScoutSkill : JobSkill {
         enemies.forEach { enemy ->
             enemy.addPotionEffect(PotionEffect(PotionEffectType.GLOWING, durationTicks, 0, false, false))
             enemy.sendMessage("§c정찰병에게 위치가 노출되었습니다!")
+            Sounds.alert(enemy)
         }
         player.sendMessage("§a적 ${enemies.size}명의 위치를 ${glowDurationSeconds}초간 표시합니다.")
         return true

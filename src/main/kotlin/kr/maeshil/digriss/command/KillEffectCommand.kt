@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.command
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.effect.EffectGUI
 import net.md_5.bungee.api.ChatColor
@@ -16,6 +17,7 @@ class KillEffectCommand(private val plugin: EffectGUI) : CommandExecutor {
             return true
         }
         plugin.open(sender)
+        Sounds.open(sender)
         return true
     }
 }

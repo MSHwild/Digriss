@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.jobManager
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -68,6 +69,7 @@ object ReaperChargeManager {
 
                 if (reaper.location.distance(orbCenter) <= 2.5) {
                     charged.add(reaperUuid)
+                    Sounds.play(reaper, org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1f, 1.3f)
                     reaper.sendMessage("§b영혼 구슬을 흡수했습니다! Shift+Q로 무체화를 발동할 수 있습니다.")
                     Bukkit.getScheduler().cancelTask(taskId)
                     return

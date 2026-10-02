@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.Sounds
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -9,6 +10,7 @@ class JobPurchaseCommand(private val jobManager: JobManager) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val player = sender as? Player ?: return true
         JobGUI.openPurchase(player, jobManager)
+        Sounds.open(player)
         return true
     }
 }
@@ -17,6 +19,7 @@ class JobConfirmCommand(private val jobManager: JobManager) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val player = sender as? Player ?: return true
         JobGUI.openConfirm(player, jobManager)
+        Sounds.open(player)
         return true
     }
 }

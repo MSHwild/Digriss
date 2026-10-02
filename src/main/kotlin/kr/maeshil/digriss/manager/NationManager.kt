@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.nation.BlueMapBridge
 import kr.maeshil.digriss.nation.Nation
@@ -156,6 +157,12 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nations[name]?.members?.forEach { Bukkit.getPlayer(it)?.sendMessage(message) }
     }
 
+    // 실패 안내: 메시지 + 실패음
+    fun deny(player: Player, message: String) {
+        player.sendMessage(message)
+        Sounds.fail(player)
+    }
+
     fun later(task: () -> Unit) {
         plugin.server.scheduler.runTask(plugin, Runnable { task() })
     }
@@ -182,6 +189,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) return true
         menu.openMenu(sender)
+        Sounds.open(sender)
         return true
     }
 
@@ -220,17 +228,17 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     private fun createNation(player: Player, nationName: String) {
         if (!Regex("^[가-힣a-zA-Z0-9_]{2,12}$").matches(nationName)) {
-            return player.sendMessage("${ChatColor.RED}국가 이름은 2~12자의 한글/영문/숫자/_ 만 사용할 수 있습니다.")
+            return deny(player, "${ChatColor.RED}국가 이름은 2~12자의 한글/영문/숫자/_ 만 사용할 수 있습니다.")
         }
-        if (playerNations.containsKey(player.uniqueId)) return player.sendMessage("${ChatColor.RED}이미 소속된 국가가 있습니다.")
-        if (nations.containsKey(nationName)) return player.sendMessage("${ChatColor.RED}이미 존재하는 국가 이름입니다.")
+        if (playerNations.containsKey(player.uniqueId)) return deny(player, "${ChatColor.RED}이미 소속된 국가가 있습니다.")
+        if (nations.containsKey(nationName)) return deny(player, "${ChatColor.RED}이미 존재하는 국가 이름입니다.")
 
         val loc = player.location.block.location
         val chunkKey = chunkKeyOf(loc)
 
         val owner = Nation.chunkClaims[chunkKey]
         if (owner != null) {
-            return player.sendMessage("${ChatColor.RED}이곳은 이미 '$owner' 국가의 영토입니다. 다른 장소에서 건국해주세요.")
+            return deny(player, "${ChatColor.RED}이곳은 이미 '$owner' 국가의 영토입니다. 다른 장소에서 건국해주세요.")
         }
 
         loc.block.type = Material.BEACON
@@ -247,23 +255,25 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         BlueMapBridge.updateTerritory(newNation, loc.world.name)
 
         player.sendMessage("${ChatColor.GREEN}'$nationName' 국가를 성공적으로 건국했습니다!")
+        Sounds.bigReward(player)
+        Sounds.play(player, org.bukkit.Sound.BLOCK_BEACON_ACTIVATE, 1f, 1f)
         saveNations()
     }
 
     fun claimChunk(player: Player) {
-        val nationName = playerNations[player.uniqueId] ?: return player.sendMessage("${ChatColor.RED}소속된 국가가 없습니다.")
+        val nationName = playerNations[player.uniqueId] ?: return deny(player, "${ChatColor.RED}소속된 국가가 없습니다.")
         val nation = nations[nationName]!!
-        if (nation.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 영토를 점령할 수 있습니다.")
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 영토를 점령할 수 있습니다.")
 
         val chunkKey = chunkKeyOf(player.location)
 
         if (Nation.chunkClaims.containsKey(chunkKey)) {
-            return player.sendMessage("${ChatColor.RED}이미 점령된 영토입니다. (점령국: ${Nation.chunkClaims[chunkKey]})")
+            return deny(player, "${ChatColor.RED}이미 점령된 영토입니다. (점령국: ${Nation.chunkClaims[chunkKey]})")
         }
 
         val maxClaims = nation.members.size * 10
         if (nation.claims.size >= maxClaims) {
-            return player.sendMessage("${ChatColor.RED}국가 인원수 대비 점령 한도를 초과했습니다! (최대 $maxClaims 개)")
+            return deny(player, "${ChatColor.RED}국가 인원수 대비 점령 한도를 초과했습니다! (최대 $maxClaims 개)")
         }
 
         Nation.chunkClaims[chunkKey] = nationName
@@ -271,6 +281,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         BlueMapBridge.updateTerritory(nation, player.world.name)
 
+        Sounds.success(player)
         player.sendMessage("${ChatColor.GREEN}현재 청크를 점령했습니다! (현재 점령지: ${nation.claims.size}/$maxClaims 개)")
         plugin.questManager.addProgress(player, QuestType.CLAIM_CHUNK)
         saveNations()
@@ -278,7 +289,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     fun setNationBeacon(player: Player) {
         val nationName = playerNations[player.uniqueId] ?: return
-        if (nations[nationName]?.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}지도자만 사용할 수 있습니다.")
+        if (nations[nationName]?.leader != player.uniqueId) return deny(player, "${ChatColor.RED}지도자만 사용할 수 있습니다.")
 
         val oldBeaconLoc = nationBeacons[nationName]
         val newLoc = player.location.block.location
@@ -292,6 +303,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         BlueMapBridge.addNationMarker(nationName, newLoc)
 
+        Sounds.play(player, org.bukkit.Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.2f)
         player.sendMessage("${ChatColor.GREEN}국가 신호기 위치를 변경했습니다. 기존 신호기는 제거되었습니다.")
         saveNations()
     }
@@ -300,49 +312,55 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         val nationName = playerNations[player.uniqueId] ?: return
 
         if (playerNations.containsKey(target.uniqueId)) {
-            return player.sendMessage("${ChatColor.RED}${target.name} 님은 이미 다른 국가에 소속되어 있습니다.")
+            return deny(player, "${ChatColor.RED}${target.name} 님은 이미 다른 국가에 소속되어 있습니다.")
         }
 
         nationInvites[target.uniqueId] = nationName
         target.sendMessage("${ChatColor.GOLD}'$nationName' 국가에서 초대가 도착했습니다.")
         target.sendMessage("${ChatColor.YELLOW}/국가 를 입력해 GUI에서 수락하세요.")
+        Sounds.notify(target)
         player.sendMessage("${ChatColor.GREEN}${target.name} 님에게 국가 초대를 보냈습니다.")
+        Sounds.success(player)
     }
 
     fun acceptInvite(player: Player) {
         if (playerNations.containsKey(player.uniqueId)) {
-            return player.sendMessage("${ChatColor.RED}이미 소속된 국가가 있어 초대를 수락할 수 없습니다.")
+            return deny(player, "${ChatColor.RED}이미 소속된 국가가 있어 초대를 수락할 수 없습니다.")
         }
 
-        val nationName = nationInvites.remove(player.uniqueId) ?: return player.sendMessage("${ChatColor.RED}받은 국가 초대가 없습니다.")
-        val nation = nations[nationName] ?: return player.sendMessage("${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
+        val nationName = nationInvites.remove(player.uniqueId) ?: return deny(player, "${ChatColor.RED}받은 국가 초대가 없습니다.")
+        val nation = nations[nationName] ?: return deny(player, "${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
         nation.members.add(player.uniqueId)
         playerNations[player.uniqueId] = nationName
         player.sendMessage("${ChatColor.GREEN}'$nationName' 국가에 가입을 완료했습니다!")
+        Sounds.reward(player)
+        notifyNation(nationName, "${ChatColor.GREEN}${player.name} 님이 국가에 가입했습니다!")
+        Sounds.nation(nationName) { if (it != player) Sounds.notify(it) }
         saveNations()
     }
 
     fun depositBank(player: Player, amount: Double) {
-        val economy = econ ?: return player.sendMessage("${ChatColor.RED}Vault 경제 시스템이 연동되어 있지 않습니다.")
-        val nationName = playerNations[player.uniqueId] ?: return player.sendMessage("${ChatColor.RED}소속된 국가가 없습니다.")
+        val economy = econ ?: return deny(player, "${ChatColor.RED}Vault 경제 시스템이 연동되어 있지 않습니다.")
+        val nationName = playerNations[player.uniqueId] ?: return deny(player, "${ChatColor.RED}소속된 국가가 없습니다.")
         val nation = nations[nationName]!!
 
         if (!economy.has(player, amount)) {
-            return player.sendMessage("${ChatColor.RED}소지금이 부족합니다. (현재 소지금: ${economy.getBalance(player)}원)")
+            return deny(player, "${ChatColor.RED}소지금이 부족합니다. (현재 소지금: ${economy.getBalance(player)}원)")
         }
 
         economy.withdrawPlayer(player, amount)
         nation.bank += amount
 
+        Sounds.coin(player)
         player.sendMessage("${ChatColor.GREEN}국가 금고에 $amount 원을 입금했습니다. (금고 총액: ${nation.bank}원)")
         plugin.questManager.addProgress(player, QuestType.BANK_DEPOSIT, amount.toInt())
         saveNations()
     }
 
     fun upgradeNation(player: Player) {
-        val nationName = playerNations[player.uniqueId] ?: return player.sendMessage("${ChatColor.RED}소속된 국가가 없습니다.")
+        val nationName = playerNations[player.uniqueId] ?: return deny(player, "${ChatColor.RED}소속된 국가가 없습니다.")
         val nation = nations[nationName]!!
-        if (nation.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 업그레이드를 진행할 수 있습니다.")
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 업그레이드를 진행할 수 있습니다.")
 
         if (nation.level >= 5) {
             return player.sendMessage("${ChatColor.GOLD}이미 최고 레벨(5레벨)에 도달했습니다!")
@@ -351,7 +369,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         val cost = upgradeCost(nation.level)
 
         if (nation.bank < cost) {
-            return player.sendMessage("${ChatColor.RED}국가 금고 잔액이 부족합니다! 필요 금액: $cost 원 (현재 금고: ${nation.bank}원)")
+            return deny(player, "${ChatColor.RED}국가 금고 잔액이 부족합니다! 필요 금액: $cost 원 (현재 금고: ${nation.bank}원)")
         }
 
         nation.bank -= cost
@@ -361,6 +379,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         player.sendMessage("${ChatColor.AQUA}해금된 효과: ${levelEffectMessage(nation.level)}")
 
         nation.members.forEach { uuid -> Bukkit.getPlayer(uuid)?.let { territory.applyLevelEffects(it) } }
+        notifyNation(nationName, "${ChatColor.AQUA}🎉 국가 레벨이 Lv.${nation.level}(으)로 올랐습니다!")
+        Sounds.nation(nationName) { Sounds.bigReward(it) }
 
         saveNations()
     }
@@ -389,6 +409,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
                 nation.bank -= tax
                 leaderPlayer?.sendMessage("${ChatColor.YELLOW}[유지비] 국가 금고에서 일일 유지비 $tax 원이 차감되었습니다. (남은 잔액: ${nation.bank}원)")
             } else {
+                leaderPlayer?.let { Sounds.alert(it) }
                 leaderPlayer?.sendMessage("${ChatColor.RED}[경고] 국가 금고 잔액이 부족하여 유지비($tax 원)를 납부하지 못했습니다!")
             }
         }
@@ -397,9 +418,10 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     fun setNationSpawn(player: Player) {
         val nationName = playerNations[player.uniqueId] ?: return
-        if (nations[nationName]?.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}지도자만 사용할 수 있습니다.")
+        if (nations[nationName]?.leader != player.uniqueId) return deny(player, "${ChatColor.RED}지도자만 사용할 수 있습니다.")
         nationSpawns[nationName] = player.location
         player.sendMessage("${ChatColor.GREEN}국가 스폰 지점을 현재 위치로 설정했습니다.")
+        Sounds.success(player)
         saveNations()
     }
 
@@ -407,15 +429,16 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         val nationName = playerNations[player.uniqueId] ?: return
         val nation = nations[nationName] ?: return
         val target = nationSpawns[nationName] ?: nationBeacons[nationName]?.clone()?.add(0.5, 1.0, 0.5)
-        if (target == null) return player.sendMessage("${ChatColor.RED}설정된 스폰 위치가 없습니다.")
+        if (target == null) return deny(player, "${ChatColor.RED}설정된 스폰 위치가 없습니다.")
 
         if (!teleporting.add(player.uniqueId)) {
-            return player.sendMessage("${ChatColor.RED}이미 이동 대기 중입니다.")
+            return deny(player, "${ChatColor.RED}이미 이동 대기 중입니다.")
         }
 
         val delay = teleportDelaySeconds(nation.level)
         val start = player.location.clone()
         player.sendMessage("${ChatColor.YELLOW}${delay}초 뒤 국가 스폰으로 이동합니다. 움직이면 취소됩니다.")
+        Sounds.play(player, org.bukkit.Sound.BLOCK_PORTAL_TRIGGER, 0.3f, 1.5f)
 
         plugin.server.scheduler.runTaskLater(plugin, Runnable {
             teleporting.remove(player.uniqueId)
@@ -424,18 +447,20 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             val now = player.location
             if (now.world != start.world || now.distanceSquared(start) > 1.0) {
                 player.sendMessage("${ChatColor.RED}움직여서 이동이 취소되었습니다.")
+                Sounds.fail(player)
                 return@Runnable
             }
 
             player.teleport(target)
             player.sendMessage("${ChatColor.GREEN}국가 스폰 지점으로 이동했습니다.")
+            Sounds.play(player, org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.0f)
         }, delay * 20L)
     }
 
     fun dissolveNation(player: Player) {
         val nationName = playerNations[player.uniqueId] ?: return
         val nation = nations[nationName] ?: return
-        if (nation.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 해체할 수 있습니다.")
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 해체할 수 있습니다.")
 
         plugin.nationStorageManager.dropAll(nationName, player.location) // 창고 아이템은 지도자 발밑에 떨어뜨림
         nation.claims.forEach { Nation.chunkClaims.remove(it) }
@@ -450,16 +475,19 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         BlueMapBridge.removeTerritory(nationName)
 
         player.sendMessage("${ChatColor.RED}국가가 해체되었습니다.")
+        Sounds.play(player, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.8f)
         saveNations()
     }
 
     fun leaveNation(player: Player) {
         val nationName = playerNations[player.uniqueId] ?: return
         val nation = nations[nationName] ?: return
-        if (nation.leader == player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자는 탈퇴할 수 없습니다. 국가 해체를 이용하세요.")
+        if (nation.leader == player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자는 탈퇴할 수 없습니다. 국가 해체를 이용하세요.")
         nation.members.remove(player.uniqueId)
         playerNations.remove(player.uniqueId)
         player.sendMessage("${ChatColor.GREEN}국가를 탈퇴했습니다.")
+        Sounds.click(player)
+        notifyNation(nationName, "${ChatColor.GRAY}${player.name} 님이 국가를 탈퇴했습니다.")
         saveNations()
     }
 
@@ -479,14 +507,17 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             breakerNation == null -> {
                 event.isCancelled = true
                 breaker.sendMessage("${ChatColor.RED}국가에 소속되어 있어야 다른 국가의 신호기를 점령할 수 있습니다.")
+                Sounds.fail(breaker)
             }
             breakerNation == defenderName -> {
                 event.isCancelled = true
                 breaker.sendMessage("${ChatColor.RED}자국 신호기는 부술 수 없습니다. 이동/해체는 /국가 메뉴를 이용하세요.")
+                Sounds.fail(breaker)
             }
             !war.isAtWar(breakerNation, defenderName) -> {
                 event.isCancelled = true
                 breaker.sendMessage("${ChatColor.RED}'$defenderName' 국가와 전쟁 중이 아닙니다! /국가 → 전쟁 관리에서 전쟁을 선포하고 수락받아야 점령할 수 있습니다.")
+                Sounds.fail(breaker)
             }
             else -> {
                 event.isDropItems = false
@@ -526,6 +557,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         war.removeNation(defenderNationName, "국가 멸망으로 종료", attackerNationName)
 
         Bukkit.broadcastMessage("${ChatColor.RED}⚔ '$defenderNationName' 국가가 '$attackerNationName' 국가에 의해 점령 및 멸망했습니다!")
+        Sounds.all(org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.0f)
         attacker.sendMessage("${ChatColor.GOLD}${defenderNation.claims.size}개의 영토와 금고 잔액 ${defenderNation.bank}원을 모두 흡수했습니다!")
 
         saveNations()

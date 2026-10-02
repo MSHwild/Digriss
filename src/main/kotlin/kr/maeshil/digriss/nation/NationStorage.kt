@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.nation
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -26,6 +27,8 @@ class NationStorage(private val plugin: Digriss) : Listener, CommandExecutor {
 
     @EventHandler
     fun onClose(e: InventoryCloseEvent) {
-        if (e.inventory.holder is NationStorageHolder) plugin.nationStorageManager.save()
+        if (e.inventory.holder !is NationStorageHolder) return
+        plugin.nationStorageManager.save()
+        (e.player as? Player)?.let { Sounds.play(it, org.bukkit.Sound.BLOCK_CHEST_CLOSE, 0.7f, 1.0f) }
     }
 }

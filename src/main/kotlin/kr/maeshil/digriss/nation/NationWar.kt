@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.nation
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.manager.NationManager
 import org.bukkit.Bukkit
@@ -83,6 +84,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         truceRequests[accepter]?.remove(declarer)
         addRecord("START", declarer, accepter)
         Bukkit.broadcastMessage("${ChatColor.RED}⚔ [전쟁] '$declarer' 국가와 '$accepter' 국가의 전쟁이 시작되었습니다! 이제 서로의 신호기를 점령할 수 있습니다. (최대 3일, 이후 자동 휴전)")
+        Sounds.all(org.bukkit.Sound.EVENT_RAID_HORN, 1.0f, 1.0f)
         save()
     }
 
@@ -93,6 +95,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         truceRequests[b]?.remove(a)
         addRecord("TRUCE", a, b)
         Bukkit.broadcastMessage("${ChatColor.GREEN}☮ [휴전] '$a' 국가와 '$b' 국가가 휴전했습니다.")
+        Sounds.all(org.bukkit.Sound.BLOCK_BELL_USE, 1.0f, 1.0f)
         if (plugin.warScoreManager.settle(a, b)) core.saveNations() // 전쟁 점수 정산 (배상금)
         save()
     }
@@ -124,27 +127,29 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
     private fun declareWar(player: Player, target: String) {
         val myName = core.getNationName(player.uniqueId) ?: return
         val me = nations[myName] ?: return
-        if (me.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 전쟁을 선포할 수 있습니다.")
+        if (me.leader != player.uniqueId) return core.deny(player, "${ChatColor.RED}국가 지도자만 전쟁을 선포할 수 있습니다.")
         if (myName == target) return
-        if (nations[target] == null) return player.sendMessage("${ChatColor.RED}존재하지 않는 국가입니다.")
-        if (isAtWar(myName, target)) return player.sendMessage("${ChatColor.RED}이미 전쟁 중입니다.")
-        if (plugin.allianceManager.areAllied(myName, target)) return player.sendMessage("${ChatColor.RED}연합국에는 전쟁을 선포할 수 없습니다. 먼저 /연합 에서 연합을 해제하세요.")
+        if (nations[target] == null) return core.deny(player, "${ChatColor.RED}존재하지 않는 국가입니다.")
+        if (isAtWar(myName, target)) return core.deny(player, "${ChatColor.RED}이미 전쟁 중입니다.")
+        if (plugin.allianceManager.areAllied(myName, target)) return core.deny(player, "${ChatColor.RED}연합국에는 전쟁을 선포할 수 없습니다. 먼저 /연합 에서 연합을 해제하세요.")
 
         val requests = warRequests.getOrPut(target) { mutableSetOf() }
-        if (!requests.add(myName)) return player.sendMessage("${ChatColor.RED}이미 전쟁을 선포했습니다. 상대의 수락을 기다리는 중입니다.")
+        if (!requests.add(myName)) return core.deny(player, "${ChatColor.RED}이미 전쟁을 선포했습니다. 상대의 수락을 기다리는 중입니다.")
 
         player.sendMessage("${ChatColor.GREEN}'$target' 국가에 전쟁을 선포했습니다. 상대가 수락하면 전쟁이 시작됩니다.")
+        Sounds.success(player)
+        Sounds.nation(target) { Sounds.alert(it) }
         core.notifyNation(target, "${ChatColor.RED}⚔ '$myName' 국가가 전쟁을 선포했습니다! /국가 → 전쟁 관리에서 수락 또는 거절하세요.")
     }
 
     private fun acceptWar(player: Player, from: String) {
         val myName = core.getNationName(player.uniqueId) ?: return
-        if (warRequests[myName]?.contains(from) != true) return player.sendMessage("${ChatColor.RED}해당 국가의 전쟁 선포가 없습니다.")
+        if (warRequests[myName]?.contains(from) != true) return core.deny(player, "${ChatColor.RED}해당 국가의 전쟁 선포가 없습니다.")
         if (nations[from] == null) {
             warRequests[myName]?.remove(from)
-            return player.sendMessage("${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
+            return core.deny(player, "${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
         }
-        if (plugin.allianceManager.areAllied(myName, from)) return player.sendMessage("${ChatColor.RED}연합국과는 전쟁할 수 없습니다.")
+        if (plugin.allianceManager.areAllied(myName, from)) return core.deny(player, "${ChatColor.RED}연합국과는 전쟁할 수 없습니다.")
         startWar(from, myName)
     }
 
@@ -153,13 +158,14 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         if (warRequests[myName]?.remove(from) == true) {
             player.sendMessage("${ChatColor.YELLOW}'$from' 국가의 전쟁 선포를 거절했습니다.")
             core.notifyNation(from, "${ChatColor.YELLOW}'$myName' 국가가 전쟁 선포를 거절했습니다.")
+            Sounds.nation(from) { Sounds.notify(it) }
         }
     }
 
     private fun cancelDeclare(player: Player, target: String) {
         val myName = core.getNationName(player.uniqueId) ?: return
         val me = nations[myName] ?: return
-        if (me.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 취소할 수 있습니다.")
+        if (me.leader != player.uniqueId) return core.deny(player, "${ChatColor.RED}국가 지도자만 취소할 수 있습니다.")
         if (warRequests[target]?.remove(myName) == true) {
             player.sendMessage("${ChatColor.YELLOW}'$target' 국가에 대한 전쟁 선포를 취소했습니다.")
         }
@@ -168,38 +174,41 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
     private fun requestTruce(player: Player, target: String) {
         val myName = core.getNationName(player.uniqueId) ?: return
         val me = nations[myName] ?: return
-        if (me.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 휴전을 요청할 수 있습니다.")
+        if (me.leader != player.uniqueId) return core.deny(player, "${ChatColor.RED}국가 지도자만 휴전을 요청할 수 있습니다.")
         if (!isAtWar(myName, target)) return
 
         val requests = truceRequests.getOrPut(target) { mutableSetOf() }
-        if (!requests.add(myName)) return player.sendMessage("${ChatColor.RED}이미 휴전을 요청했습니다.")
+        if (!requests.add(myName)) return core.deny(player, "${ChatColor.RED}이미 휴전을 요청했습니다.")
 
         player.sendMessage("${ChatColor.GREEN}'$target' 국가에 휴전을 요청했습니다.")
+        Sounds.success(player)
+        Sounds.nation(target) { Sounds.notify(it) }
         core.notifyNation(target, "${ChatColor.GREEN}☮ '$myName' 국가가 휴전을 요청했습니다! 지도자는 /국가 → 전쟁 관리에서 응답하세요.")
     }
 
     private fun acceptTruce(player: Player, from: String) {
         val myName = core.getNationName(player.uniqueId) ?: return
         val me = nations[myName] ?: return
-        if (me.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 휴전을 수락할 수 있습니다.")
-        if (truceRequests[myName]?.contains(from) != true) return player.sendMessage("${ChatColor.RED}해당 국가의 휴전 요청이 없습니다.")
+        if (me.leader != player.uniqueId) return core.deny(player, "${ChatColor.RED}국가 지도자만 휴전을 수락할 수 있습니다.")
+        if (truceRequests[myName]?.contains(from) != true) return core.deny(player, "${ChatColor.RED}해당 국가의 휴전 요청이 없습니다.")
         endWar(myName, from)
     }
 
     private fun rejectTruce(player: Player, from: String) {
         val myName = core.getNationName(player.uniqueId) ?: return
         val me = nations[myName] ?: return
-        if (me.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 거절할 수 있습니다.")
+        if (me.leader != player.uniqueId) return core.deny(player, "${ChatColor.RED}국가 지도자만 거절할 수 있습니다.")
         if (truceRequests[myName]?.remove(from) == true) {
             player.sendMessage("${ChatColor.YELLOW}'$from' 국가의 휴전 요청을 거절했습니다.")
             core.notifyNation(from, "${ChatColor.YELLOW}'$myName' 국가가 휴전 요청을 거절했습니다.")
+            Sounds.nation(from) { Sounds.notify(it) }
         }
     }
 
     private fun cancelTruce(player: Player, target: String) {
         val myName = core.getNationName(player.uniqueId) ?: return
         val me = nations[myName] ?: return
-        if (me.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 취소할 수 있습니다.")
+        if (me.leader != player.uniqueId) return core.deny(player, "${ChatColor.RED}국가 지도자만 취소할 수 있습니다.")
         if (truceRequests[target]?.remove(myName) == true) {
             player.sendMessage("${ChatColor.YELLOW}'$target' 국가에 대한 휴전 요청을 취소했습니다.")
         }
@@ -208,7 +217,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
     // 전쟁 관리 메뉴에서 국가를 클릭했을 때 (상태에 따라 선포/수락/거절/휴전)
     fun handleClick(player: Player, target: String, right: Boolean) {
         val myName = core.getNationName(player.uniqueId) ?: return
-        if (nations[target] == null) return player.sendMessage("${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
+        if (nations[target] == null) return core.deny(player, "${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
 
         when {
             // 전쟁 중

@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.manager.JobSkillManager
 import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
@@ -31,6 +32,7 @@ class JobTriggerListener(
 
         if (!skillManager.isReady(player.uniqueId)) {
             ActionBarManager.showTemp(player, "§c스킬 쿨타임: ${skillManager.getRemaining(player.uniqueId)}초", 1.0)
+            Sounds.cooldown(player)
             return
         }
 
