@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.quest
 
+import kr.maeshil.digriss.manager.QuestManager
 import org.bukkit.Bukkit
 import org.bukkit.entity.Enemy
 import org.bukkit.entity.Player

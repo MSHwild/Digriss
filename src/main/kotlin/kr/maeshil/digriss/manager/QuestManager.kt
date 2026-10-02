@@ -1,7 +1,12 @@
-package kr.maeshil.digriss.quest
+package kr.maeshil.digriss.manager
 
 import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
+import kr.maeshil.digriss.quest.ActiveQuest
+import kr.maeshil.digriss.quest.PlayerQuestData
+import kr.maeshil.digriss.quest.QuestDefinition
+import kr.maeshil.digriss.quest.QuestDifficulty
+import kr.maeshil.digriss.quest.QuestType
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
