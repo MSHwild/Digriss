@@ -15,10 +15,19 @@ import org.bukkit.plugin.java.JavaPlugin
 
 class QuestListener(private val plugin: JavaPlugin, private val questManager: QuestManager) : Listener {
 
-    // 접속 시 오늘 퀘스트 갱신
+    // 접속 시 오늘 퀘스트 갱신 + 진행 상황 안내 (다른 입장 메시지에 묻히지 않게 2초 뒤)
     @EventHandler
     fun onJoin(e: PlayerJoinEvent) {
-        questManager.ensureToday(e.player)
+        val player = e.player
+        questManager.ensureToday(player)
+        Bukkit.getScheduler().runTaskLater(plugin, Runnable {
+            if (!player.isOnline) return@Runnable
+            val pd = questManager.getData(player)
+            val done = pd.quests.count { it.done }
+            val total = pd.quests.size
+            val status = if (total > 0 && done == total) "§a모두 완료!" else "§f$done§7/§f$total 완료"
+            player.sendMessage("§6[일일 퀘스트] §7오늘 퀘스트 $status §8| §e/퀘스트§7로 확인")
+        }, 40L)
     }
 
     // 몬스터 처치 (스포너/시련의 스포너 몹 제외)
