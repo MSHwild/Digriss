@@ -2,6 +2,7 @@ package kr.maeshil.digriss.nation
 
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.ActionBarManager
+import kr.maeshil.digriss.quest.QuestType
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -110,6 +111,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         plugin.server.scheduler.runTaskTimer(plugin, Runnable {
             for (player in Bukkit.getOnlinePlayers()) {
                 checkTerritoryEntry(player)
+                checkEnemyBeaconVisit(player)
             }
         }, 10L, 10L)
 
@@ -383,6 +385,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         if (previous == null || previous == owner) return
 
         val myNation = playerNations[player.uniqueId]
+        if (owner.isNotEmpty() && owner != myNation) plugin.questManager.onEnterTerritory(player, owner)
         val (title, subtitle) = when {
             owner.isEmpty() -> "§7무소속 지역" to "§8누구의 영토도 아닙니다"
             owner == myNation -> "§a$owner" to "§2내 국가 영토"
@@ -391,6 +394,19 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         }
         player.sendTitle(title, subtitle, 5, 30, 10)
     }
+
+    // 전쟁 중인 국가의 신호기 15블록 이내 방문 (퀘스트용)
+    private fun checkEnemyBeaconVisit(player: Player) {
+        for (enemy in warsOfPlayer(player.uniqueId)) {
+            val beacon = nationBeacons[enemy] ?: continue
+            if (beacon.world == player.world && beacon.distanceSquared(player.location) <= 15.0 * 15.0) {
+                plugin.questManager.onBeaconVisit(player, enemy)
+            }
+        }
+    }
+
+    // 해당 위치를 점령한 국가 (없으면 null)
+    fun territoryOwnerAt(location: Location): String? = Nation.chunkClaims[chunkKeyOf(location)]
 
     // 플레이어 국가가 전쟁 중인 상대 국가 목록 (스코어보드 표시용)
     fun warsOfPlayer(uuid: UUID): List<String> {
@@ -879,6 +895,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         BlueMapBridge.updateTerritory(nation, player.world.name)
 
         player.sendMessage("${ChatColor.GREEN}현재 청크를 점령했습니다! (현재 점령지: ${nation.claims.size}/$maxClaims 개)")
+        plugin.questManager.addProgress(player, QuestType.CLAIM_CHUNK)
         saveNations()
     }
 
@@ -941,6 +958,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         nation.bank += amount
 
         player.sendMessage("${ChatColor.GREEN}국가 금고에 $amount 원을 입금했습니다. (금고 총액: ${nation.bank}원)")
+        plugin.questManager.addProgress(player, QuestType.BANK_DEPOSIT, amount.toInt())
         saveNations()
     }
 
