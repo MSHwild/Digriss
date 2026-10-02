@@ -19,6 +19,7 @@ class QuestManager(private val plugin: Digriss) {
     private val zone = ZoneId.of("Asia/Seoul")
     private val resetHour = 5L
 
+    private val configFile = File(plugin.dataFolder, "quest.yml")
     private val file = File(plugin.dataFolder, "player-quests.yml")
     private val dcLogFile = File(plugin.dataFolder, "quest-dc.log")
     private var data = YamlConfiguration()
@@ -38,7 +39,7 @@ class QuestManager(private val plugin: Digriss) {
     private val repeatKillWindowMs = 10 * 60 * 1000L
 
     init {
-        plugin.saveDefaultConfig()
+        if (!configFile.exists()) plugin.saveResource("quest.yml", false)
         loadDefinitions()
         if (!plugin.dataFolder.exists()) plugin.dataFolder.mkdirs()
         if (!file.exists()) file.createNewFile()
@@ -51,8 +52,7 @@ class QuestManager(private val plugin: Digriss) {
     // ───────────────────────── 설정 ─────────────────────────
 
     fun loadDefinitions() {
-        plugin.reloadConfig()
-        val config = plugin.config
+        val config = YamlConfiguration.loadConfiguration(configFile)
         val section = config.getConfigurationSection("quests")
         val result = LinkedHashMap<String, QuestDefinition>()
 
@@ -90,7 +90,7 @@ class QuestManager(private val plugin: Digriss) {
 
         QuestDifficulty.entries.forEach { d ->
             if (result.values.none { it.difficulty == d && !it.warOnly }) {
-                plugin.logger.warning("[퀘스트] ${d.name} 난이도에 평시 퀘스트가 없습니다. config의 quests를 확인하세요.")
+                plugin.logger.warning("[퀘스트] ${d.name} 난이도에 평시 퀘스트가 없습니다. quest.yml의 quests를 확인하세요.")
             }
         }
     }
@@ -193,15 +193,47 @@ class QuestManager(private val plugin: Digriss) {
         if (changed) save(player.uniqueId)
     }
 
-    // 플레이어 킬: 같은 상대를 10분 안에 다시 죽인 건 제외
-    fun recordPlayerKill(killer: Player, victim: Player) {
+    // 플레이어 킬 + 전쟁 중 적국 영토 킬. 같은 상대를 10분 안에 다시 죽인 건 둘 다 제외
+    fun onPlayerKill(killer: Player, victim: Player) {
         if (killer == victim) return
         val now = System.currentTimeMillis()
         val history = recentKills.getOrPut(killer.uniqueId) { HashMap() }
         history.entries.removeIf { now - it.value >= repeatKillWindowMs }
         val repeated = history.containsKey(victim.uniqueId)
         history[victim.uniqueId] = now
-        if (!repeated) addProgress(killer, QuestType.PLAYER_KILL)
+        if (repeated) return
+
+        addProgress(killer, QuestType.PLAYER_KILL)
+
+        // 피해자가 죽은 곳이 킬러 국가와 전쟁 중인 국가의 영토면 전쟁 킬
+        val owner = plugin.nationManager.territoryOwnerAt(victim.location) ?: return
+        if (owner in plugin.nationManager.warsOfPlayer(killer.uniqueId)) {
+            addProgress(killer, QuestType.WAR_KILL_ENEMY_TERRITORY)
+        }
+    }
+
+    // 다른 국가 영토 진입: 경계를 왔다갔다 하는 반복을 막기 위해 같은 국가는 5분에 1회만 인정
+    private val territoryEnterCooldown = HashMap<UUID, HashMap<String, Long>>()
+    private val territoryEnterCooldownMs = 5 * 60 * 1000L
+
+    fun onEnterTerritory(player: Player, nationName: String) {
+        val now = System.currentTimeMillis()
+        val history = territoryEnterCooldown.getOrPut(player.uniqueId) { HashMap() }
+        val last = history[nationName]
+        if (last != null && now - last < territoryEnterCooldownMs) return
+        history[nationName] = now
+        addProgress(player, QuestType.ENEMY_TERRITORY_ENTER)
+    }
+
+    // 적 신호기 방문: 같은 국가 신호기는 하루 1회만 인정 (근처에서 잠수해도 계속 오르지 않음)
+    private val beaconVisits = HashMap<UUID, MutableSet<String>>() // "날짜|국가"
+
+    fun onBeaconVisit(player: Player, nationName: String) {
+        val visits = beaconVisits.getOrPut(player.uniqueId) { mutableSetOf() }
+        val today = todayKey()
+        visits.removeIf { !it.startsWith("$today|") }
+        if (!visits.add("$today|$nationName")) return
+        addProgress(player, QuestType.ENEMY_BEACON_VISIT)
     }
 
     private fun complete(player: Player, pd: PlayerQuestData, def: QuestDefinition) {
@@ -273,6 +305,8 @@ class QuestManager(private val plugin: Digriss) {
     fun resetAll() {
         players.clear()
         recentKills.clear()
+        territoryEnterCooldown.clear()
+        beaconVisits.clear()
         data = YamlConfiguration()
         data.save(file)
     }
