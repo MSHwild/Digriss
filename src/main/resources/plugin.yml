@@ -57,6 +57,18 @@ commands:
   도움말:
     description: 서버 기능 도움말을 엽니다
     usage: /도움말 [카테고리]
+  칭호:
+    description: 업적 목록을 보고 칭호를 장착합니다
+    usage: /칭호
+    aliases:
+      - 업적
+  전쟁이벤트:
+    description: 국가전쟁 이벤트 상태를 확인합니다 (관리자는 시작/종료)
+    usage: /전쟁이벤트 [상태|시작 <분>|종료|리로드]
+  아이콘:
+    description: icons.yml을 다시 불러옵니다 (관리자)
+    usage: /아이콘 리로드
+    permission: digriss.admin
   번들:
     description: 판매 중인 번들(상점 패키지) 목록을 엽니다
     usage: /번들

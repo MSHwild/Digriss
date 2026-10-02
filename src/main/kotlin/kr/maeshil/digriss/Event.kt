@@ -70,6 +70,7 @@ class Event(private val plugin: Digriss) : Listener {
                 )
             }
             plugin.kdManager.addKill(killer)
+            plugin.achievementManager.onKill(killer, plugin.kdManager.getKills(killer), newStreak, victimStreak >= 5 && !repeated)
             plugin.questManager.onPlayerKill(killer, victim)
             plugin.warScoreManager.recordKill(killer, victim)
             val rankGain = plugin.rankManager.onKill(killer, victim, newStreak)

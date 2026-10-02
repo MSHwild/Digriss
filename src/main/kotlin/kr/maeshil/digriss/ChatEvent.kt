@@ -14,6 +14,7 @@ class ChatEvent(private val plugin: Digriss) : Listener {
         val tier = plugin.rankManager.getTier(player)
         val coloredTier = ChatColor.translateAlternateColorCodes('&', tier.color + tier.name)
 
-        event.format = "${ChatColor.GRAY}[$coloredTier${ChatColor.GRAY}] ${ChatColor.WHITE}${player.name}${ChatColor.GRAY}: ${ChatColor.RESET}%2\$s"
+        val title = plugin.achievementManager.titleOf(player.uniqueId)?.let { "$it " } ?: ""
+        event.format = "$title${ChatColor.GRAY}[$coloredTier${ChatColor.GRAY}] ${ChatColor.WHITE}${player.name}${ChatColor.GRAY}: ${ChatColor.RESET}%2\$s"
     }
 }

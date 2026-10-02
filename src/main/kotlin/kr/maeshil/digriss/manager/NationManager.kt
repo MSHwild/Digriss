@@ -255,6 +255,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         BlueMapBridge.updateTerritory(newNation, loc.world.name)
 
         player.sendMessage("${ChatColor.GREEN}'$nationName' 국가를 성공적으로 건국했습니다!")
+        plugin.achievementManager.unlock(player, kr.maeshil.digriss.achievement.Achievement.FOUNDER)
         Sounds.bigReward(player)
         Sounds.play(player, org.bukkit.Sound.BLOCK_BEACON_ACTIVATE, 1f, 1f)
         saveNations()
@@ -381,6 +382,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nation.members.forEach { uuid -> Bukkit.getPlayer(uuid)?.let { territory.applyLevelEffects(it) } }
         notifyNation(nationName, "${ChatColor.AQUA}🎉 국가 레벨이 Lv.${nation.level}(으)로 올랐습니다!")
         Sounds.nation(nationName) { Sounds.bigReward(it) }
+        if (nation.level >= 5) plugin.achievementManager.unlockNation(nationName, kr.maeshil.digriss.achievement.Achievement.NATION_MAX)
 
         saveNations()
     }
@@ -558,6 +560,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         Bukkit.broadcastMessage("${ChatColor.RED}⚔ '$defenderNationName' 국가가 '$attackerNationName' 국가에 의해 점령 및 멸망했습니다!")
         Sounds.all(org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.0f)
+        plugin.achievementManager.unlock(attacker, kr.maeshil.digriss.achievement.Achievement.CONQUEROR)
         attacker.sendMessage("${ChatColor.GOLD}${defenderNation.claims.size}개의 영토와 금고 잔액 ${defenderNation.bank}원을 모두 흡수했습니다!")
 
         saveNations()

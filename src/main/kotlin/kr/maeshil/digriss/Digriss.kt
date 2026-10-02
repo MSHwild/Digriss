@@ -30,6 +30,12 @@ import kr.maeshil.digriss.bundle.BundleEditHolder
 import kr.maeshil.digriss.bundle.BundleListener
 import kr.maeshil.digriss.help.HelpCommand
 import kr.maeshil.digriss.menu.MainMenu
+import kr.maeshil.digriss.achievement.TitleMenu
+import kr.maeshil.digriss.command.IconCommand
+import kr.maeshil.digriss.command.WarEventCommand
+import kr.maeshil.digriss.manager.AchievementManager
+import kr.maeshil.digriss.manager.IconManager
+import kr.maeshil.digriss.manager.WarEventManager
 import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.AllianceManager
 import kr.maeshil.digriss.manager.BundleManager
@@ -95,6 +101,12 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var helpManager: HelpManager
         private set
+    lateinit var iconManager: IconManager
+        private set
+    lateinit var warEventManager: WarEventManager
+        private set
+    lateinit var achievementManager: AchievementManager
+        private set
 
     override fun onEnable() {
 
@@ -103,6 +115,8 @@ class Digriss : JavaPlugin() {
 
         // 매니저 초기화 (nationManager는 scoreboardManager보다 먼저!)
         adminLogManager = AdminLogManager(this)
+        iconManager = IconManager(this)
+        achievementManager = AchievementManager(this)
         soulManager = SoulManager(this)
         kdManager = KDManager(this)
         rankManager = RankManager(this)
@@ -121,6 +135,7 @@ class Digriss : JavaPlugin() {
         questManager = QuestManager(this) // soul/dc/nation 매니저 이후에 생성
         bundleManager = BundleManager(this)
         helpManager = HelpManager(this)
+        warEventManager = WarEventManager(this)
 
         // 직업 스킬(Shift+Q) 쿨타임 상시 표시 (스킬이 있는 직업만)
         ActionBarManager.addProvider { player ->
@@ -156,6 +171,8 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
         Bukkit.getPluginManager().registerEvents(BundleListener(this), this)
         Bukkit.getPluginManager().registerEvents(MainMenu(this), this) // Shift+F 메뉴
+        val titleMenu = TitleMenu(this)
+        Bukkit.getPluginManager().registerEvents(titleMenu, this)
         val nationStorage = NationStorage(this)
         Bukkit.getPluginManager().registerEvents(nationStorage, this)
         val nationChat = NationChat(this)
@@ -188,6 +205,9 @@ class Digriss : JavaPlugin() {
         BundleCommand(this).let { cmd ->
             listOf("번들", "번들생성", "번들수정", "번들삭제").forEach { getCommand(it)?.apply { setExecutor(cmd); tabCompleter = cmd } }
         }
+        getCommand("칭호")?.setExecutor(titleMenu)
+        WarEventCommand(this).let { getCommand("전쟁이벤트")?.apply { setExecutor(it); tabCompleter = it } }
+        getCommand("아이콘")?.setExecutor(IconCommand(this))
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
@@ -204,6 +224,7 @@ class Digriss : JavaPlugin() {
     override fun onDisable() {
         ReaperSkill.restoreAll() // 무체화 중 리로드/종료 시 장비 복구
         SphereUtil.restoreAll()  // 결계 흑요석이 남지 않게 원래대로
+        if (::warEventManager.isInitialized) warEventManager.shutdown()
         // 번들 편집 창이 열린 채로 꺼지면 넣은 아이템이 저장되지 않으므로 리스너 해제 전에 닫아서 저장
         Bukkit.getOnlinePlayers().filter { it.openInventory.topInventory.holder is BundleEditHolder }.forEach { it.closeInventory() }
         HandlerList.unregisterAll(this)

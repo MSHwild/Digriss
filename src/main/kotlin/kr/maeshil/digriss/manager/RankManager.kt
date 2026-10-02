@@ -159,6 +159,7 @@ class RankManager(private val plugin: Digriss) {
             player.sendTitle("${color}${after.name}", "§f랭크 승급!", 5, 50, 15)
             Sounds.bigReward(player)
             Bukkit.broadcastMessage("§6🎖 ${player.name}§e님이 ${color}${after.name}§e 랭크로 승급했습니다!")
+            plugin.achievementManager.onRankReached(player, after.name)
         } else {
             player.sendTitle("${color}${after.name}", "§7랭크 강등", 5, 40, 15)
             Sounds.play(player, org.bukkit.Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.4f, 0.6f)

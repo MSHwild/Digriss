@@ -38,23 +38,23 @@ object AllianceGUI {
             val n = Nation.nations[name] ?: return@forEach
             val info = listOf("§7국가원 §f${n.members.size}명 §8| §7영토 §f${n.claims.size}개 §8| §7Lv.${n.level}", "")
             val item = when {
-                alliance.areAllied(myNation, name) -> item(Material.LIGHT_BLUE_BANNER, "§b§l$name §7(연합국)",
+                alliance.areAllied(myNation, name) -> item(icon(plugin, "alliance.allied", Material.LIGHT_BLUE_BANNER), "§b§l$name §7(연합국)",
                     info + listOf("§b🤝 연합 중", if (isLeader) "§c쉬프트+클릭: 연합 해제" else ""))
-                plugin.nationManager.isAtWarBetween(myNation, name) -> item(Material.RED_BANNER, "§4§l$name §7(전쟁 중)",
+                plugin.nationManager.isAtWarBetween(myNation, name) -> item(icon(plugin, "alliance.at_war", Material.RED_BANNER), "§4§l$name §7(전쟁 중)",
                     info + listOf("§c전쟁 중인 국가와는 연합할 수 없습니다."))
-                alliance.hasRequest(myNation, name) -> item(Material.YELLOW_BANNER, "§e§l$name §7(연합 요청 받음)",
+                alliance.hasRequest(myNation, name) -> item(icon(plugin, "alliance.request_received", Material.YELLOW_BANNER), "§e§l$name §7(연합 요청 받음)",
                     info + listOf("§e이 국가가 연합을 요청했습니다!", if (isLeader) "§a좌클릭: 수락 §8| §c우클릭: 거절" else ""))
-                alliance.hasRequest(name, myNation) -> item(Material.GRAY_BANNER, "§7§l$name §7(요청 보냄)",
+                alliance.hasRequest(name, myNation) -> item(icon(plugin, "alliance.request_sent", Material.GRAY_BANNER), "§7§l$name §7(요청 보냄)",
                     info + listOf("§7상대의 수락을 기다리는 중입니다.", if (isLeader) "§c우클릭: 요청 취소" else ""))
-                else -> item(Material.WHITE_BANNER, "§f§l$name",
+                else -> item(icon(plugin, "alliance.neutral", Material.WHITE_BANNER), "§f§l$name",
                     info + listOf(if (isLeader) "§a클릭: 연합 요청" else "§7국가 지도자만 연합을 요청할 수 있습니다."))
             }
             inv.setItem(slot, item)
         }
 
-        val filler = item(Material.BLACK_STAINED_GLASS_PANE, " ")
+        val filler = item(icon(plugin, "common.filler_dark", Material.BLACK_STAINED_GLASS_PANE), " ")
         for (i in 45 until 54) inv.setItem(i, filler)
-        inv.setItem(49, item(Material.BOOK, "§b§l연합 안내",
+        inv.setItem(49, item(icon(plugin, "alliance.info", Material.BOOK), "§b§l연합 안내",
             "§7연합국끼리는 서로 공격할 수 없고",
             "§7전쟁을 선포할 수 없습니다.",
             "§7연합국 국가원은 이름이 §b하늘색§7으로 보입니다.",
@@ -68,8 +68,14 @@ object AllianceGUI {
 
     private fun item(material: Material, name: String, vararg lore: String): ItemStack = item(material, name, lore.toList())
 
-    private fun item(material: Material, name: String, lore: List<String>): ItemStack {
-        val item = ItemStack(material)
+    private fun icon(plugin: Digriss, key: String, default: Material): ItemStack = plugin.iconManager.get(key, default)
+
+    private fun item(material: Material, name: String, lore: List<String>): ItemStack = item(ItemStack(material), name, lore)
+
+    private fun item(base: ItemStack, name: String, vararg lore: String): ItemStack = item(base, name, lore.toList())
+
+    private fun item(base: ItemStack, name: String, lore: List<String>): ItemStack {
+        val item = base
         val meta = item.itemMeta
         meta.setDisplayName(name)
         meta.lore = lore.dropLastWhile { it.isEmpty() }

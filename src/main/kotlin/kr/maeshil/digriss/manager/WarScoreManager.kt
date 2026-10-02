@@ -75,13 +75,18 @@ class WarScoreManager(private val plugin: Digriss) {
             return
         }
 
+        // 국가전쟁 이벤트 중이면 점수·영혼 배율 적용
+        val event = plugin.warEventManager
+        val points = if (event.isActive()) event.scoreMultiplier else 1
+        val souls = KILL_BONUS_SOULS * (if (event.isActive()) event.soulMultiplier else 1)
+
         val war = scores.getOrPut(key(killerNation, victimNation)) { mutableMapOf() }
-        war[killerNation] = (war[killerNation] ?: 0) + 1
+        war[killerNation] = (war[killerNation] ?: 0) + points
         val contrib = contributions.getOrPut(key(killerNation, victimNation)) { mutableMapOf() }
         contrib[killer.uniqueId] = (contrib[killer.uniqueId] ?: 0) + 1
         save()
 
-        plugin.soulManager.addSouls(killer, KILL_BONUS_SOULS)
+        plugin.soulManager.addSouls(killer, souls)
         val mine = war[killerNation] ?: 0
         val theirs = war[victimNation] ?: 0
         val message = "§4⚔ 전쟁 점수 §a$killerNation $mine §7: §c$theirs $victimNation"
@@ -89,7 +94,7 @@ class WarScoreManager(private val plugin: Digriss) {
         Nation.nations[victimNation]?.members?.forEach {
             Bukkit.getPlayer(it)?.sendMessage("§4⚔ 전쟁 점수 §c$victimNation $theirs §7: §a$mine $killerNation")
         }
-        killer.sendMessage("§b전쟁 킬 보너스 영혼 +$KILL_BONUS_SOULS")
+        killer.sendMessage("§b전쟁 킬 보너스 영혼 +$souls" + if (event.isActive()) " §6(⚔ 이벤트: 점수 +$points)" else "")
         Sounds.play(killer, org.bukkit.Sound.ENTITY_ARROW_HIT_PLAYER, 0.8f, 1.0f)
     }
 
@@ -110,6 +115,7 @@ class WarScoreManager(private val plugin: Digriss) {
         val (winner, loser) = if (scoreA > scoreB) a to b else b to a
         val diff = kotlin.math.abs(scoreA - scoreB)
         rewardRank(winner, (RANK_WIN_BASE + RANK_WIN_PER_DIFF * diff).coerceAtMost(RANK_WIN_MAX), contrib, "승리")
+        plugin.achievementManager.unlockNation(winner, kr.maeshil.digriss.achievement.Achievement.WAR_WINNER)
         rewardRank(loser, 0L, contrib, "패배")
         val winNation = Nation.nations[winner] ?: return false
         val loseNation = Nation.nations[loser] ?: return false
@@ -130,6 +136,7 @@ class WarScoreManager(private val plugin: Digriss) {
         scores.remove(key(attacker, defender))
         save()
         rewardRank(attacker, RANK_CONQUER, contrib, "점령 승리")
+        plugin.achievementManager.unlockNation(attacker, kr.maeshil.digriss.achievement.Achievement.WAR_WINNER)
         rewardRank(defender, 0L, contrib, "멸망")
     }
 

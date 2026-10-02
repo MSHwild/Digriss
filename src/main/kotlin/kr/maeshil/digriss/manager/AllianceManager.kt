@@ -140,6 +140,9 @@ class AllianceManager(private val plugin: Digriss) {
         save()
         Bukkit.broadcastMessage("§b🤝 [연합] '$a' 국가와 '$b' 국가가 연합을 맺었습니다!")
         listOf(a, b).forEach { n -> Sounds.nation(n) { Sounds.bigReward(it) } }
+        listOf(a, b).mapNotNull { Nation.nations[it]?.leader }.forEach {
+            plugin.achievementManager.unlock(Bukkit.getOfflinePlayer(it), kr.maeshil.digriss.achievement.Achievement.DIPLOMAT)
+        }
     }
 
     private fun deny(player: Player, message: String) {

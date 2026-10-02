@@ -38,7 +38,9 @@ class MainMenu(private val plugin: Digriss) : Listener {
         Button(21, Material.GOLDEN_HELMET, "§d§l내 랭크", listOf("§7내 랭크와 점수 확인"), "랭크"),
         Button(22, Material.DIAMOND, "§b§l플레이어 랭킹", listOf("§7랭크 순위 TOP 10"), "랭킹"),
         Button(23, Material.EMERALD, "§a§l국가 랭킹", listOf("§7영토 · 금고 · 인원 · 레벨 순위"), "국가랭킹"),
-        Button(24, Material.BOOK, "§f§l도움말", listOf("§7서버 기능 설명"), "도움말")
+        Button(24, Material.BOOK, "§f§l도움말", listOf("§7서버 기능 설명"), "도움말"),
+        Button(19, Material.NAME_TAG, "§6§l업적 · 칭호", listOf("§7달성한 업적과 칭호 장착"), "칭호"),
+        Button(25, Material.RED_BANNER, "§4§l전쟁 이벤트", listOf("§7이벤트 시간 · 진행 상황"), "전쟁이벤트")
     )
     private val bySlot = buttons.associateBy { it.slot }
 
@@ -53,12 +55,12 @@ class MainMenu(private val plugin: Digriss) : Listener {
 
     fun open(player: Player) {
         val inv = Bukkit.createInventory(MainMenuHolder(), 36, "§8디그리스 메뉴")
-        val filler = item(ItemStack(Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
+        val filler = item(icon("common.filler", Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
         for (i in 0 until inv.size) inv.setItem(i, filler)
 
         inv.setItem(4, profile(player))
-        buttons.forEach { b -> inv.setItem(b.slot, item(ItemStack(b.icon), b.name, b.lore + listOf("", "§e클릭하여 열기"))) }
-        inv.setItem(31, item(ItemStack(Material.BARRIER), "§c닫기", emptyList()))
+        buttons.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.command}", b.icon), b.name, b.lore + listOf("", "§e클릭하여 열기"))) }
+        inv.setItem(31, item(icon("common.close", Material.BARRIER), "§c닫기", emptyList()))
         player.openInventory(inv)
     }
 
@@ -75,11 +77,14 @@ class MainMenu(private val plugin: Digriss) : Listener {
             "§7영혼 §b${plugin.soulManager.getSouls(player)}",
             "§7DC §3${plugin.dcManager.getDC(player)}",
             "§7국가 §a${plugin.nationManager.getNationName(player.uniqueId) ?: "§8없음"}",
-            "§7직업 §e${plugin.jobManager.getJob(player.uniqueId)?.displayName ?: "§8없음"}"
+            "§7직업 §e${plugin.jobManager.getJob(player.uniqueId)?.displayName ?: "§8없음"}",
+            "§7칭호 ${plugin.achievementManager.titleOf(player.uniqueId) ?: "§8없음"}"
         ))
     }
 
-    // 나중에 ItemsAdder 아이콘으로 바꿀 때 이 함수만 손보면 됨
+    // 아이콘은 icons.yml에서 바꿀 수 있음 (menu.<명령어>)
+    private fun icon(key: String, default: Material): ItemStack = plugin.iconManager.get(key, default)
+
     private fun item(stack: ItemStack, name: String, lore: List<String>): ItemStack {
         val meta = stack.itemMeta ?: return stack
         meta.setDisplayName(name)

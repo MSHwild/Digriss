@@ -283,6 +283,8 @@ class QuestManager(private val plugin: Digriss) {
             giveStreakBonus(player, pd.streak)
         }
 
+        plugin.achievementManager.onQuestComplete(player, pd.streak)
+
         // 주간 보너스: 이번 주에 퀘스트를 완료한 날짜 기록
         pd.weekDays.add(pd.dateKey)
         if (!pd.weeklyClaimed && pd.weekDays.size >= weeklyRequiredDays) {

@@ -55,11 +55,11 @@ object BundleGUI {
             lore += contentLines(b.items)
             lore += text("")
             lore += text("§e클릭: 자세히 보기 / 구매")
-            inv.setItem(i, item(Material.CHEST, "§6§l${b.name}", lore))
+            inv.setItem(i, item(icon(plugin, "bundle.item", Material.CHEST), "§6§l${b.name}", lore))
         }
 
         if (bundles.isEmpty()) {
-            inv.setItem(22, item(Material.BARRIER, "§7지금 판매 중인 번들이 없습니다.", emptyList()))
+            inv.setItem(22, item(icon(plugin, "common.empty", Material.BARRIER), "§7지금 판매 중인 번들이 없습니다.", emptyList()))
         }
         inv.setItem(LIST_DC_SLOT, dcItem(player, plugin))
         player.openInventory(inv)
@@ -71,8 +71,8 @@ object BundleGUI {
         val inv = Bukkit.createInventory(BundlePreviewHolder(bundle.name), 54, "§8번들 - ${bundle.name}")
         bundle.items.take(EDIT_SIZE).forEachIndexed { i, stack -> inv.setItem(i, stack.clone()) }
 
-        inv.setItem(PREVIEW_BACK_SLOT, item(Material.ARROW, "§7← 목록으로", emptyList()))
-        inv.setItem(PREVIEW_BUY_SLOT, item(Material.EMERALD_BLOCK, "§a§l구매하기",
+        inv.setItem(PREVIEW_BACK_SLOT, item(icon(plugin, "common.back", Material.ARROW), "§7← 목록으로", emptyList()))
+        inv.setItem(PREVIEW_BUY_SLOT, item(icon(plugin, "bundle.buy", Material.EMERALD_BLOCK), "§a§l구매하기",
             listOf(
                 text("§7가격 §b${bundle.price} DC"),
                 text("§7남은 판매 기간 §f${bundle.remainingText()}"),
@@ -119,12 +119,16 @@ object BundleGUI {
     }
 
     private fun dcItem(player: Player, plugin: Digriss): ItemStack =
-        item(Material.SUNFLOWER, "§b§l보유 DC §f${plugin.dcManager.getDC(player)}", emptyList())
+        item(icon(plugin, "bundle.dc", Material.SUNFLOWER), "§b§l보유 DC §f${plugin.dcManager.getDC(player)}", emptyList())
 
     private fun text(s: String): Component = legacy.deserialize(s).decoration(TextDecoration.ITALIC, false)
 
-    private fun item(material: Material, name: String, lore: List<Component>): ItemStack {
-        val item = ItemStack(material)
+    private fun icon(plugin: Digriss, key: String, default: Material): ItemStack = plugin.iconManager.get(key, default)
+
+    private fun item(material: Material, name: String, lore: List<Component>): ItemStack = item(ItemStack(material), name, lore)
+
+    private fun item(base: ItemStack, name: String, lore: List<Component>): ItemStack {
+        val item = base
         val meta = item.itemMeta
         meta.displayName(text(name))
         meta.lore(lore)
