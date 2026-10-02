@@ -54,6 +54,9 @@ commands:
   연합채팅:
     description: 같은 국가와 연합국 국가원에게 보내는 채팅 (채팅창에 !!메시지 도 가능)
     usage: /연합채팅 <메시지>
+  도움말:
+    description: 서버 기능 도움말을 엽니다
+    usage: /도움말 [카테고리]
   번들:
     description: 판매 중인 번들(상점 패키지) 목록을 엽니다
     usage: /번들

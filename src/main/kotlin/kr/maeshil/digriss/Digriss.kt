@@ -28,9 +28,11 @@ import kr.maeshil.digriss.command.NationRankCommand
 import kr.maeshil.digriss.bundle.BundleCommand
 import kr.maeshil.digriss.bundle.BundleEditHolder
 import kr.maeshil.digriss.bundle.BundleListener
+import kr.maeshil.digriss.help.HelpCommand
 import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.AllianceManager
 import kr.maeshil.digriss.manager.BundleManager
+import kr.maeshil.digriss.manager.HelpManager
 import kr.maeshil.digriss.manager.DCManager
 import kr.maeshil.digriss.manager.JobSkillManager
 import kr.maeshil.digriss.manager.KDManager
@@ -85,6 +87,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var bundleManager: BundleManager
         private set
+    lateinit var helpManager: HelpManager
+        private set
 
     override fun onEnable() {
 
@@ -110,6 +114,7 @@ class Digriss : JavaPlugin() {
 
         questManager = QuestManager(this) // soul/dc/nation 매니저 이후에 생성
         bundleManager = BundleManager(this)
+        helpManager = HelpManager(this)
 
         // 직업 스킬(Shift+Q) 쿨타임 상시 표시 (스킬이 있는 직업만)
         ActionBarManager.addProvider { player ->
@@ -166,6 +171,10 @@ class Digriss : JavaPlugin() {
         getCommand("국가채팅")?.setExecutor(nationChat)
         getCommand("국가창고")?.setExecutor(nationStorage)
         getCommand("연합채팅")?.setExecutor(nationChat)
+        HelpCommand(this).let { cmd ->
+            getCommand("도움말")?.apply { setExecutor(cmd); tabCompleter = cmd }
+            Bukkit.getPluginManager().registerEvents(cmd, this)
+        }
         BundleCommand(this).let { cmd ->
             listOf("번들", "번들생성", "번들수정", "번들삭제").forEach { getCommand(it)?.apply { setExecutor(cmd); tabCompleter = cmd } }
         }
