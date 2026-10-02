@@ -8,7 +8,7 @@ import kr.maeshil.digriss.manager.KDManager
 import kr.maeshil.digriss.manager.RankTiers
 import kr.maeshil.digriss.manager.RankManager
 import kr.maeshil.digriss.manager.SoulManager
-import kr.maeshil.digriss.nation.Nation_D
+import kr.maeshil.digriss.manager.NationManager
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -22,7 +22,7 @@ class ScoreboardManager(
     private val rankManager: RankManager,
     private val killEffectManager: KillEffectManager,
     private val jobManager: JobManager,
-    private val nationManager: Nation_D,
+    private val nationManager: NationManager,
     private val dcManager: DCManager,
     private val allianceManager: AllianceManager
 ) {

@@ -42,7 +42,7 @@ import kr.maeshil.digriss.manager.SoulManager
 import kr.maeshil.digriss.manager.WarScoreManager
 import kr.maeshil.digriss.nation.NationChat
 import kr.maeshil.digriss.nation.NationStorage
-import kr.maeshil.digriss.nation.Nation_D
+import kr.maeshil.digriss.manager.NationManager
 import kr.maeshil.digriss.quest.QuestAdminCommand
 import kr.maeshil.digriss.quest.QuestCommand
 import kr.maeshil.digriss.quest.QuestListener
@@ -71,7 +71,7 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var jobSkillManager: JobSkillManager
         private set
-    lateinit var nationManager: Nation_D
+    lateinit var nationManager: NationManager
         private set
     lateinit var questManager: QuestManager
         private set
@@ -102,10 +102,10 @@ class Digriss : JavaPlugin() {
         manaManager = ManaManager(this)
         jobSkillManager = JobSkillManager(this)
 
-        allianceManager = AllianceManager(this) // Nation_D가 사용하므로 먼저 생성
+        allianceManager = AllianceManager(this) // NationManager가 사용하므로 먼저 생성
         warScoreManager = WarScoreManager(this)
         nationStorageManager = NationStorageManager(this)
-        nationManager = Nation_D(this)
+        nationManager = NationManager(this)
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
 
         questManager = QuestManager(this) // soul/dc/nation 매니저 이후에 생성

@@ -122,7 +122,7 @@ class WarScoreManager(private val plugin: Digriss) {
         return amount > 0
     }
 
-    // 신호기 점령으로 전쟁이 끝날 때 (Nation_D.conquerNation에서 국가 데이터가 지워지기 전에 호출)
+    // 신호기 점령으로 전쟁이 끝날 때 (NationManager.conquerNation에서 국가 데이터가 지워지기 전에 호출)
     fun settleConquest(attacker: String, defender: String) {
         val contrib = contributions.remove(key(attacker, defender)) ?: mutableMapOf()
         scores.remove(key(attacker, defender))
