@@ -254,6 +254,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         truceRequests[b]?.remove(a)
         addRecord("TRUCE", a, b)
         Bukkit.broadcastMessage("${ChatColor.GREEN}☮ [휴전] '$a' 국가와 '$b' 국가가 휴전했습니다.")
+        if (plugin.warScoreManager.settle(a, b)) saveNations() // 전쟁 점수 정산 (배상금)
         saveWars()
     }
 
@@ -261,6 +262,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
     private fun removeWarData(name: String, endDetail: String, except: String? = null) {
         warsOf(name).filter { it != except }.forEach { addRecord("END", name, it, endDetail) }
         plugin.allianceManager.removeNation(name)
+        plugin.warScoreManager.removeNation(name)
         activeWars.removeAll { it.split("|").contains(name) }
         warRequests.remove(name)
         warRequests.values.forEach { it.remove(name) }

@@ -33,6 +33,7 @@ import kr.maeshil.digriss.manager.ManaManager
 import kr.maeshil.digriss.manager.QuestManager
 import kr.maeshil.digriss.manager.RankManager
 import kr.maeshil.digriss.manager.SoulManager
+import kr.maeshil.digriss.manager.WarScoreManager
 import kr.maeshil.digriss.nation.Nation_D
 import kr.maeshil.digriss.quest.QuestAdminCommand
 import kr.maeshil.digriss.quest.QuestCommand
@@ -68,6 +69,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var allianceManager: AllianceManager
         private set
+    lateinit var warScoreManager: WarScoreManager
+        private set
 
     override fun onEnable() {
 
@@ -85,6 +88,7 @@ class Digriss : JavaPlugin() {
         jobSkillManager = JobSkillManager(this)
 
         allianceManager = AllianceManager(this) // Nation_D가 사용하므로 먼저 생성
+        warScoreManager = WarScoreManager(this)
         nationManager = Nation_D(this)
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
 

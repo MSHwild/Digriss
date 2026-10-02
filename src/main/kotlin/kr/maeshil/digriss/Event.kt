@@ -60,6 +60,7 @@ class Event(private val plugin: Digriss) : Listener {
             }
             plugin.kdManager.addKill(killer)
             plugin.questManager.onPlayerKill(killer, victim)
+            plugin.warScoreManager.recordKill(killer, victim)
             val rankGain = plugin.rankManager.onKill(killer, victim, newStreak)
             val streakText = if (newStreak >= 2) "  §6🔥 ${newStreak}킬스트릭" else ""
             ActionBarManager.showTemp(killer, "§a+$rankGain 랭크점수  §b+${10 + bonus} 영혼$streakText", 2.0)
