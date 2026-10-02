@@ -120,6 +120,7 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(JobTriggerListener(this, jobManager, jobSkillManager), this)
         Bukkit.getPluginManager().registerEvents(EffectListener(this, effectGUI), this)
         Bukkit.getPluginManager().registerEvents(Event(this), this)
+        Bukkit.getPluginManager().registerEvents(ChatEvent(this), this)
         Bukkit.getPluginManager().registerEvents(JobListener(jobManager, soulManager), this)
         Bukkit.getPluginManager().registerEvents(WeaponSkillListener(this), this)
         Bukkit.getPluginManager().registerEvents(SkillListener(this, manaManager), this)
