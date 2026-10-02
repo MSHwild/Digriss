@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.weapon
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.attribute.Attribute
@@ -14,7 +15,7 @@ class BloodHoeSkill : WeaponSkill {
     private val damage = 7.0
     private val lifestealRatio = 0.3 // 입힌 피해량의 30% 흡수
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         player.world.playSound(player.location, Sound.ENTITY_WITHER_HURT, 1.0f, 1.4f)
         drawRadiusEffect(player)
 
@@ -22,7 +23,7 @@ class BloodHoeSkill : WeaponSkill {
         var totalDamageDealt = 0.0
 
         for (entity in nearby) {
-            if (entity == player) continue
+            if (entity == player || Friendly.isAlly(player, entity)) continue
 
             entity.damage(damage, player)
             totalDamageDealt += damage
@@ -48,6 +49,7 @@ class BloodHoeSkill : WeaponSkill {
             )
             player.world.playSound(player.location, Sound.ENTITY_WITCH_DRINK, 1f, 0.7f)
         }
+        return true
     }
 
     private fun drawRadiusEffect(player: Player) {

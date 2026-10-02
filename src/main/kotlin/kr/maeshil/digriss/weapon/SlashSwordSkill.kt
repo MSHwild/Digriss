@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.weapon
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.Sound
@@ -20,7 +21,7 @@ class SlashSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
     private val bleedTicks = 5 // 5초, 1초마다 틱
     private val bleedInterval = 20L
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val eyeLoc = player.eyeLocation
         val direction = eyeLoc.direction.setY(0).normalize()
 
@@ -31,7 +32,7 @@ class SlashSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
         val nearby = player.world.getNearbyLivingEntities(player.location, range)
 
         for (entity in nearby) {
-            if (entity == player) continue
+            if (entity == player || Friendly.isAlly(player, entity)) continue
             if (isOnLine(player.location, direction, entity.location)) {
                 hitEntities.add(entity)
             }
@@ -41,6 +42,7 @@ class SlashSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
             entity.damage(damage, player)
             applyBleed(entity, player)
         }
+        return true
     }
 
     private fun isOnLine(origin: Location, direction: Vector, targetLoc: Location): Boolean {

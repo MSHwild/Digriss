@@ -13,10 +13,10 @@ class ReaperSkill : JobSkill {
     override val baseCooldownSeconds = 20
     private val invulnDurationSeconds = 2.0
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         if (!ReaperChargeManager.isCharged(player.uniqueId)) {
             player.sendMessage("§c충전된 영혼이 없습니다. 처치 후 영혼 구슬을 흡수하세요.")
-            return
+            return false
         }
 
         ReaperChargeManager.consumeCharge(player.uniqueId)
@@ -55,6 +55,7 @@ class ReaperSkill : JobSkill {
             }, durationTicks - 1).taskId // 이미 1틱 지난 만큼 보정
             stashes[uuid] = stash
         })
+        return true
     }
 
     private class Stash(

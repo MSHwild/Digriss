@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.weapon
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.attribute.Attribute
@@ -20,10 +21,10 @@ class VampireSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
     private val speedDurationTicks = 40 // 2초
     private val speedAmplifier = 1 // 이속 2단계
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val target = getTargetEntity(player) ?: run {
             player.sendMessage("${net.md_5.bungee.api.ChatColor.GRAY}대상이 없습니다.")
-            return
+            return false
         }
 
         player.world.playSound(player.location, Sound.ENTITY_PLAYER_ATTACK_STRONG, 1.2f, 0.8f)
@@ -39,6 +40,7 @@ class VampireSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
         drawLifestealEffect(player, target)
 
         player.sendMessage("${net.md_5.bungee.api.ChatColor.RED}흡혈 +${"%.1f".format(healAmount)}")
+        return true
     }
 
     private fun getTargetEntity(player: Player): LivingEntity? {
@@ -46,7 +48,7 @@ class VampireSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
             player.eyeLocation,
             player.eyeLocation.direction,
             range
-        ) { entity -> entity is LivingEntity && entity != player }
+        ) { entity -> entity is LivingEntity && entity != player && !Friendly.isAlly(player, entity) }
 
         return result?.hitEntity as? LivingEntity
     }

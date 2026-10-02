@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.weapon
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
@@ -14,7 +15,7 @@ class OceanSpearSkill : WeaponSkill {
     private val damage = 6.0
     private val hitRadius = 1.5
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val direction = player.location.direction.setY(0).normalize()
 
         player.world.playSound(player.location, Sound.ENTITY_DOLPHIN_JUMP, 1.2f, 1.0f)
@@ -28,13 +29,14 @@ class OceanSpearSkill : WeaponSkill {
         // 돌진 경로상의 적 탐색 후 데미지
         val nearby = player.world.getNearbyLivingEntities(player.location, dashDistance)
         for (entity in nearby) {
-            if (entity == player) continue
+            if (entity == player || Friendly.isAlly(player, entity)) continue
             if (isInDashPath(player, direction, entity)) {
                 entity.damage(damage, player)
                 val knockback = direction.clone().multiply(0.8).setY(0.3)
                 entity.velocity = knockback
             }
         }
+        return true
     }
 
     private fun isInDashPath(player: Player, direction: Vector, entity: LivingEntity): Boolean {

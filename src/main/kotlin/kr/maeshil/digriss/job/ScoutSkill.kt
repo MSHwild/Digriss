@@ -13,7 +13,7 @@ class ScoutSkill : JobSkill {
     private val radius = 30.0
     private val glowDurationSeconds = 5.0
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss") as Digriss
         val myNation = plugin.nationManager.getNationName(player.uniqueId)
         val durationTicks = (glowDurationSeconds * 20).toInt()
@@ -30,7 +30,7 @@ class ScoutSkill : JobSkill {
 
         if (enemies.isEmpty()) {
             player.sendMessage("§7주변 ${radius.toInt()}블록 내에 적이 없습니다.")
-            return
+            return false
         }
 
         enemies.forEach { enemy ->
@@ -38,5 +38,6 @@ class ScoutSkill : JobSkill {
             enemy.sendMessage("§c정찰병에게 위치가 노출되었습니다!")
         }
         player.sendMessage("§a적 ${enemies.size}명의 위치를 ${glowDurationSeconds}초간 표시합니다.")
+        return true
     }
 }

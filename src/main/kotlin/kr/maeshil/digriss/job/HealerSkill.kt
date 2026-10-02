@@ -20,7 +20,7 @@ class HealerSkill : JobSkill {
         PotionEffectType.WEAKNESS, PotionEffectType.BLINDNESS, PotionEffectType.NAUSEA
     )
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss") as Digriss
         player.world.playSound(player.location, Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1.6f)
         player.world.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f)
@@ -37,6 +37,7 @@ class HealerSkill : JobSkill {
         }
         drawBloom(player)
         player.sendMessage("§d✨ 생명의 축복! §7아군 ${healed}명을 회복했습니다.")
+        return true
     }
 
     private fun drawBloom(player: Player) {

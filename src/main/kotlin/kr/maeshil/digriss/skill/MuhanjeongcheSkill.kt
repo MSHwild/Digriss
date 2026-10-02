@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.Sound
@@ -15,7 +16,7 @@ class MuhanjeongcheSkill(private val plugin: JavaPlugin) : Skill {
     private val radius = 3.6
     private val durationTicks = 100L
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val center = player.location.clone() // 발밑부터 전개
         val world = center.world!!
         val barrier = SphereUtil.placeSphereShell(center, radius, world)
@@ -27,7 +28,7 @@ class MuhanjeongcheSkill(private val plugin: JavaPlugin) : Skill {
         val frozen = HashMap<LivingEntity, Location>()
         world.getNearbyEntities(center, radius, radius, radius)
             .filterIsInstance<LivingEntity>()
-            .filter { it != player && it.location.distance(center) <= radius }
+            .filter { it != player && !Friendly.isAlly(player, it) && it.location.distance(center) <= radius }
             .forEach { frozen[it] = it.location.clone() }
 
         var elapsed = 0L
@@ -61,5 +62,6 @@ class MuhanjeongcheSkill(private val plugin: JavaPlugin) : Skill {
         }.runTaskTimer(plugin, 0L, 1L)
 
         barrier.task = task
+        return true
     }
 }

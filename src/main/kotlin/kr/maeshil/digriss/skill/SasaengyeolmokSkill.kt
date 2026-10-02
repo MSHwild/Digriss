@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
@@ -15,7 +16,7 @@ class SasaengyeolmokSkill(private val plugin: JavaPlugin) : Skill {
     private val durationTicks = 200L
     private val tickInterval = 10L
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val center = player.location.clone() // 발밑부터 전개
         val world = center.world!!
         val barrier = SphereUtil.placeSphereShell(center, radius, world)
@@ -41,7 +42,7 @@ class SasaengyeolmokSkill(private val plugin: JavaPlugin) : Skill {
 
                 world.getNearbyEntities(center, radius, radius, radius)
                     .filterIsInstance<LivingEntity>()
-                    .filter { it != player && it.location.distance(center) <= radius }
+                    .filter { it != player && !Friendly.isAlly(player, it) && it.location.distance(center) <= radius }
                     .forEach {
                         it.noDamageTicks = 0
                         it.damage(1.0, player)
@@ -55,5 +56,6 @@ class SasaengyeolmokSkill(private val plugin: JavaPlugin) : Skill {
         }.runTaskTimer(plugin, tickInterval, tickInterval)
 
         barrier.task = task
+        return true
     }
 }

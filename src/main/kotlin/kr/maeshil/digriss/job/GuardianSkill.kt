@@ -24,7 +24,7 @@ class GuardianSkill : JobSkill {
     private val barrierRadius = 6.0
     private val durationSeconds = 4.0
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss") as Digriss
         val ticks = (durationSeconds * 20).toInt()
         val until = System.currentTimeMillis() + (durationSeconds * 1000).toLong()
@@ -62,6 +62,7 @@ class GuardianSkill : JobSkill {
         }
 
         player.sendMessage("§9🛡 수호 태세! §7도발 ${taunted}명, 배리어 아군 ${shielded}명")
+        return true
     }
 
     private fun drawBarrier(player: Player) {

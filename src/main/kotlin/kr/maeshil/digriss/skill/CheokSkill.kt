@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Color
 import org.bukkit.Particle
 import org.bukkit.Sound
@@ -10,7 +11,7 @@ class CheokSkill : Skill {
     override val itemId = "weapon:skill_7"
     override val manaCost = 30.0
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val maxDistance = 20.0
         val result = player.rayTraceBlocks(maxDistance)
         val endLoc = result?.hitPosition?.toLocation(player.world)
@@ -37,7 +38,7 @@ class CheokSkill : Skill {
 
             current.world!!.getNearbyEntities(current, 0.6, 0.6, 0.6)
                 .filterIsInstance<LivingEntity>()
-                .filter { it != player && it !in hit }
+                .filter { it != player && it !in hit && !Friendly.isAlly(player, it) }
                 .forEach { target ->
                     hit.add(target)
                     target.damage(8.0, player)
@@ -47,5 +48,6 @@ class CheokSkill : Skill {
 
         endLoc.world!!.spawnParticle(Particle.DUST, endLoc, 30, 0.3, 0.3, 0.3, 0.0,
             Particle.DustOptions(Color.fromRGB(255, 0, 0), 1.6f))
+        return true
     }
 }

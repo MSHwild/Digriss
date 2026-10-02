@@ -10,7 +10,7 @@ class AssassinSkill : JobSkill {
     override val baseCooldownSeconds = 30
     private val stealthDurationSeconds = 4.0
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val durationTicks = (stealthDurationSeconds * 20).toInt()
 
         AssassinStealthManager.activate(player.uniqueId)
@@ -25,5 +25,6 @@ class AssassinSkill : JobSkill {
                 player.sendMessage("§7은신이 종료되었습니다.")
             }
         }, durationTicks.toLong())
+        return true
     }
 }

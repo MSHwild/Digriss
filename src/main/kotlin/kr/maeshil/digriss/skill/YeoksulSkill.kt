@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
@@ -20,7 +21,7 @@ class YeoksulSkill(private val plugin: JavaPlugin) : Skill {
         const val META_STORED = "digriss_yeoksul_stored"
     }
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val durationTicks = 60L
 
         player.setMetadata(META_ABSORB, FixedMetadataValue(plugin, true))
@@ -44,6 +45,7 @@ class YeoksulSkill(private val plugin: JavaPlugin) : Skill {
                 ticks += 5
             }
         }.runTaskTimer(plugin, 0L, 5L)
+        return true
     }
 
     private fun reflect(player: Player, amount: Double) {
@@ -53,7 +55,7 @@ class YeoksulSkill(private val plugin: JavaPlugin) : Skill {
 
         player.world.getNearbyEntities(player.location, radius, radius, radius)
             .filterIsInstance<LivingEntity>()
-            .filter { it != player }
+            .filter { it != player && !Friendly.isAlly(player, it) }
             .forEach { it.damage(amount, player) }
 
         player.sendMessage("§d역술 §f- ${amount.toInt()} 피해 반사")

@@ -61,8 +61,8 @@ class WeaponSkillListener(private val plugin: Digriss) : Listener {
 
         val skill = skillMap[weaponData.skillType] ?: return
 
+        if (!skill.execute(player)) return
         cooldowns[key] = now
         player.sendMessage("${ChatColor.GOLD}[${weaponData.displayName}] ${ChatColor.YELLOW}스킬 발동!")
-        skill.execute(player)
     }
 }

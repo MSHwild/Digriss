@@ -36,8 +36,8 @@ class SkillListener(private val plugin: JavaPlugin, private val manaManager: Man
             return
         }
 
+        if (!skill.execute(player)) return
         manaManager.consumeMana(player, skill.manaCost)
-        skill.execute(player)
         (plugin as kr.maeshil.digriss.Digriss).questManager.addProgress(player, kr.maeshil.digriss.quest.QuestType.SKILL_USE)
     }
 }

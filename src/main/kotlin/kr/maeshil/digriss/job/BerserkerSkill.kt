@@ -17,7 +17,7 @@ class BerserkerSkill : JobSkill {
     private val knockback = 1.2
     private val groggyTicks = 30 // 1.5초
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss") as Digriss
         val center = player.location
 
@@ -37,6 +37,7 @@ class BerserkerSkill : JobSkill {
             hits++
         }
         player.sendMessage(if (hits > 0) "§c광폭 강타! §7${hits}명에게 피해를 입혔습니다." else "§c광폭 강타! §7주변에 대상이 없습니다.")
+        return true
     }
 
     private fun pushAway(player: Player, target: LivingEntity) {

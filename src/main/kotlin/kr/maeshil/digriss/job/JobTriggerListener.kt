@@ -34,14 +34,14 @@ class JobTriggerListener(
             return
         }
 
-        skill.execute(player)
-        skillManager.startCooldown(player.uniqueId, skill.baseCooldownSeconds)
+        if (skill.execute(player)) skillManager.startCooldown(player.uniqueId, skill.baseCooldownSeconds)
     }
 
     // 킬 시 쿨타임 15초 감소 + 사신이면 영혼 구슬 생성
     @EventHandler
     fun onKill(e: PlayerDeathEvent) {
         val killer = e.entity.killer as? Player ?: return
+        if (killer == e.entity) return
         skillManager.reduceOnKill(killer.uniqueId)
 
         val job = jobManager.getJob(killer.uniqueId) ?: return

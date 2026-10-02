@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Color
 import org.bukkit.Particle
 import org.bukkit.Sound
@@ -12,7 +13,7 @@ class InSkill(private val plugin: JavaPlugin) : Skill {
     override val itemId = "weapon:skill_6"
     override val manaCost = 30.0
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val maxDistance = 15.0
         val result = player.rayTraceBlocks(maxDistance)
         val center = result?.hitPosition?.toLocation(player.world)
@@ -38,14 +39,17 @@ class InSkill(private val plugin: JavaPlugin) : Skill {
 
                 center.world!!.getNearbyEntities(center, radius, radius, radius)
                     .filterIsInstance<LivingEntity>()
-                    .filter { it != player }
+                    .filter { it != player && !Friendly.isAlly(player, it) }
                     .forEach { entity ->
-                        val pull = center.toVector().subtract(entity.location.toVector()).normalize().multiply(0.35)
+                        val toCenter = center.toVector().subtract(entity.location.toVector())
+                        if (toCenter.lengthSquared() < 0.01) return@forEach // 중심에 딱 붙어 있으면 방향 계산 불가(NaN)
+                        val pull = toCenter.normalize().multiply(0.35)
                         entity.velocity = entity.velocity.add(pull).setY(pull.y.coerceAtLeast(0.05))
                     }
 
                 ticks += 2
             }
         }.runTaskTimer(plugin, 0L, 2L)
+        return true
     }
 }

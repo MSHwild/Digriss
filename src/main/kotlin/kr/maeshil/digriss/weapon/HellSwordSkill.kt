@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.weapon
 
+import kr.maeshil.digriss.Friendly
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.Sound
@@ -16,7 +17,7 @@ class HellSwordSkill : WeaponSkill {
     private val damage = 8.0
     private val fireSeconds = 3
 
-    override fun execute(player: Player) {
+    override fun execute(player: Player): Boolean {
         val eyeLoc = player.eyeLocation
         val direction = eyeLoc.direction.setY(0).normalize()
 
@@ -27,7 +28,7 @@ class HellSwordSkill : WeaponSkill {
         // 부채꼴 범위 내 적 탐색
         val nearby = player.world.getNearbyLivingEntities(player.location, range)
         for (entity in nearby) {
-            if (entity == player) continue
+            if (entity == player || Friendly.isAlly(player, entity)) continue
             if (!isInFront(player.location, direction, entity.location, angleDegrees)) continue
 
             entity.damage(damage, player)
@@ -35,6 +36,7 @@ class HellSwordSkill : WeaponSkill {
 
             entity.world.spawnParticle(Particle.FLAME, entity.location.add(0.0, 1.0, 0.0), 20, 0.3, 0.5, 0.3, 0.02)
         }
+        return true
     }
 
     private fun isInFront(origin: Location, direction: Vector, targetLoc: Location, maxAngle: Double): Boolean {
