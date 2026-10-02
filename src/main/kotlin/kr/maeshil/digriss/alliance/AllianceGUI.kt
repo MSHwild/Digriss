@@ -59,7 +59,9 @@ object AllianceGUI {
             "§7전쟁을 선포할 수 없습니다.",
             "§7연합국 국가원은 이름이 §b하늘색§7으로 보입니다.",
             "",
-            "§7현재 연합국: §b${alliance.alliesOf(myNation).ifEmpty { listOf("없음") }.joinToString(", ")}"))
+            "§7연합은 국가당 최대 ${kr.maeshil.digriss.manager.AllianceManager.MAX_ALLIES}개국까지 맺을 수 있습니다.",
+            "",
+            "§7현재 연합국 (${alliance.alliesOf(myNation).size}/${kr.maeshil.digriss.manager.AllianceManager.MAX_ALLIES}): §b${alliance.alliesOf(myNation).ifEmpty { listOf("없음") }.joinToString(", ")}"))
 
         player.openInventory(inv)
     }

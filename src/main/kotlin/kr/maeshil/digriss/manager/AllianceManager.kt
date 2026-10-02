@@ -14,6 +14,10 @@ class AllianceManager(private val plugin: Digriss) {
     private val alliances = mutableSetOf<String>()                       // "A|B" (이름순 정렬)
     private val requests = mutableMapOf<String, MutableSet<String>>()    // 받는 국가 -> 요청한 국가들 (저장 안 함)
 
+    companion object {
+        const val MAX_ALLIES = 3 // 국가당 최대 연합국 수
+    }
+
     init {
         if (!plugin.dataFolder.exists()) plugin.dataFolder.mkdirs()
         if (file.exists()) alliances.addAll(YamlConfiguration.loadConfiguration(file).getStringList("alliances"))
@@ -45,6 +49,19 @@ class AllianceManager(private val plugin: Digriss) {
         return na == nb || areAllied(na, nb)
     }
 
+    // 두 국가 모두 연합 한도에 여유가 있는지 확인, 아니면 안내 후 false
+    private fun checkLimit(player: Player, me: String, target: String): Boolean {
+        if (alliesOf(me).size >= MAX_ALLIES) {
+            player.sendMessage("§c연합은 최대 ${MAX_ALLIES}개국까지 맺을 수 있습니다. 기존 연합을 해제하세요.")
+            return false
+        }
+        if (alliesOf(target).size >= MAX_ALLIES) {
+            player.sendMessage("§c'$target' 국가는 이미 연합 한도(${MAX_ALLIES}개국)에 도달했습니다.")
+            return false
+        }
+        return true
+    }
+
     fun hasRequest(to: String, from: String): Boolean = requests[to]?.contains(from) == true
 
     // ───────────────────────── 요청 / 수락 / 해제 ─────────────────────────
@@ -68,6 +85,7 @@ class AllianceManager(private val plugin: Digriss) {
         if (me == target || Nation.nations[target] == null) return
         if (areAllied(me, target)) return player.sendMessage("§c이미 연합 중입니다.")
         if (plugin.nationManager.isAtWarBetween(me, target)) return player.sendMessage("§c전쟁 중인 국가와는 연합할 수 없습니다. 먼저 휴전하세요.")
+        if (!checkLimit(player, me, target)) return
 
         // 상대도 나에게 요청해 둔 상태면 바로 성사
         if (hasRequest(me, target)) return form(me, target)
@@ -87,6 +105,7 @@ class AllianceManager(private val plugin: Digriss) {
             return player.sendMessage("§c해당 국가는 더 이상 존재하지 않습니다.")
         }
         if (plugin.nationManager.isAtWarBetween(me, from)) return player.sendMessage("§c전쟁 중인 국가와는 연합할 수 없습니다. 먼저 휴전하세요.")
+        if (!checkLimit(player, me, from)) return
         form(from, me)
     }
 
