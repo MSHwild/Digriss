@@ -23,6 +23,7 @@ class ResetCommand(private val plugin: Digriss) : CommandExecutor {
         if (args.isNotEmpty() && args[0] == "확인" && pendingConfirm.contains(senderName)) {
             pendingConfirm.remove(senderName)
             val moneyReset = executeReset()
+            plugin.adminLogManager.log(sender, "서버 전체 데이터 초기화")
             sender.sendMessage("${ChatColor.GREEN}서버 전체 데이터를 초기화했습니다.")
             if (!moneyReset) {
                 sender.sendMessage("${ChatColor.YELLOW}Vault 경제 플러그인을 찾을 수 없어 돈 초기화는 건너뛰었습니다.")

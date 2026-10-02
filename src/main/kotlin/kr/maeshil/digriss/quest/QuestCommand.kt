@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.quest
 
+import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.QuestManager
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -17,7 +18,10 @@ class QuestCommand(private val questManager: QuestManager) : CommandExecutor {
 }
 
 // /퀘스트관리 초기화 <닉네임>
-class QuestAdminCommand(private val questManager: QuestManager) : CommandExecutor {
+class QuestAdminCommand(
+    private val questManager: QuestManager,
+    private val adminLog: AdminLogManager
+) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (!sender.hasPermission("digriss.admin")) {
             sender.sendMessage("§c권한이 없습니다.")
@@ -37,6 +41,7 @@ class QuestAdminCommand(private val questManager: QuestManager) : CommandExecuto
             sender.sendMessage("§c${target.name}님은 퀘스트 기록이 없습니다.")
             return true
         }
+        adminLog.log(sender, "오늘 퀘스트 초기화 → ${target.name}")
         sender.sendMessage("§a${target.name}님의 오늘 퀘스트를 초기화했습니다." +
             if (target.isOnline) "" else " (다음 접속 때 새로 뽑힙니다)")
         return true

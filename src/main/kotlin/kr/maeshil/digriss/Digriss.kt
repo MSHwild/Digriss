@@ -25,6 +25,7 @@ import kr.maeshil.digriss.jobManager.AssassinListener
 import kr.maeshil.digriss.alliance.AllianceCommand
 import kr.maeshil.digriss.alliance.AllianceListener
 import kr.maeshil.digriss.command.NationRankCommand
+import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.AllianceManager
 import kr.maeshil.digriss.manager.DCManager
 import kr.maeshil.digriss.manager.JobSkillManager
@@ -76,6 +77,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var nationStorageManager: NationStorageManager
         private set
+    lateinit var adminLogManager: AdminLogManager
+        private set
 
     override fun onEnable() {
 
@@ -83,6 +86,7 @@ class Digriss : JavaPlugin() {
         ActionBarManager.start(this)
 
         // 매니저 초기화 (nationManager는 scoreboardManager보다 먼저!)
+        adminLogManager = AdminLogManager(this)
         soulManager = SoulManager(this)
         kdManager = KDManager(this)
         rankManager = RankManager(this)
@@ -149,7 +153,7 @@ class Digriss : JavaPlugin() {
         getCommand("랭킹")?.setExecutor(RankCommand(this))
         getCommand("킬이펙트")?.setExecutor(KillEffectCommand(effectGUI))
         getCommand("퀘스트")?.setExecutor(QuestCommand(questManager))
-        getCommand("퀘스트관리")?.setExecutor(QuestAdminCommand(questManager))
+        getCommand("퀘스트관리")?.setExecutor(QuestAdminCommand(questManager, adminLogManager))
         getCommand("연합")?.setExecutor(AllianceCommand(this))
         getCommand("국가채팅")?.setExecutor(nationChat)
         getCommand("국가창고")?.setExecutor(nationStorage)

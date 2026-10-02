@@ -30,10 +30,12 @@ class DCCommand(private val plugin: Digriss) : CommandExecutor {
 
             if (args[0] == "지급") {
                 plugin.dcManager.addDC(target, amount)
+                plugin.adminLogManager.log(sender, "DC 지급 → ${target.name} $amount")
                 sender.sendMessage("${ChatColor.GREEN}${target.name}님에게 DC $amount 지급했습니다.")
             } else {
                 val success = plugin.dcManager.removeDC(target, amount)
                 if (success) {
+                    plugin.adminLogManager.log(sender, "DC 차감 → ${target.name} $amount")
                     sender.sendMessage("${ChatColor.GREEN}${target.name}님의 DC $amount 차감했습니다.")
                 } else {
                     val current = plugin.dcManager.getDC(target)

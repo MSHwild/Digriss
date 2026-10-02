@@ -38,15 +38,20 @@ class SoulCommand(private val plugin: Digriss) : CommandExecutor {
         when (action) {
             "지급" -> {
                 plugin.soulManager.addSouls(target, amount)
+                plugin.adminLogManager.log(sender, "영혼 지급 → ${target.name} $amount")
                 sender.sendMessage("${ChatColor.GREEN}${target.name}님에게 영혼 $amount 지급했습니다.")
             }
             "차감" -> {
                 val success = plugin.soulManager.removeSouls(target, amount)
-                if (success) sender.sendMessage("${ChatColor.GREEN}${target.name}님의 영혼 $amount 차감했습니다.")
-                else sender.sendMessage("${ChatColor.RED}보유 영혼이 부족합니다.")
+                if (success) {
+                    plugin.adminLogManager.log(sender, "영혼 차감 → ${target.name} $amount")
+                    sender.sendMessage("${ChatColor.GREEN}${target.name}님의 영혼 $amount 차감했습니다.")
+                } else sender.sendMessage("${ChatColor.RED}보유 영혼이 부족합니다.")
             }
             "설정" -> {
+                val before = plugin.soulManager.getSouls(target)
                 plugin.soulManager.setSouls(target, amount)
+                plugin.adminLogManager.log(sender, "영혼 설정 → ${target.name} $before → $amount")
                 sender.sendMessage("${ChatColor.GREEN}${target.name}님의 영혼을 $amount(으)로 설정했습니다.")
             }
             else -> {
