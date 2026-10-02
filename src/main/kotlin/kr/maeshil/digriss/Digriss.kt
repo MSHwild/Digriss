@@ -25,8 +25,12 @@ import kr.maeshil.digriss.jobManager.AssassinListener
 import kr.maeshil.digriss.alliance.AllianceCommand
 import kr.maeshil.digriss.alliance.AllianceListener
 import kr.maeshil.digriss.command.NationRankCommand
+import kr.maeshil.digriss.bundle.BundleCommand
+import kr.maeshil.digriss.bundle.BundleEditHolder
+import kr.maeshil.digriss.bundle.BundleListener
 import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.AllianceManager
+import kr.maeshil.digriss.manager.BundleManager
 import kr.maeshil.digriss.manager.DCManager
 import kr.maeshil.digriss.manager.JobSkillManager
 import kr.maeshil.digriss.manager.KDManager
@@ -79,6 +83,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var adminLogManager: AdminLogManager
         private set
+    lateinit var bundleManager: BundleManager
+        private set
 
     override fun onEnable() {
 
@@ -103,6 +109,7 @@ class Digriss : JavaPlugin() {
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
 
         questManager = QuestManager(this) // soul/dc/nation 매니저 이후에 생성
+        bundleManager = BundleManager(this)
 
         // 직업 스킬(Shift+Q) 쿨타임 상시 표시 (스킬이 있는 직업만)
         ActionBarManager.addProvider { player ->
@@ -136,6 +143,7 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
         Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
         Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
+        Bukkit.getPluginManager().registerEvents(BundleListener(this), this)
         val nationStorage = NationStorage(this)
         Bukkit.getPluginManager().registerEvents(nationStorage, this)
         val nationChat = NationChat(this)
@@ -158,6 +166,9 @@ class Digriss : JavaPlugin() {
         getCommand("국가채팅")?.setExecutor(nationChat)
         getCommand("국가창고")?.setExecutor(nationStorage)
         getCommand("연합채팅")?.setExecutor(nationChat)
+        BundleCommand(this).let { cmd ->
+            listOf("번들", "번들생성", "번들수정", "번들삭제").forEach { getCommand(it)?.apply { setExecutor(cmd); tabCompleter = cmd } }
+        }
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
@@ -173,6 +184,8 @@ class Digriss : JavaPlugin() {
 
     override fun onDisable() {
         ReaperSkill.restoreAll() // 무체화 중 리로드/종료 시 장비 복구
+        // 번들 편집 창이 열린 채로 꺼지면 넣은 아이템이 저장되지 않으므로 리스너 해제 전에 닫아서 저장
+        Bukkit.getOnlinePlayers().filter { it.openInventory.topInventory.holder is BundleEditHolder }.forEach { it.closeInventory() }
         HandlerList.unregisterAll(this)
         saveAll()
         if (::nationManager.isInitialized) nationManager.disable()

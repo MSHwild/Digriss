@@ -54,6 +54,21 @@ commands:
   연합채팅:
     description: 같은 국가와 연합국 국가원에게 보내는 채팅 (채팅창에 !!메시지 도 가능)
     usage: /연합채팅 <메시지>
+  번들:
+    description: 판매 중인 번들(상점 패키지) 목록을 엽니다
+    usage: /번들
+  번들생성:
+    description: 새 번들을 만듭니다. 열린 창에 아이템을 넣고 닫으면 저장 (관리자)
+    usage: /번들생성 <이름> <가격(DC)> <기간(일), 0이면 무기한>
+    permission: digriss.admin
+  번들수정:
+    description: 번들의 아이템을 수정합니다 (관리자)
+    usage: /번들수정 <이름>
+    permission: digriss.admin
+  번들삭제:
+    description: 번들을 삭제합니다 (관리자)
+    usage: /번들삭제 <이름>
+    permission: digriss.admin
   국가랭킹:
     description: 국가 순위를 확인합니다
     usage: /국가랭킹 [영토|금고|인원|레벨]
