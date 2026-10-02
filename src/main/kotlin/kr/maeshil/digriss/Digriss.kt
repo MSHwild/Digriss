@@ -29,6 +29,7 @@ import kr.maeshil.digriss.bundle.BundleCommand
 import kr.maeshil.digriss.bundle.BundleEditHolder
 import kr.maeshil.digriss.bundle.BundleListener
 import kr.maeshil.digriss.help.HelpCommand
+import kr.maeshil.digriss.menu.MainMenu
 import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.AllianceManager
 import kr.maeshil.digriss.manager.BundleManager
@@ -154,6 +155,7 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
         Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
         Bukkit.getPluginManager().registerEvents(BundleListener(this), this)
+        Bukkit.getPluginManager().registerEvents(MainMenu(this), this) // Shift+F 메뉴
         val nationStorage = NationStorage(this)
         Bukkit.getPluginManager().registerEvents(nationStorage, this)
         val nationChat = NationChat(this)
