@@ -37,6 +37,14 @@ class AllianceManager(private val plugin: Digriss) {
     fun alliesOfPlayer(player: Player): List<String> =
         plugin.nationManager.getNationName(player.uniqueId)?.let { alliesOf(it) } ?: emptyList()
 
+    // 아군 판정: 본인, 같은 국가, 연합국 (무소속은 본인만 아군)
+    fun isFriendly(a: Player, b: Player): Boolean {
+        if (a == b) return true
+        val na = plugin.nationManager.getNationName(a.uniqueId) ?: return false
+        val nb = plugin.nationManager.getNationName(b.uniqueId) ?: return false
+        return na == nb || areAllied(na, nb)
+    }
+
     fun hasRequest(to: String, from: String): Boolean = requests[to]?.contains(from) == true
 
     // ───────────────────────── 요청 / 수락 / 해제 ─────────────────────────
