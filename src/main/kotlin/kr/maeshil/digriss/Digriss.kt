@@ -48,7 +48,12 @@ import kr.maeshil.digriss.manager.NationManager
 import kr.maeshil.digriss.quest.QuestAdminCommand
 import kr.maeshil.digriss.quest.QuestCommand
 import kr.maeshil.digriss.quest.QuestListener
+import kr.maeshil.digriss.skill.BarrierBlockListener
 import kr.maeshil.digriss.skill.SkillListener
+import kr.maeshil.digriss.skill.SphereUtil
+import kr.maeshil.digriss.skill.YeoksulDamageListener
+import kr.maeshil.digriss.command.AttributeCommand
+import kr.maeshil.digriss.util.ItemAttributeStore
 import org.bukkit.Bukkit
 import org.bukkit.event.HandlerList
 import org.bukkit.plugin.java.JavaPlugin
@@ -154,15 +159,18 @@ class Digriss : JavaPlugin() {
         val nationChat = NationChat(this)
         Bukkit.getPluginManager().registerEvents(nationChat, this)
         Bukkit.getPluginManager().registerEvents(GuardianSkill.TauntListener(), this)
+        Bukkit.getPluginManager().registerEvents(BarrierBlockListener(), this)       // 결계 흑요석을 부수면 결계 해제 (드랍 없음)
+        Bukkit.getPluginManager().registerEvents(YeoksulDamageListener(this), this)  // 역술 피해 흡수
         HealerAura.start(this)
 
         // 명령어 등록
         getCommand("영혼")?.setExecutor(SoulCommand(this))
+        getCommand("어트리뷰트")?.setExecutor(AttributeCommand(ItemAttributeStore(this)))
         getCommand("직업")?.setExecutor(JobPurchaseCommand(jobManager))
         getCommand("직업설정")?.setExecutor(JobConfirmCommand(jobManager))
         getCommand("초기화")?.setExecutor(ResetCommand(this))
         getCommand("dc")?.setExecutor(DCCommand(this))
-        getCommand("랭크")?.setExecutor(MyRankCommand(rankManager))
+        getCommand("랭크")?.setExecutor(MyRankCommand(rankManager, adminLogManager))
         getCommand("랭킹")?.setExecutor(RankCommand(this))
         getCommand("킬이펙트")?.setExecutor(KillEffectCommand(effectGUI))
         getCommand("퀘스트")?.setExecutor(QuestCommand(questManager))
@@ -193,6 +201,7 @@ class Digriss : JavaPlugin() {
 
     override fun onDisable() {
         ReaperSkill.restoreAll() // 무체화 중 리로드/종료 시 장비 복구
+        SphereUtil.restoreAll()  // 결계 흑요석이 남지 않게 원래대로
         // 번들 편집 창이 열린 채로 꺼지면 넣은 아이템이 저장되지 않으므로 리스너 해제 전에 닫아서 저장
         Bukkit.getOnlinePlayers().filter { it.openInventory.topInventory.holder is BundleEditHolder }.forEach { it.closeInventory() }
         HandlerList.unregisterAll(this)

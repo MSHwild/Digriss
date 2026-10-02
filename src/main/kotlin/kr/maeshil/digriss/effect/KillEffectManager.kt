@@ -36,8 +36,9 @@ class KillEffectManager(private val plugin: Digriss) {
         owned.forEach { (uuid, list) ->
             config.set("$uuid.owned", list.toList())
         }
-        equipped.forEach { (uuid, effectId) ->
-            config.set("$uuid.equipped", effectId)
+        // 해제한 사람은 null로 덮어써야 재시작 후 다시 장착되지 않음
+        (owned.keys + equipped.keys).forEach { uuid ->
+            config.set("$uuid.equipped", equipped[uuid])
         }
         config.save(file)
     }

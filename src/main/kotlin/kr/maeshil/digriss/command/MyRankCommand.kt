@@ -1,6 +1,7 @@
 package kr.maeshil.digriss.command
 
 import kr.maeshil.digriss.Digriss
+import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.RankManager
 import kr.maeshil.digriss.manager.RankTiers
 import net.md_5.bungee.api.ChatColor
@@ -10,7 +11,7 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-class MyRankCommand(private val plugin: RankManager) : CommandExecutor {
+class MyRankCommand(private val plugin: RankManager, private val adminLog: AdminLogManager) : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         // 관리자용: /랭크 지급|차감|설정 <닉네임> <수량>
@@ -34,11 +35,13 @@ class MyRankCommand(private val plugin: RankManager) : CommandExecutor {
             when (args[0]) {
                 "지급" -> {
                     plugin.addScore(target, amount)
+                    adminLog.log(sender, "랭크 점수 지급 → ${target.name} $amount")
                     sender.sendMessage("${ChatColor.GREEN}${target.name}님에게 랭크 점수 $amount 지급했습니다.")
                 }
                 "차감" -> {
                     val success = plugin.removeScore(target, amount)
                     if (success) {
+                        adminLog.log(sender, "랭크 점수 차감 → ${target.name} $amount")
                         sender.sendMessage("${ChatColor.GREEN}${target.name}님의 랭크 점수 $amount 차감했습니다.")
                     } else {
                         val current = plugin.getScore(target)
@@ -46,7 +49,9 @@ class MyRankCommand(private val plugin: RankManager) : CommandExecutor {
                     }
                 }
                 "설정" -> {
+                    val before = plugin.getScore(target)
                     plugin.setScore(target, amount)
+                    adminLog.log(sender, "랭크 점수 설정 → ${target.name} $before → $amount")
                     sender.sendMessage("${ChatColor.GREEN}${target.name}님의 랭크 점수를 $amount(으)로 설정했습니다.")
                 }
             }

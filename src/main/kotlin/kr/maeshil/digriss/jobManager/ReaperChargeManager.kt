@@ -34,6 +34,11 @@ object ReaperChargeManager {
             var taskId = -1
 
             override fun run() {
+                // 사신이 나갔거나 다른 월드로 이동하면 구슬 소멸 (거리 계산 시 월드가 다르면 오류)
+                if (!reaper.isOnline || reaper.world != world) {
+                    Bukkit.getScheduler().cancelTask(taskId)
+                    return
+                }
                 if (tick >= 100) { // 5초(100틱) 경과 시 구슬 소멸
                     // 그 안에 흡수 못 했으면 확실히 미충전 상태로 고정
                     if (!charged.contains(reaperUuid)) {

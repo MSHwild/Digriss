@@ -86,9 +86,18 @@ class ReaperSkill : JobSkill {
 
             val stash = stashes.remove(player.uniqueId) ?: return
             if (stash.taskId != -1) Bukkit.getScheduler().cancelTask(stash.taskId)
-            player.inventory.setItem(stash.heldSlot, stash.mainHand)
-            player.inventory.setItemInOffHand(stash.offHand)
-            player.inventory.armorContents = stash.armor
+
+            // 무체화 중에 그 칸에 들어온 아이템(주운 것, 새로 낀 갑옷)은 덮어쓰지 않고 인벤토리로 돌려줌
+            val inv = player.inventory
+            val displaced = ArrayList<ItemStack>()
+            inv.getItem(stash.heldSlot)?.takeIf { !it.type.isAir }?.let { displaced += it }
+            inv.itemInOffHand.takeIf { !it.type.isAir }?.let { displaced += it }
+            inv.armorContents.filterNotNull().filter { !it.type.isAir }.forEach { displaced += it }
+
+            inv.setItem(stash.heldSlot, stash.mainHand)
+            inv.setItemInOffHand(stash.offHand)
+            inv.armorContents = stash.armor
+            inv.addItem(*displaced.toTypedArray()).values.forEach { player.world.dropItemNaturally(player.location, it) }
         }
 
         fun restoreAll() {

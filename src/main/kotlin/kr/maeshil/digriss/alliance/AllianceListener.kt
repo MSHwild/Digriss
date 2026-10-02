@@ -26,7 +26,7 @@ class AllianceCommand(private val plugin: Digriss) : CommandExecutor {
 
 class AllianceListener(private val plugin: Digriss) : Listener {
 
-    // 연합국끼리 공격 차단 (근접, 투사체, 스킬 피해 모두)
+    // 같은 국가원·연합국끼리 공격 차단 (근접, 투사체, 스킬 피해 모두)
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun onDamage(e: EntityDamageByEntityEvent) {
         val victim = e.entity as? Player ?: return
@@ -38,9 +38,17 @@ class AllianceListener(private val plugin: Digriss) : Listener {
         if (attacker == victim) return
 
         val nations = plugin.nationManager
-        if (plugin.allianceManager.areAllied(nations.getNationName(attacker.uniqueId), nations.getNationName(victim.uniqueId))) {
-            e.isCancelled = true
-            ActionBarManager.showTemp(attacker, "§b🤝 연합국 국가원은 공격할 수 없습니다.", 1.0)
+        val attackerNation = nations.getNationName(attacker.uniqueId)
+        val victimNation = nations.getNationName(victim.uniqueId)
+        when {
+            attackerNation != null && attackerNation == victimNation -> {
+                e.isCancelled = true
+                ActionBarManager.showTemp(attacker, "§a같은 국가원은 공격할 수 없습니다.", 1.0)
+            }
+            plugin.allianceManager.areAllied(attackerNation, victimNation) -> {
+                e.isCancelled = true
+                ActionBarManager.showTemp(attacker, "§b🤝 연합국 국가원은 공격할 수 없습니다.", 1.0)
+            }
         }
     }
 

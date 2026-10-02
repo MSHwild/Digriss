@@ -6,6 +6,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryDragEvent
 
 class EffectListener(private val plugin: Digriss, private val gui: EffectGUI) : Listener {
 
@@ -13,6 +14,7 @@ class EffectListener(private val plugin: Digriss, private val gui: EffectGUI) : 
     fun onClick(event: InventoryClickEvent) {
         if (event.view.title != gui.title) return
         event.isCancelled = true
+        if (event.clickedInventory != event.view.topInventory) return
 
         val player = event.whoClicked as? Player ?: return
         val slot = event.slot
@@ -44,5 +46,10 @@ class EffectListener(private val plugin: Digriss, private val gui: EffectGUI) : 
         }
 
         gui.open(player)
+    }
+
+    @EventHandler
+    fun onDrag(event: InventoryDragEvent) {
+        if (event.view.title == gui.title) event.isCancelled = true
     }
 }

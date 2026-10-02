@@ -7,6 +7,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.event.inventory.InventoryDragEvent
 
 class JobListener(
     private val jobManager: JobManager,
@@ -21,6 +22,7 @@ class JobListener(
         when (holder) {
             is JobPurchaseHolder -> {
                 e.isCancelled = true
+                if (e.clickedInventory != e.view.topInventory) return
                 val clicked = e.currentItem ?: return
                 val job = jobManager.getJobFromItem(clicked) ?: return
 
@@ -42,6 +44,11 @@ class JobListener(
                 }
             }
         }
+    }
+
+    @EventHandler
+    fun onDrag(e: InventoryDragEvent) {
+        if (e.inventory.holder is JobPurchaseHolder) e.isCancelled = true
     }
 
     @EventHandler
