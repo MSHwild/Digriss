@@ -14,14 +14,14 @@ data class RankTier(val name: String, val color: String, val minScore: Long)
 object RankTiers {
     val tiers = listOf(
         RankTier("언랭크","&f",0),
-        RankTier("브론즈", "&6", 50),
-        RankTier("실버", "&7", 100),
-        RankTier("골드", "&6", 150),
-        RankTier("플래티넘", "&b", 200),
-        RankTier("다이아", "&3", 250),
-        RankTier("장교", "&c", 350),
-        RankTier("황제", "&e", 400),
-        RankTier("디그리스", "&2&l", 500)
+        RankTier("브론즈", "&6", 100),
+        RankTier("실버", "&7", 200),
+        RankTier("골드", "&6", 300),
+        RankTier("플래티넘", "&b", 400),
+        RankTier("다이아", "&3", 500),
+        RankTier("장교", "&c", 700),
+        RankTier("황제", "&e", 800),
+        RankTier("디그리스", "&2&l", 1000)
     )
 
     val DIGRISS_MAX_SCORE = tiers.last().minScore + 2000L // 디그리스 상한 = 진입점수 + 2000
