@@ -1150,6 +1150,9 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         val attackerNation = nations[attackerNationName] ?: return
         val defenderNation = nations[defenderNationName] ?: return
 
+        // 전쟁 랭크 점수 지급 (국가 데이터가 사라지기 전에)
+        plugin.warScoreManager.settleConquest(attackerNationName, defenderNationName)
+
         // 전쟁 기록 (국가 데이터가 사라지기 전에 기록)
         addRecord("CONQUER", attackerNationName, defenderNationName,
             "영토 ${defenderNation.claims.size}개, 금고 ${defenderNation.bank}원 흡수")
