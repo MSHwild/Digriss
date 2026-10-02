@@ -43,11 +43,13 @@ class ManaManager(private val plugin: JavaPlugin) : Listener {
         }
     }
 
+    // 접속 처리 도중에 붙이면 클라이언트가 못 받는 경우가 있어 1초 뒤에 붙임 (회복 루프도 계속 확인함)
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
-        val currentMana = getMana(player)
-        updateBar(player, currentMana)
+        Bukkit.getScheduler().runTaskLater(plugin, Runnable {
+            if (player.isOnline) updateBar(player, getMana(player))
+        }, 20L)
     }
 
     @EventHandler
@@ -63,6 +65,9 @@ class ManaManager(private val plugin: JavaPlugin) : Listener {
                     val current = getMana(player)
                     if (current < maxMana) {
                         setMana(player, (current + regenAmount).coerceAtMost(maxMana))
+                    } else {
+                        // 마나가 가득 차 있어도 보스바가 빠져 있으면 다시 붙임 (접속 타이밍·월드 이동 등으로 빠지는 경우)
+                        updateBar(player, current)
                     }
                 }
             }
@@ -92,12 +97,15 @@ class ManaManager(private val plugin: JavaPlugin) : Listener {
     private fun updateBar(player: Player, current: Int) {
         val bar = bars.getOrPut(player.uniqueId) {
             // 키가 있는 보스바라서 리로드 후에도 찾아서 지울 수 있음
-            val newBar = Bukkit.createBossBar(barKey(player.uniqueId), "마나", BarColor.BLUE, BarStyle.SOLID)
-            newBar.addPlayer(player)
-            newBar
+            Bukkit.getBossBar(barKey(player.uniqueId))?.let { Bukkit.removeBossBar(barKey(player.uniqueId)) }
+            Bukkit.createBossBar(barKey(player.uniqueId), "마나", BarColor.BLUE, BarStyle.SOLID)
         }
-        bar.progress = current.toDouble() / maxMana
-        bar.setTitle("마나 $current / $maxMana")
+        if (!bar.isVisible) bar.isVisible = true
+        if (player !in bar.players) bar.addPlayer(player)
+        val progress = current.toDouble() / maxMana
+        if (bar.progress != progress) bar.progress = progress
+        val title = "마나 $current / $maxMana"
+        if (bar.title != title) bar.setTitle(title)
     }
 
     private fun barKey(uuid: UUID) = NamespacedKey(plugin, "mana_$uuid")
