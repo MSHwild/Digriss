@@ -34,6 +34,7 @@ import kr.maeshil.digriss.manager.QuestManager
 import kr.maeshil.digriss.manager.RankManager
 import kr.maeshil.digriss.manager.SoulManager
 import kr.maeshil.digriss.manager.WarScoreManager
+import kr.maeshil.digriss.nation.NationChat
 import kr.maeshil.digriss.nation.Nation_D
 import kr.maeshil.digriss.quest.QuestAdminCommand
 import kr.maeshil.digriss.quest.QuestCommand
@@ -125,6 +126,8 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
         Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
         Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
+        val nationChat = NationChat(this)
+        Bukkit.getPluginManager().registerEvents(nationChat, this)
         Bukkit.getPluginManager().registerEvents(GuardianSkill.TauntListener(), this)
         HealerAura.start(this)
 
@@ -140,6 +143,8 @@ class Digriss : JavaPlugin() {
         getCommand("퀘스트")?.setExecutor(QuestCommand(questManager))
         getCommand("퀘스트관리")?.setExecutor(QuestAdminCommand(questManager))
         getCommand("연합")?.setExecutor(AllianceCommand(this))
+        getCommand("국가채팅")?.setExecutor(nationChat)
+        getCommand("연합채팅")?.setExecutor(nationChat)
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
