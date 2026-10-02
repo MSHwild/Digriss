@@ -32,9 +32,11 @@ import kr.maeshil.digriss.manager.KDManager
 import kr.maeshil.digriss.manager.ManaManager
 import kr.maeshil.digriss.manager.QuestManager
 import kr.maeshil.digriss.manager.RankManager
+import kr.maeshil.digriss.manager.NationStorageManager
 import kr.maeshil.digriss.manager.SoulManager
 import kr.maeshil.digriss.manager.WarScoreManager
 import kr.maeshil.digriss.nation.NationChat
+import kr.maeshil.digriss.nation.NationStorage
 import kr.maeshil.digriss.nation.Nation_D
 import kr.maeshil.digriss.quest.QuestAdminCommand
 import kr.maeshil.digriss.quest.QuestCommand
@@ -72,6 +74,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var warScoreManager: WarScoreManager
         private set
+    lateinit var nationStorageManager: NationStorageManager
+        private set
 
     override fun onEnable() {
 
@@ -90,6 +94,7 @@ class Digriss : JavaPlugin() {
 
         allianceManager = AllianceManager(this) // Nation_D가 사용하므로 먼저 생성
         warScoreManager = WarScoreManager(this)
+        nationStorageManager = NationStorageManager(this)
         nationManager = Nation_D(this)
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
 
@@ -127,6 +132,8 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
         Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
         Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
+        val nationStorage = NationStorage(this)
+        Bukkit.getPluginManager().registerEvents(nationStorage, this)
         val nationChat = NationChat(this)
         Bukkit.getPluginManager().registerEvents(nationChat, this)
         Bukkit.getPluginManager().registerEvents(GuardianSkill.TauntListener(), this)
@@ -145,6 +152,7 @@ class Digriss : JavaPlugin() {
         getCommand("퀘스트관리")?.setExecutor(QuestAdminCommand(questManager))
         getCommand("연합")?.setExecutor(AllianceCommand(this))
         getCommand("국가채팅")?.setExecutor(nationChat)
+        getCommand("국가창고")?.setExecutor(nationStorage)
         getCommand("연합채팅")?.setExecutor(nationChat)
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
@@ -176,5 +184,6 @@ class Digriss : JavaPlugin() {
         if (::killEffectManager.isInitialized) killEffectManager.save()
         if (::jobManager.isInitialized) jobManager.save()
         if (::questManager.isInitialized) questManager.saveAll()
+        if (::nationStorageManager.isInitialized) nationStorageManager.save()
     }
 }

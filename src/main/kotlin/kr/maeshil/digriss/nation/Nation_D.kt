@@ -66,6 +66,8 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
     private val warRequests = mutableMapOf<String, MutableSet<String>>()     // 받는 국가 -> 선포한 국가들
     private val truceRequests = mutableMapOf<String, MutableSet<String>>()   // 받는 국가 -> 휴전 요청한 국가들
     private val warLog = mutableListOf<WarRecord>()                          // 전쟁 기록 (최근 200개 보관)
+    private val warStarts = mutableMapOf<String, Long>()                     // "A|B" -> 전쟁 시작 시각
+    private val warDurationMs = 3L * 24 * 60 * 60 * 1000                      // 전쟁 최대 기간 3일
     private val dateFormat = SimpleDateFormat("MM/dd HH:mm")
 
     private lateinit var nationsFile: File
@@ -96,6 +98,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         plugin.server.pluginManager.registerEvents(this, plugin)
 
         plugin.server.scheduler.runTaskTimer(plugin, Runnable { saveNations() }, 6000L, 6000L)
+        plugin.server.scheduler.runTaskTimer(plugin, Runnable { checkWarExpiry() }, 1200L, 1200L) // 1분마다
         startDailyTaxTask()
 
         // 영토 표시는 ActionBarManager가 다른 액션바와 합쳐서 출력
@@ -151,6 +154,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         Nation.chunkClaims.clear()
 
         activeWars.clear()
+        warStarts.clear()
         warRequests.clear()
         truceRequests.clear()
         warLog.clear()
@@ -217,6 +221,25 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
 
     fun isAtWarBetween(a: String, b: String) = isAtWar(a, b)
 
+    // 전쟁 남은 시간(ms), 전쟁 중이 아니면 null
+    fun warRemainingMs(a: String, b: String): Long? {
+        val start = warStarts[warKey(a, b)] ?: return null
+        return (start + warDurationMs - System.currentTimeMillis()).coerceAtLeast(0)
+    }
+
+    // 3일이 지난 전쟁은 자동 휴전 (휴전과 똑같이 전쟁 점수 정산)
+    private fun checkWarExpiry() {
+        val now = System.currentTimeMillis()
+        activeWars.toList().forEach { key ->
+            val start = warStarts.getOrPut(key) { now }
+            if (now - start < warDurationMs) return@forEach
+            val parts = key.split("|")
+            if (parts.size != 2) return@forEach
+            Bukkit.broadcastMessage("${ChatColor.YELLOW}⏳ [전쟁] '${parts[0]}' 국가와 '${parts[1]}' 국가의 전쟁 기간(3일)이 끝나 자동으로 휴전합니다.")
+            endWar(parts[0], parts[1])
+        }
+    }
+
     private fun warsOf(name: String): List<String> =
         activeWars.mapNotNull { key ->
             val parts = key.split("|")
@@ -239,17 +262,19 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
 
     private fun startWar(declarer: String, accepter: String) {
         activeWars.add(warKey(declarer, accepter))
+        warStarts[warKey(declarer, accepter)] = System.currentTimeMillis()
         warRequests[declarer]?.remove(accepter)
         warRequests[accepter]?.remove(declarer)
         truceRequests[declarer]?.remove(accepter)
         truceRequests[accepter]?.remove(declarer)
         addRecord("START", declarer, accepter)
-        Bukkit.broadcastMessage("${ChatColor.RED}⚔ [전쟁] '$declarer' 국가와 '$accepter' 국가의 전쟁이 시작되었습니다! 이제 서로의 신호기를 점령할 수 있습니다.")
+        Bukkit.broadcastMessage("${ChatColor.RED}⚔ [전쟁] '$declarer' 국가와 '$accepter' 국가의 전쟁이 시작되었습니다! 이제 서로의 신호기를 점령할 수 있습니다. (최대 3일, 이후 자동 휴전)")
         saveWars()
     }
 
     private fun endWar(a: String, b: String) {
         activeWars.remove(warKey(a, b))
+        warStarts.remove(warKey(a, b))
         truceRequests[a]?.remove(b)
         truceRequests[b]?.remove(a)
         addRecord("TRUCE", a, b)
@@ -264,6 +289,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         plugin.allianceManager.removeNation(name)
         plugin.warScoreManager.removeNation(name)
         activeWars.removeAll { it.split("|").contains(name) }
+        warStarts.keys.removeAll { it.split("|").contains(name) }
         warRequests.remove(name)
         warRequests.values.forEach { it.remove(name) }
         truceRequests.remove(name)
@@ -517,21 +543,30 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
             "§a금고 §f${nation.bank}원",
             "§b일일 유지비 §f${dailyTax(nation.level)}원 §7(매일 자정)",
             if (nation.level < 5) "§7다음 업그레이드 §f${upgradeCost(nation.level)}원" else "§7최고 레벨 도달",
-            if (enemies.isEmpty()) "§7전쟁 중인 국가 §f없음" else "§c전쟁 중 §f${enemies.joinToString(", ")}"))
+            if (enemies.isEmpty()) "§7전쟁 중인 국가 §f없음"
+            else "§c전쟁 중 §f" + enemies.joinToString(", ") { e ->
+                val left = (warRemainingMs(nationName, e) ?: 0) / 60000
+                "$e §7(${left / 60}시간 ${left % 60}분 남음)§f"
+            }))
 
-        inv.setItem(11, item(Material.GRASS_BLOCK, "§a§l영토 점령",
+        inv.setItem(10, item(Material.GRASS_BLOCK, "§a§l영토 점령",
             "§7현재 서 있는 청크를 국가 영토로 점령합니다.", "", leaderOnly))
 
-        inv.setItem(13, item(Material.GOLD_INGOT, "§e§l금고 입금",
+        inv.setItem(12, item(Material.GOLD_INGOT, "§e§l금고 입금",
             "§7좌클릭 §f100원",
             "§7우클릭 §f1,000원",
             "§7쉬프트+좌클릭 §f10,000원",
             "§7쉬프트+우클릭 §f100,000원"))
 
-        inv.setItem(15, item(Material.EXPERIENCE_BOTTLE, "§b§l국가 업그레이드",
+        inv.setItem(14, item(Material.EXPERIENCE_BOTTLE, "§b§l국가 업그레이드",
             if (nation.level < 5) "§7필요 금액 §f${upgradeCost(nation.level)}원" else "§7이미 최고 레벨입니다.",
             if (nation.level < 5) "§7다음 효과: ${getLevelEffectMessage(nation.level + 1)}" else "",
             "", leaderOnly))
+
+        inv.setItem(16, item(Material.CHEST, "§6§l국가 창고",
+            "§7국가원 모두가 함께 쓰는 창고입니다.",
+            "§7크기 §f${9 * (nation.level + 2).coerceIn(3, 6)}칸 §7(국가 레벨이 오르면 커짐)",
+            "", "§a클릭하여 열기"))
 
         inv.setItem(20, item(Material.ENDER_PEARL, "§d§l국가 스폰 이동",
             "§7국가 스폰 지점으로 이동합니다.",
@@ -760,8 +795,8 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
             }
 
             MenuType.MAIN -> when (event.slot) {
-                11 -> { player.closeInventory(); claimChunk(player) }
-                13 -> {
+                10 -> { player.closeInventory(); claimChunk(player) }
+                12 -> {
                     val amount = when (event.click) {
                         ClickType.LEFT -> 100.0
                         ClickType.RIGHT -> 1000.0
@@ -772,7 +807,8 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
                     depositBank(player, amount)
                     later { openMainMenu(player) }
                 }
-                15 -> { upgradeNation(player); later { openMainMenu(player) } }
+                14 -> { upgradeNation(player); later { openMainMenu(player) } }
+                16 -> later { plugin.nationStorageManager.open(player) }
                 20 -> { player.closeInventory(); centerTP(player) }
                 22 -> { player.closeInventory(); setNationSpawn(player) }
                 24 -> { player.closeInventory(); setNationBeacon(player) }
@@ -1089,6 +1125,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         val nation = nations[nationName] ?: return
         if (nation.leader != player.uniqueId) return player.sendMessage("${ChatColor.RED}국가 지도자만 해체할 수 있습니다.")
 
+        plugin.nationStorageManager.dropAll(nationName, player.location) // 창고 아이템은 지도자 발밑에 떨어뜨림
         nation.claims.forEach { Nation.chunkClaims.remove(it) }
         nation.members.forEach { playerNations.remove(it) }
         nations.remove(nationName)
@@ -1152,6 +1189,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
 
         // 전쟁 랭크 점수 지급 (국가 데이터가 사라지기 전에)
         plugin.warScoreManager.settleConquest(attackerNationName, defenderNationName)
+        plugin.nationStorageManager.absorb(attackerNationName, defenderNationName, attacker.location)
 
         // 전쟁 기록 (국가 데이터가 사라지기 전에 기록)
         addRecord("CONQUER", attackerNationName, defenderNationName,
@@ -1202,6 +1240,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         if (!::warsFile.isInitialized) return
         val config = YamlConfiguration()
         config.set("wars", activeWars.toList())
+        config.set("war-starts", warStarts.map { "${it.key}|${it.value}" })
         config.set("log", warLog.map { "${it.time}|${it.type}|${it.a}|${it.b}|${it.detail}" })
         try { config.save(warsFile) } catch (e: IOException) { e.printStackTrace() }
     }
@@ -1218,6 +1257,16 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
                 activeWars.add(key)
             }
         }
+
+        // 시작 시각 기록이 없는 기존 전쟁은 지금부터 3일
+        val now = System.currentTimeMillis()
+        config.getStringList("war-starts").forEach { line ->
+            val p = line.split("|")
+            val time = p.getOrNull(2)?.toLongOrNull() ?: return@forEach
+            warStarts["${p[0]}|${p[1]}"] = time
+        }
+        warStarts.keys.retainAll(activeWars)
+        activeWars.forEach { warStarts.putIfAbsent(it, now) }
 
         config.getStringList("log").forEach { line ->
             val p = line.split("|", limit = 5)

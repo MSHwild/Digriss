@@ -45,6 +45,9 @@ commands:
   연합:
     description: 국가 연합을 요청하고 관리합니다
     usage: /연합
+  국가창고:
+    description: 국가원이 함께 쓰는 국가 창고를 엽니다
+    usage: /국가창고
   국가채팅:
     description: 같은 국가원에게만 보내는 채팅 (채팅창에 !메시지 도 가능)
     usage: /국가채팅 <메시지>

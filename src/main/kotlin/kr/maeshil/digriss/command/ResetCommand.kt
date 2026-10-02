@@ -53,6 +53,7 @@ class ResetCommand(private val plugin: Digriss) : CommandExecutor {
         plugin.nationManager.resetAll()
         plugin.allianceManager.resetAll()
         plugin.warScoreManager.resetAll()
+        plugin.nationStorageManager.resetAll()
         plugin.questManager.resetAll()
 
         return resetMoney()

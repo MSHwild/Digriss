@@ -1,0 +1,93 @@
+package kr.maeshil.digriss.manager
+
+import kr.maeshil.digriss.Digriss
+import kr.maeshil.digriss.nation.Nation
+import kr.maeshil.digriss.nation.NationStorageHolder
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.Player
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemStack
+import java.io.File
+
+// 국가 공용 창고: 국가원 모두가 같은 인벤토리를 함께 씀 (동시에 열어도 실시간 공유)
+// 크기는 국가 레벨에 따라 커짐: Lv.1 27칸, Lv.2 36칸, Lv.3 45칸, Lv.4 이상 54칸
+class NationStorageManager(private val plugin: Digriss) {
+
+    private val file = File(plugin.dataFolder, "nation-storage.yml")
+    private val inventories = mutableMapOf<String, Inventory>()
+    private val saved = mutableMapOf<String, List<ItemStack?>>() // 아직 열지 않은 국가의 저장된 내용
+
+    init {
+        if (file.exists()) {
+            val config = YamlConfiguration.loadConfiguration(file)
+            config.getKeys(false).forEach { name ->
+                @Suppress("UNCHECKED_CAST")
+                saved[name] = (config.getList(name) as? List<ItemStack?>) ?: emptyList()
+            }
+        }
+    }
+
+    private fun sizeFor(level: Int) = 9 * (level + 2).coerceIn(3, 6)
+
+    fun open(player: Player) {
+        val name = plugin.nationManager.getNationName(player.uniqueId)
+        if (name == null) {
+            player.sendMessage("§c소속된 국가가 없습니다.")
+            return
+        }
+        player.openInventory(inventoryOf(name))
+    }
+
+    private fun inventoryOf(name: String): Inventory {
+        val size = sizeFor(Nation.nations[name]?.level ?: 1)
+        val current = inventories[name]
+        if (current != null && current.size >= size) return current
+
+        // 처음 열거나 레벨업으로 칸이 늘어났으면 새로 만들고 내용 옮김
+        val contents = current?.contents?.toList() ?: saved.remove(name) ?: emptyList()
+        val inv = Bukkit.createInventory(NationStorageHolder(name), size, "§8국가 창고 - $name")
+        contents.take(size).forEachIndexed { i, item -> if (item != null) inv.setItem(i, item) }
+        current?.viewers?.toList()?.forEach { it.closeInventory() }
+        inventories[name] = inv
+        return inv
+    }
+
+    // 국가 해체: 창고 아이템을 지정 위치(지도자 위치)에 떨어뜨림
+    fun dropAll(name: String, location: Location) {
+        val items = takeAll(name)
+        items.forEach { location.world?.dropItemNaturally(location, it) }
+        save()
+    }
+
+    // 국가 점령: 패배국 창고를 승리국 창고로 옮기고, 넘치는 건 공격자 위치에 떨어뜨림
+    fun absorb(attacker: String, defender: String, overflowAt: Location) {
+        val items = takeAll(defender)
+        val leftover = inventoryOf(attacker).addItem(*items.toTypedArray())
+        leftover.values.forEach { overflowAt.world?.dropItemNaturally(overflowAt, it) }
+        save()
+    }
+
+    private fun takeAll(name: String): List<ItemStack> {
+        val inv = inventories.remove(name)
+        inv?.viewers?.toList()?.forEach { it.closeInventory() }
+        val items = inv?.contents?.toList() ?: saved.remove(name) ?: emptyList()
+        saved.remove(name)
+        return items.filterNotNull().filter { !it.type.isAir }
+    }
+
+    fun resetAll() {
+        inventories.values.forEach { inv -> inv.viewers.toList().forEach { it.closeInventory() } }
+        inventories.clear()
+        saved.clear()
+        save()
+    }
+
+    fun save() {
+        val config = YamlConfiguration()
+        saved.forEach { (name, items) -> config.set(name, items) }
+        inventories.forEach { (name, inv) -> config.set(name, inv.contents.toList()) }
+        runCatching { config.save(file) }.onFailure { plugin.logger.severe("nation-storage.yml 저장 실패: ${it.message}") }
+    }
+}
