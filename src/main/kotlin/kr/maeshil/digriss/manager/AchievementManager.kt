@@ -103,9 +103,24 @@ class AchievementManager(private val plugin: Digriss) {
 
     // ── 저장 ──
 
+    // /초기화: 운영자가 지급한 칭호(베타 테스터 등)만 남기고 전부 지움
     fun resetAll() {
-        players.clear()
+        players.entries.removeIf { (_, d) ->
+            d.unlocked.retainAll { it.manual }
+            if (d.title?.manual != true) d.title = null
+            d.quests = 0
+            d.unlocked.isEmpty()
+        }
         save()
+    }
+
+    // 운영자 회수: 달성 기록과 장착 상태 제거
+    fun revoke(uuid: UUID, a: Achievement): Boolean {
+        val d = data(uuid)
+        if (!d.unlocked.remove(a)) return false
+        if (d.title == a) d.title = null
+        save()
+        return true
     }
 
     private fun save() {

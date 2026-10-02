@@ -7,7 +7,8 @@ enum class Achievement(
     val displayName: String,
     val description: String,
     val title: String,
-    val icon: Material
+    val icon: Material,
+    val manual: Boolean = false   // 운영자가 직접 지급하는 칭호 (/초기화 해도 유지)
 ) {
     // ── 전투 ──
     FIRST_BLOOD("첫 사냥", "플레이어를 처음으로 처치", "§7[신참 전사]", Material.WOODEN_SWORD),
@@ -31,9 +32,18 @@ enum class Achievement(
 
     // ── 랭크 ──
     RANK_DIAMOND("다이아몬드", "다이아 랭크 도달", "§3[다이아의 기백]", Material.DIAMOND),
-    RANK_DIGRISS("전설", "디그리스 랭크 도달", "§2§l[디그리스의 전설]", Material.DRAGON_HEAD);
+    RANK_DIGRISS("전설", "디그리스 랭크 도달", "§2§l[디그리스의 전설]", Material.DRAGON_HEAD),
+
+    // ── 운영자 지급 ──
+    BETA_TESTER("베타 테스터", "테스트 서버에 참여해 디그리스를 함께 만든 사람", "§d§l[베타 테스터]", Material.AMETHYST_SHARD, manual = true);
 
     companion object {
         fun of(name: String): Achievement? = entries.firstOrNull { it.name == name }
+
+        // 명령어 입력용: "BETA_TESTER", "베타테스터", "베타 테스터" 모두 인식
+        fun find(input: String): Achievement? {
+            val key = input.replace(" ", "")
+            return entries.firstOrNull { it.name.equals(key, true) || it.displayName.replace(" ", "") == key }
+        }
     }
 }

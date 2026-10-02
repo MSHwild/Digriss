@@ -59,7 +59,7 @@ commands:
     usage: /도움말 [카테고리]
   칭호:
     description: 업적 목록을 보고 칭호를 장착합니다
-    usage: /칭호
+    usage: /칭호 (관리자 /칭호 지급|회수 <닉네임> <칭호>)
     aliases:
       - 업적
   전쟁이벤트:
