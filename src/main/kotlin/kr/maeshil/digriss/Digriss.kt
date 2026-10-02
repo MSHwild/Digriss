@@ -13,6 +13,8 @@ import kr.maeshil.digriss.job.JobConfirmCommand
 import kr.maeshil.digriss.job.JobListener
 import kr.maeshil.digriss.job.JobManager
 import kr.maeshil.digriss.job.JobPurchaseCommand
+import kr.maeshil.digriss.job.GuardianSkill
+import kr.maeshil.digriss.job.HealerAura
 import kr.maeshil.digriss.job.JobSkillRegistry
 import kr.maeshil.digriss.job.JobType
 import kr.maeshil.digriss.jobManager.AssassinStealthManager
@@ -119,6 +121,8 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
         Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
         Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
+        Bukkit.getPluginManager().registerEvents(GuardianSkill.TauntListener(), this)
+        HealerAura.start(this)
 
         // 명령어 등록
         getCommand("영혼")?.setExecutor(SoulCommand(this))
