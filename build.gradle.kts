@@ -26,6 +26,17 @@ tasks {
         dependsOn(shadowJar)
     }
 
+    // 서버에 올릴 jar: Kotlin·설정 파일(quest.yml, help.yml)까지 다 들어간 jar를 바탕화면 plugin 폴더에 Digriss.jar로 복사
+    // (IntelliJ "Build Artifacts"로 만든 jar는 설정 파일이 빠져서 서버에서 켜지지 않음)
+    val deployJar by registering(Copy::class) {
+        from(shadowJar.flatMap { it.archiveFile })
+        into("${System.getProperty("user.home")}/Desktop/plugin")
+        rename { "Digriss.jar" }
+    }
+    shadowJar {
+        finalizedBy(deployJar)
+    }
+
     runServer {
         // Configure the Minecraft version for our task.
         // This is the only required configuration besides applying the plugin.
