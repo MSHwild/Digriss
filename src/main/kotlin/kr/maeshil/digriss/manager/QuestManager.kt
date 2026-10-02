@@ -152,9 +152,19 @@ class QuestManager(private val plugin: Digriss) {
 
     private fun drawFor(player: Player, difficulty: QuestDifficulty, excludeIds: Set<String>): QuestDefinition? {
         val atWar = isAtWar(player)
-        return definitions.values
+        val candidates = definitions.values
             .filter { it.difficulty == difficulty && it.id !in excludeIds && (!it.warOnly || atWar) }
-            .randomOrNull()
+        // 영토 점령은 지도자만, 금고 입금은 국가원만 할 수 있으므로 할 수 있는 것 우선 (없으면 전체에서)
+        return candidates.filter { canDo(player, it.type) }.randomOrNull() ?: candidates.randomOrNull()
+    }
+
+    private fun canDo(player: Player, type: QuestType): Boolean {
+        val nationName = plugin.nationManager.getNationName(player.uniqueId)
+        return when (type) {
+            QuestType.CLAIM_CHUNK -> nationName != null && kr.maeshil.digriss.nation.Nation.nations[nationName]?.leader == player.uniqueId
+            QuestType.BANK_DEPOSIT -> nationName != null
+            else -> true
+        }
     }
 
     // 하루 1회, 완료하지 않은 퀘스트 1개를 같은 난이도의 다른 퀘스트로 교체

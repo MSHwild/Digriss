@@ -65,6 +65,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         }
         nationsConfig = YamlConfiguration.loadConfiguration(nationsFile)
         loadNations()
+        BlueMapBridge.onReady { redrawMap() }
         war.load(File(plugin.dataFolder, "war.yml"))
 
         plugin.getCommand("국가")?.setExecutor(this)
@@ -528,6 +529,16 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         attacker.sendMessage("${ChatColor.GOLD}${defenderNation.claims.size}개의 영토와 금고 잔액 ${defenderNation.bank}원을 모두 흡수했습니다!")
 
         saveNations()
+    }
+
+    // BlueMap 지도에 모든 국가 신호기·영토를 다시 표시
+    private fun redrawMap() {
+        nations.values.forEach { nation ->
+            nationBeacons[nation.name]?.let { BlueMapBridge.addNationMarker(nation.name, it) }
+            nation.claims.map { it.substringBefore(',') }.distinct().forEach { world ->
+                BlueMapBridge.updateTerritory(nation, world)
+            }
+        }
     }
 
     // ───────────────────────── 저장 / 로드 ─────────────────────────

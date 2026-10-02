@@ -15,6 +15,17 @@ object BlueMapBridge {
     private const val POI_SET_ID = "nation_markers"
     private const val TERRITORY_SET_ID = "nation_territory"
 
+    // BlueMap이 없는 서버에서 BlueMap 클래스를 건드리면 오류가 나므로 먼저 확인
+    private val available: Boolean get() = Bukkit.getPluginManager().getPlugin("BlueMap") != null
+
+    // BlueMap API는 서버가 켜진 뒤 비동기로 준비되고, /bluemap reload 때마다 마커가 지워짐
+    // → 준비될 때마다 action으로 전체 마커를 다시 그림 (메인 스레드에서 실행)
+    fun onReady(action: () -> Unit) {
+        if (!available) return
+        val plugin = Bukkit.getPluginManager().getPlugin("Digriss") ?: return
+        BlueMapAPI.onEnable { Bukkit.getScheduler().runTask(plugin, Runnable { action() }) }
+    }
+
     // 🌟 BlueMap Color 생성자 (ARGB Int 패킹 방식 사용 - 클래스 충돌 100% 방지)
     // 🌟 16진수 ARGB/RGBA 정수 패킹 방식을 사용하여 생성자 타입 충돌 완전 해결
     private fun colorFor(nationName: String): Color {
@@ -46,6 +57,7 @@ object BlueMapBridge {
 
     // 📍 1. 국가 깃발/아이콘 POI 마커 추가 (Y=64 고정)
     fun addNationMarker(nationName: String, loc: Location) {
+        if (!available) return
         BlueMapAPI.getInstance().ifPresent { api ->
             val world = loc.world ?: return@ifPresent
             api.getWorld(world).ifPresent { blueWorld ->
@@ -70,6 +82,7 @@ object BlueMapBridge {
     }
 
     fun removeNationMarker(nationName: String) {
+        if (!available) return
         BlueMapAPI.getInstance().ifPresent { api ->
             api.maps.forEach { map ->
                 map.markerSets[POI_SET_ID]?.markers?.remove(nationName)
@@ -79,6 +92,7 @@ object BlueMapBridge {
 
     // 🗺️ 2. 국가 영토 사각형 표시 (Y=64 고정 및 depthTestEnabled(false))
     fun updateTerritory(nation: Nations, worldName: String) {
+        if (!available) return
         BlueMapAPI.getInstance().ifPresent { api ->
             val bukkitWorld = Bukkit.getWorld(worldName) ?: return@ifPresent
             api.getWorld(bukkitWorld).ifPresent { blueWorld ->
@@ -128,6 +142,7 @@ object BlueMapBridge {
     }
 
     fun removeTerritory(nationName: String) {
+        if (!available) return
         BlueMapAPI.getInstance().ifPresent { api ->
             api.maps.forEach { map ->
                 map.markerSets[TERRITORY_SET_ID]?.markers?.keys?.removeIf { it.startsWith("${nationName}_chunk_") }
