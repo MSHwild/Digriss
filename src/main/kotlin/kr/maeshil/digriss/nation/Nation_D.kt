@@ -214,6 +214,8 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
 
     private fun isAtWar(a: String, b: String) = activeWars.contains(warKey(a, b))
 
+    fun isAtWarBetween(a: String, b: String) = isAtWar(a, b)
+
     private fun warsOf(name: String): List<String> =
         activeWars.mapNotNull { key ->
             val parts = key.split("|")
@@ -257,6 +259,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
     /** 국가가 사라질 때(해체/멸망) 관련 전쟁·요청 정리. except 국가와의 전쟁은 별도 기록이 있으므로 종료 기록을 남기지 않음 */
     private fun removeWarData(name: String, endDetail: String, except: String? = null) {
         warsOf(name).filter { it != except }.forEach { addRecord("END", name, it, endDetail) }
+        plugin.allianceManager.removeNation(name)
         activeWars.removeAll { it.split("|").contains(name) }
         warRequests.remove(name)
         warRequests.values.forEach { it.remove(name) }
@@ -272,6 +275,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         if (myName == target) return
         if (nations[target] == null) return player.sendMessage("${ChatColor.RED}존재하지 않는 국가입니다.")
         if (isAtWar(myName, target)) return player.sendMessage("${ChatColor.RED}이미 전쟁 중입니다.")
+        if (plugin.allianceManager.areAllied(myName, target)) return player.sendMessage("${ChatColor.RED}연합국에는 전쟁을 선포할 수 없습니다. 먼저 /연합 에서 연합을 해제하세요.")
 
         val requests = warRequests.getOrPut(target) { mutableSetOf() }
         if (!requests.add(myName)) return player.sendMessage("${ChatColor.RED}이미 전쟁을 선포했습니다. 상대의 수락을 기다리는 중입니다.")
@@ -287,6 +291,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
             warRequests[myName]?.remove(from)
             return player.sendMessage("${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
         }
+        if (plugin.allianceManager.areAllied(myName, from)) return player.sendMessage("${ChatColor.RED}연합국과는 전쟁할 수 없습니다.")
         startWar(from, myName)
     }
 
@@ -389,6 +394,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         val (title, subtitle) = when {
             owner.isEmpty() -> "§7무소속 지역" to "§8누구의 영토도 아닙니다"
             owner == myNation -> "§a$owner" to "§2내 국가 영토"
+            plugin.allianceManager.areAllied(myNation, owner) -> "§b$owner" to "§3연합국 영토"
             myNation != null && isAtWar(myNation, owner) -> "§4⚔ $owner ⚔" to "§c전쟁 중인 국가의 영토입니다"
             else -> "§c$owner" to "§7다른 국가의 영토"
         }
@@ -421,6 +427,7 @@ class Nation_D(private val plugin: Digriss) : Listener, CommandExecutor {
         return when {
             ownerNation == null -> "§f소속 국가 : 무소속"
             ownerNation == myNation -> "§a소속 국가 : $ownerNation(내 국가)"
+            plugin.allianceManager.areAllied(myNation, ownerNation) -> "§b소속 국가 : $ownerNation(연합국)"
             myNation != null && isAtWar(myNation, ownerNation) -> "§4소속 국가 : $ownerNation(전쟁 중)"
             else -> "§c소속 국가 : $ownerNation"
         }

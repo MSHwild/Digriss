@@ -3,6 +3,7 @@ package kr.maeshil.digriss
 import kr.maeshil.digriss.effect.KillEffectManager
 import kr.maeshil.digriss.job.JobManager
 import kr.maeshil.digriss.manager.DCManager
+import kr.maeshil.digriss.manager.AllianceManager
 import kr.maeshil.digriss.manager.KDManager
 import kr.maeshil.digriss.manager.RankTiers
 import kr.maeshil.digriss.manager.RankManager
@@ -22,7 +23,8 @@ class ScoreboardManager(
     private val killEffectManager: KillEffectManager,
     private val jobManager: JobManager,
     private val nationManager: Nation_D,
-    private val dcManager: DCManager
+    private val dcManager: DCManager,
+    private val allianceManager: AllianceManager
 ) {
 
     private var economy: Economy? = null
@@ -53,6 +55,12 @@ class ScoreboardManager(
         val rank = rankManager.getTier(player)
         val nation = nationManager.getNationName(uuid) ?: "§8없음"
         val wars = nationManager.warsOfPlayer(uuid)
+        val allies = allianceManager.alliesOfPlayer(player)
+        val allyText = when {
+            allies.isEmpty() -> "§8없음"
+            allies.size <= 2 -> "§b" + allies.joinToString(", ")
+            else -> "§b${allies[0]} 외 ${allies.size - 1}개국"
+        }
         val warText = when {
             wars.isEmpty() -> "§8없음"
             wars.size <= 2 -> "§c" + wars.joinToString(", ")
@@ -76,6 +84,7 @@ class ScoreboardManager(
             "",
             " §a✦ §7국가 §8» §a$nation",
             " §4⚔ §7전쟁 §8» $warText",
+            " §b🤝 §7연합 §8» $allyText",
             " §c✦ §7이펙트 §8» §c${equippedEffect?.displayName ?: "§8없음"}",
             "§8§m――――――――――――§r",
             " §f접속자 §8» §f§l$online§7명",
@@ -97,12 +106,14 @@ class ScoreboardManager(
     private fun updateNameColors(viewer: Player, scoreboard: Scoreboard) {
         val myNation = nationManager.getNationName(viewer.uniqueId)
         val wars = nationManager.warsOfPlayer(viewer.uniqueId)
+        val allies = allianceManager.alliesOfPlayer(viewer)
 
         Bukkit.getOnlinePlayers().forEach { other ->
             val otherNation = nationManager.getNationName(other.uniqueId)
             val (relation, color) = when {
                 myNation != null && otherNation == myNation -> "ally" to org.bukkit.ChatColor.GREEN
                 otherNation != null && otherNation in wars -> "enemy" to org.bukkit.ChatColor.RED
+                otherNation != null && otherNation in allies -> "allied" to org.bukkit.ChatColor.AQUA
                 else -> "none" to org.bukkit.ChatColor.WHITE
             }
             val tierIndex = RankTiers.tiers.indexOf(rankManager.getTier(other))

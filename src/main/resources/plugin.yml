@@ -42,6 +42,12 @@ commands:
     description: 플레이어의 오늘 퀘스트를 초기화합니다 (관리자)
     usage: /퀘스트관리 초기화 <닉네임>
     permission: digriss.admin
+  연합:
+    description: 국가 연합을 요청하고 관리합니다
+    usage: /연합
+  국가랭킹:
+    description: 국가 순위를 확인합니다
+    usage: /국가랭킹 [영토|금고|인원|레벨]
   국가:
     description: 국가 메뉴를 엽니다 (생성, 관리, 전쟁)
     usage: /국가

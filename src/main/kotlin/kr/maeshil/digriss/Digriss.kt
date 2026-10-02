@@ -20,6 +20,10 @@ import kr.maeshil.digriss.jobManager.ReaperChargeManager
 import kr.maeshil.digriss.job.ReaperSkill
 import kr.maeshil.digriss.job.JobTriggerListener
 import kr.maeshil.digriss.jobManager.AssassinListener
+import kr.maeshil.digriss.alliance.AllianceCommand
+import kr.maeshil.digriss.alliance.AllianceListener
+import kr.maeshil.digriss.command.NationRankCommand
+import kr.maeshil.digriss.manager.AllianceManager
 import kr.maeshil.digriss.manager.DCManager
 import kr.maeshil.digriss.manager.JobSkillManager
 import kr.maeshil.digriss.manager.KDManager
@@ -60,6 +64,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var questManager: QuestManager
         private set
+    lateinit var allianceManager: AllianceManager
+        private set
 
     override fun onEnable() {
 
@@ -76,6 +82,7 @@ class Digriss : JavaPlugin() {
         manaManager = ManaManager(this)
         jobSkillManager = JobSkillManager(this)
 
+        allianceManager = AllianceManager(this) // Nation_D가 사용하므로 먼저 생성
         nationManager = Nation_D(this)
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
 
@@ -98,7 +105,7 @@ class Digriss : JavaPlugin() {
             }
         }
 
-        scoreboardManager = ScoreboardManager(soulManager, kdManager, rankManager, killEffectManager, jobManager, nationManager,dcManager)
+        scoreboardManager = ScoreboardManager(soulManager, kdManager, rankManager, killEffectManager, jobManager, nationManager, dcManager, allianceManager)
 
         val effectGUI = EffectGUI(this)
 
@@ -111,6 +118,7 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(SkillListener(this, manaManager), this)
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
         Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
+        Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
 
         // 명령어 등록
         getCommand("영혼")?.setExecutor(SoulCommand(this))
@@ -123,6 +131,8 @@ class Digriss : JavaPlugin() {
         getCommand("킬이펙트")?.setExecutor(KillEffectCommand(effectGUI))
         getCommand("퀘스트")?.setExecutor(QuestCommand(questManager))
         getCommand("퀘스트관리")?.setExecutor(QuestAdminCommand(questManager))
+        getCommand("연합")?.setExecutor(AllianceCommand(this))
+        NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
         Bukkit.getScheduler().runTaskTimer(this, Runnable { saveAll() }, 6000L, 6000L)

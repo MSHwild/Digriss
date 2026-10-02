@@ -18,11 +18,12 @@ class ScoutSkill : JobSkill {
         val myNation = plugin.nationManager.getNationName(player.uniqueId)
         val durationTicks = (glowDurationSeconds * 20).toInt()
 
-        // 같은 국가원은 제외 (무소속이면 다른 모든 플레이어가 대상)
+        // 같은 국가원과 연합국 국가원은 제외 (무소속이면 다른 모든 플레이어가 대상)
         val enemies = player.world.getNearbyPlayers(player.location, radius).filter {
             it != player &&
                 it.gameMode != GameMode.SPECTATOR &&
-                (myNation == null || plugin.nationManager.getNationName(it.uniqueId) != myNation)
+                (myNation == null || plugin.nationManager.getNationName(it.uniqueId) != myNation) &&
+                !plugin.allianceManager.areAllied(myNation, plugin.nationManager.getNationName(it.uniqueId))
         }
 
         player.playSound(player.location, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.8f)
