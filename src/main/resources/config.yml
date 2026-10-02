@@ -1,0 +1,99 @@
+# ───────────────────────── 일일 퀘스트 ─────────────────────────
+# 매일 오전 5시(한국 시간)에 쉬움/보통/어려움 1개씩 새로 뽑힙니다.
+#
+# type 종류:
+#   MOB_KILL                 몬스터 처치 (스포너 몹 제외)
+#   CLAIM_CHUNK              국가 영토 청크 점령
+#   BANK_DEPOSIT             국가 금고 입금 (target = 원)
+#   SKILL_USE                스킬 아이템 사용
+#   ENEMY_TERRITORY_ENTER    적국 영토 입장 (청크 이동 기준)
+#   WAR_KILL_ENEMY_TERRITORY 전쟁 중 적국 영토에서 킬
+#   ENEMY_BEACON_VISIT       적 신호기 근처 방문
+#   PLAYER_KILL              플레이어 킬 (HARD 전용, 같은 상대 10분 내 재처치는 제외)
+#
+# difficulty: EASY / NORMAL / HARD
+# war-only: true면 내 국가가 전쟁 중일 때만 뽑힘
+# souls / money를 퀘스트에 적으면 아래 rewards 대신 그 값을 지급
+
+rewards:
+  easy:
+    souls: 10
+    money: 3000
+  normal:
+    souls: 20
+    money: 7000
+  hard:
+    souls: 40
+    money: 15000
+
+quests:
+  # 쉬움
+  mob_kill_easy:
+    type: MOB_KILL
+    difficulty: EASY
+    target: 20
+    name: "몬스터 20마리 처치"
+  skill_use_easy:
+    type: SKILL_USE
+    difficulty: EASY
+    target: 10
+    name: "스킬 아이템 10회 사용"
+  bank_deposit_easy:
+    type: BANK_DEPOSIT
+    difficulty: EASY
+    target: 5000
+    name: "국가 금고에 5,000원 입금"
+
+  # 보통
+  mob_kill_normal:
+    type: MOB_KILL
+    difficulty: NORMAL
+    target: 50
+    name: "몬스터 50마리 처치"
+  claim_chunk_normal:
+    type: CLAIM_CHUNK
+    difficulty: NORMAL
+    target: 3
+    name: "국가 영토 3청크 점령"
+  enemy_enter_normal:
+    type: ENEMY_TERRITORY_ENTER
+    difficulty: NORMAL
+    target: 5
+    name: "다른 국가 영토에 5회 진입"
+  beacon_visit_war:
+    type: ENEMY_BEACON_VISIT
+    difficulty: NORMAL
+    target: 1
+    name: "[전쟁] 적 신호기 근처 방문"
+    war-only: true
+
+  # 어려움
+  mob_kill_hard:
+    type: MOB_KILL
+    difficulty: HARD
+    target: 120
+    name: "몬스터 120마리 처치"
+  bank_deposit_hard:
+    type: BANK_DEPOSIT
+    difficulty: HARD
+    target: 30000
+    name: "국가 금고에 30,000원 입금"
+  player_kill_hard:
+    type: PLAYER_KILL
+    difficulty: HARD
+    target: 3
+    name: "플레이어 3명 처치"
+  war_kill_hard:
+    type: WAR_KILL_ENEMY_TERRITORY
+    difficulty: HARD
+    target: 2
+    name: "[전쟁] 적국 영토에서 2킬"
+    war-only: true
+
+# 한 주(월요일 시작)에 required-days일 이상 퀘스트를 1개 이상 완료하면 1회 지급
+# DC는 여기서만 지급되며 plugins/Digriss/quest-dc.log에 기록됩니다
+weekly-bonus:
+  required-days: 5
+  souls: 100
+  money: 50000
+  dc: 1

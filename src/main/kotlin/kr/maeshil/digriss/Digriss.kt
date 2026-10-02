@@ -27,6 +27,8 @@ import kr.maeshil.digriss.manager.ManaManager
 import kr.maeshil.digriss.manager.RankManager
 import kr.maeshil.digriss.manager.SoulManager
 import kr.maeshil.digriss.nation.Nation_D
+import kr.maeshil.digriss.quest.QuestListener
+import kr.maeshil.digriss.quest.QuestManager
 import kr.maeshil.digriss.skill.SkillListener
 import org.bukkit.Bukkit
 import org.bukkit.event.HandlerList
@@ -54,6 +56,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var nationManager: Nation_D
         private set
+    lateinit var questManager: QuestManager
+        private set
 
     override fun onEnable() {
 
@@ -72,6 +76,8 @@ class Digriss : JavaPlugin() {
 
         nationManager = Nation_D(this)
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
+
+        questManager = QuestManager(this) // soul/dc/nation 매니저 이후에 생성
 
         // 직업 스킬(Shift+Q) 쿨타임 상시 표시 (스킬이 있는 직업만)
         ActionBarManager.addProvider { player ->
@@ -102,6 +108,7 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(WeaponSkillListener(this), this)
         Bukkit.getPluginManager().registerEvents(SkillListener(this, manaManager), this)
         Bukkit.getPluginManager().registerEvents(AssassinListener(jobManager), this)
+        Bukkit.getPluginManager().registerEvents(QuestListener(questManager), this)
 
         // 명령어 등록
         getCommand("영혼")?.setExecutor(SoulCommand(this))
@@ -140,5 +147,6 @@ class Digriss : JavaPlugin() {
         if (::kdManager.isInitialized) kdManager.save()
         if (::killEffectManager.isInitialized) killEffectManager.save()
         if (::jobManager.isInitialized) jobManager.save()
+        if (::questManager.isInitialized) questManager.saveAll()
     }
 }
