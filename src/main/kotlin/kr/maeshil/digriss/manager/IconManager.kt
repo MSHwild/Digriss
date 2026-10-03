@@ -14,6 +14,7 @@ class IconManager(private val plugin: Digriss) {
 
     private val file = File(plugin.dataFolder, "icons.yml")
     private var config = YamlConfiguration()
+    private var loadedStamp = -1L // 마지막으로 읽은 파일의 수정 시각
 
     init {
         if (!plugin.dataFolder.exists()) plugin.dataFolder.mkdirs()
@@ -22,6 +23,7 @@ class IconManager(private val plugin: Digriss) {
 
     fun load() {
         config = if (file.exists()) YamlConfiguration.loadConfiguration(file) else YamlConfiguration()
+        loadedStamp = file.lastModified()
         if (!file.exists()) {
             config.options().setHeader(listOf(
                 "GUI 아이콘 설정. 바닐라 아이템(BEACON) 또는 ItemsAdder ID(myicons:nation)를 적으세요.",
@@ -33,6 +35,8 @@ class IconManager(private val plugin: Digriss) {
 
     // key의 아이콘. 설정이 없으면 default로 등록하고 그걸 씀. IA ID가 잘못됐거나 IA가 없으면 default로 대신 표시
     fun get(key: String, default: Material): ItemStack {
+        // 서버가 켜진 채로 파일을 고쳤으면 먼저 다시 읽음 (안 그러면 아래 save()가 고친 내용을 예전 값으로 덮어씀)
+        if (file.exists() && file.lastModified() != loadedStamp) load()
         val value = config.getString(key)
         if (value == null) {
             config.set(key, default.name)
@@ -52,6 +56,6 @@ class IconManager(private val plugin: Digriss) {
     }
 
     private fun save() {
-        runCatching { config.save(file) }.onFailure { plugin.logger.warning("[아이콘] icons.yml 저장 실패: ${it.message}") }
+        runCatching { config.save(file); loadedStamp = file.lastModified() }.onFailure { plugin.logger.warning("[아이콘] icons.yml 저장 실패: ${it.message}") }
     }
 }
