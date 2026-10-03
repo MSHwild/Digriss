@@ -601,13 +601,24 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     // ───────────────────────── 신호기 점령 (전쟁 중일 때만) ─────────────────────────
 
+    // 이 블록 위치에 있는 국가 신호기의 국가 이름 (월드 이름 + 블록 좌표로 비교)
+    private fun beaconOwnerAt(block: org.bukkit.block.Block): String? =
+        nationBeacons.entries.find { (_, loc) ->
+            loc.world?.name == block.world.name && loc.blockX == block.x && loc.blockY == block.y && loc.blockZ == block.z
+        }?.key
+
     @EventHandler(ignoreCancelled = true)
     fun onBlockBreak(event: BlockBreakEvent) {
         if (event.block.type != Material.BEACON) return
 
         val breaker = event.player
-        val defenderName = nationBeacons.entries.find { it.value == event.block.location }?.key ?: return
-        if (nations[defenderName] == null) return
+        val defenderName = beaconOwnerAt(event.block) ?: return
+        // 국가 신호기는 어떤 경우에도 아이템으로 떨어지지 않음 (신호기 복사 방지)
+        event.isDropItems = false
+        if (nations[defenderName] == null) {
+            nationBeacons.remove(defenderName) // 주인 없는 기록은 정리
+            return
+        }
 
         val breakerNation = playerNations[breaker.uniqueId]
 
@@ -632,6 +643,28 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
                 conquerNation(breakerNation, defenderName, breaker)
             }
         }
+    }
+
+    // 폭발(TNT·크리퍼 등)로 국가 신호기가 부서져 아이템이 나오지 않게 폭발 목록에서 뺌
+    @EventHandler(ignoreCancelled = true)
+    fun onEntityExplode(event: org.bukkit.event.entity.EntityExplodeEvent) {
+        event.blockList().removeIf { it.type == Material.BEACON && beaconOwnerAt(it) != null }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    fun onBlockExplode(event: org.bukkit.event.block.BlockExplodeEvent) {
+        event.blockList().removeIf { it.type == Material.BEACON && beaconOwnerAt(it) != null }
+    }
+
+    // 피스톤으로 국가 신호기를 밀거나 당겨서 옮기지 못하게
+    @EventHandler(ignoreCancelled = true)
+    fun onPistonExtend(event: org.bukkit.event.block.BlockPistonExtendEvent) {
+        if (event.blocks.any { it.type == Material.BEACON && beaconOwnerAt(it) != null }) event.isCancelled = true
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    fun onPistonRetract(event: org.bukkit.event.block.BlockPistonRetractEvent) {
+        if (event.blocks.any { it.type == Material.BEACON && beaconOwnerAt(it) != null }) event.isCancelled = true
     }
 
     private fun conquerNation(attackerNationName: String, defenderNationName: String, attacker: Player) {
