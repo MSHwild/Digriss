@@ -57,8 +57,7 @@ class WarEventCommand(private val plugin: Digriss) : CommandExecutor, TabComplet
 class IconCommand(private val plugin: Digriss) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (!sender.hasPermission("digriss.admin")) return sender.sendMessage("§c권한이 없습니다.").let { true }
-        plugin.iconManager.load()
-        sender.sendMessage("§aicons.yml을 다시 불러왔습니다. 메뉴를 다시 열면 적용됩니다.")
+        sender.sendMessage(plugin.iconManager.load())
         return true
     }
 }

@@ -21,15 +21,38 @@ class IconManager(private val plugin: Digriss) {
         load()
     }
 
-    fun load() {
-        config = if (file.exists()) YamlConfiguration.loadConfiguration(file) else YamlConfiguration()
+    // 파일을 못 읽었을 때(형식 오류) 기본값으로 덮어쓰지 않도록 저장을 막는 표시
+    private var broken = false
+
+    // 읽기 결과 안내 문구를 돌려줌 (/아이콘 리로드에서 보여줌)
+    fun load(): String {
         loadedStamp = file.lastModified()
         if (!file.exists()) {
+            broken = false
+            config = YamlConfiguration()
             config.options().setHeader(listOf(
-                "GUI 아이콘 설정. 바닐라 아이템(BEACON) 또는 ItemsAdder ID(myicons:nation)를 적으세요.",
+                "GUI 아이콘 설정. 바닐라 아이템(BEACON) 또는 ItemsAdder ID(digriss:menu_nation)를 적으세요.",
                 "수정 후 /아이콘 리로드 로 바로 적용됩니다. 메뉴를 처음 열 때 키가 자동으로 추가됩니다."
             ))
             save()
+            return "§aicons.yml을 새로 만들었습니다."
+        }
+        val bytes = file.readBytes()
+        // 메모장이 한글을 ANSI(EUC-KR)로 저장한 경우도 읽을 수 있게: UTF-8이 아니면 MS949로 해석
+        val text = runCatching {
+            java.nio.charset.StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(bytes)).toString()
+        }.getOrElse { String(bytes, java.nio.charset.Charset.forName("MS949")) }.removePrefix("﻿") // 메모장 UTF-8 BOM 제거
+
+        return try {
+            val loaded = YamlConfiguration()
+            loaded.loadFromString(text)
+            config = loaded
+            broken = false
+            "§aicons.yml을 다시 불러왔습니다. 메뉴를 다시 열면 적용됩니다."
+        } catch (e: Exception) {
+            broken = true
+            plugin.logger.warning("[아이콘] icons.yml 형식이 잘못되어 읽지 못했습니다. 파일은 건드리지 않고 기본 아이콘으로 표시합니다: ${e.message?.lineSequence()?.firstOrNull()}")
+            "§cicons.yml 형식이 잘못되어 읽지 못했습니다. §7(```같은 줄이 들어갔거나 들여쓰기가 틀렸는지 확인) 기본 아이콘으로 표시합니다."
         }
     }
 
@@ -39,8 +62,10 @@ class IconManager(private val plugin: Digriss) {
         if (file.exists() && file.lastModified() != loadedStamp) load()
         val value = config.getString(key)
         if (value == null) {
-            config.set(key, default.name)
-            save()
+            if (!broken) {
+                config.set(key, default.name)
+                save()
+            }
             return ItemStack(default)
         }
         return create(value) ?: ItemStack(default)
