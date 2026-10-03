@@ -8,7 +8,10 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerDropItemEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.event.player.PlayerQuitEvent
 import kr.maeshil.digriss.jobManager.AssassinStealthManager
 import kr.maeshil.digriss.jobManager.ReaperChargeManager
@@ -22,13 +25,24 @@ class JobTriggerListener(
     // Shift+Q 감지 (일반 Q 드랍은 그대로 동작)
     @EventHandler
     fun onDrop(e: PlayerDropItemEvent) {
-        val player = e.player
-        if (!player.isSneaking) return
+        if (!e.player.isSneaking) return
+        if (JobSkillRegistry.get(jobManager.getJob(e.player.uniqueId) ?: return) == null) return
+        e.isCancelled = true // 아이템 드랍 취소, 스킬로 대체
+        trigger(e.player)
+    }
 
+    // 손이 비어 있으면 Q를 눌러도 서버에 아무 신호가 안 와서, 맨손일 땐 Shift+좌클릭(허공)으로 발동
+    @EventHandler
+    fun onEmptyHandClick(e: PlayerInteractEvent) {
+        if (e.action != Action.LEFT_CLICK_AIR || e.hand != EquipmentSlot.HAND) return
+        val player = e.player
+        if (!player.isSneaking || !player.inventory.itemInMainHand.type.isAir) return
+        trigger(player)
+    }
+
+    private fun trigger(player: Player) {
         val job = jobManager.getJob(player.uniqueId) ?: return
         val skill = JobSkillRegistry.get(job) ?: return
-
-        e.isCancelled = true // 아이템 드랍 취소, 스킬로 대체
 
         if (!skillManager.isReady(player.uniqueId)) {
             ActionBarManager.showTemp(player, "§c스킬 쿨타임: ${skillManager.getRemaining(player.uniqueId)}초", 1.0)
