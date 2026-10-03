@@ -36,7 +36,14 @@ class RandomSpawnManager(private val plugin: Digriss) : Listener {
 
     fun load() {
         val file = File(plugin.dataFolder, "spawn.yml")
-        if (!file.exists()) plugin.saveResource("spawn.yml", false)
+        if (!file.exists()) {
+            // jar 안에 spawn.yml이 없어도(IntelliJ 아티팩트로 빌드 등) 플러그인이 꺼지지 않게 기본값으로 만듦
+            if (plugin.getResource("spawn.yml") != null) plugin.saveResource("spawn.yml", false)
+            else YamlConfiguration().apply {
+                set("enabled", true); set("world", ""); set("min-radius", 300); set("max-radius", 3000)
+                save(file)
+            }
+        }
         val config = YamlConfiguration.loadConfiguration(file)
         enabled = config.getBoolean("enabled", true)
         worldName = config.getString("world", "") ?: ""
