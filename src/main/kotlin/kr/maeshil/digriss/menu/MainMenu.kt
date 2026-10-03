@@ -24,7 +24,7 @@ class MainMenuHolder : InventoryHolder {
 // Shift+F 메인 메뉴: 각 기능의 명령어를 대신 실행해 주는 바로가기 모음
 class MainMenu(private val plugin: Digriss) : Listener {
 
-    private data class Button(val slot: Int, val icon: Material, val name: String, val lore: List<String>, val command: String)
+    private data class Button(val slot: Int, val icon: Material, val name: String, val lore: List<String>, val command: String, val iconKey: String = command)
 
     private val buttons = listOf(
         Button(10, Material.BEACON, "§6§l국가", listOf("§7건국, 영토, 금고, 전쟁 관리"), "국가"),
@@ -40,7 +40,8 @@ class MainMenu(private val plugin: Digriss) : Listener {
         Button(23, Material.EMERALD, "§a§l국가 랭킹", listOf("§7영토 · 금고 · 인원 · 레벨 순위"), "국가랭킹"),
         Button(24, Material.BOOK, "§f§l도움말", listOf("§7서버 기능 설명"), "도움말"),
         Button(19, Material.NAME_TAG, "§6§l업적 · 칭호", listOf("§7달성한 업적과 칭호 장착"), "칭호"),
-        Button(25, Material.RED_BANNER, "§4§l전쟁 이벤트", listOf("§7이벤트 시간 · 진행 상황"), "전쟁이벤트")
+        Button(25, Material.RED_BANNER, "§4§l전쟁 이벤트", listOf("§7이벤트 시간 · 진행 상황"), "전쟁이벤트"),
+        Button(30, Material.CRAFTING_TABLE, "§e§l레시피 보기", listOf("§7무기 제작법 확인"), "ia weapon_c", "레시피")
     )
     private val bySlot = buttons.associateBy { it.slot }
 
@@ -59,7 +60,7 @@ class MainMenu(private val plugin: Digriss) : Listener {
         for (i in 0 until inv.size) inv.setItem(i, filler)
 
         inv.setItem(4, profile(player))
-        buttons.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.command}", b.icon), b.name, b.lore + listOf("", "§e클릭하여 열기"))) }
+        buttons.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.iconKey}", b.icon), b.name, b.lore + listOf("", "§e클릭하여 열기"))) }
         inv.setItem(31, item(icon("common.close", Material.BARRIER), "§c닫기", emptyList()))
         player.openInventory(inv)
     }
