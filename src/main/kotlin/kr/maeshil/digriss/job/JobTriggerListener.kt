@@ -8,10 +8,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
-import org.bukkit.event.block.Action
-import org.bukkit.event.player.PlayerDropItemEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import kr.maeshil.digriss.jobManager.AssassinStealthManager
 import kr.maeshil.digriss.jobManager.ReaperChargeManager
@@ -22,22 +19,13 @@ class JobTriggerListener(
     private val skillManager: JobSkillManager
 ) : Listener {
 
-    // Shift+Q 감지 (일반 Q 드랍은 그대로 동작)
-    @EventHandler
-    fun onDrop(e: PlayerDropItemEvent) {
-        if (!e.player.isSneaking) return
+    // F(양손 바꾸기)로 직업 스킬 발동. 스킬 있는 직업이면 손 바꾸기는 막힘. Shift+F는 메뉴(MainMenu)
+    @EventHandler(ignoreCancelled = true)
+    fun onSwap(e: PlayerSwapHandItemsEvent) {
+        if (e.player.isSneaking) return
         if (JobSkillRegistry.get(jobManager.getJob(e.player.uniqueId) ?: return) == null) return
-        e.isCancelled = true // 아이템 드랍 취소, 스킬로 대체
+        e.isCancelled = true
         trigger(e.player)
-    }
-
-    // 손이 비어 있으면 Q를 눌러도 서버에 아무 신호가 안 와서, 맨손일 땐 Shift+좌클릭(허공)으로 발동
-    @EventHandler
-    fun onEmptyHandClick(e: PlayerInteractEvent) {
-        if (e.action != Action.LEFT_CLICK_AIR || e.hand != EquipmentSlot.HAND) return
-        val player = e.player
-        if (!player.isSneaking || !player.inventory.itemInMainHand.type.isAir) return
-        trigger(player)
     }
 
     private fun trigger(player: Player) {

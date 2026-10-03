@@ -12,6 +12,7 @@ const val JOB_PURCHASE_TITLE = "§8직업 구매"
 const val JOB_CONFIRM_TITLE = "§8직업 확정"
 const val JOB_PURCHASE_COST = 100
 const val JOB_CONFIRM_SLOT = 13
+const val JOB_BACK_SLOT = 18
 
 class JobPurchaseHolder : InventoryHolder {
     override fun getInventory(): Inventory = throw UnsupportedOperationException()
@@ -49,6 +50,7 @@ object JobGUI {
                 inv.setItem(JOB_SLOTS[i], jobManager.createJobItem(job))
             }
         }
+        inv.setItem(JOB_BACK_SLOT, backItem())
         player.openInventory(inv)
     }
 
@@ -65,6 +67,10 @@ object JobGUI {
         if (current != null) {
             inv.setItem(JOB_CONFIRM_SLOT, jobManager.createJobItem(current))
         }
+        inv.setItem(JOB_BACK_SLOT, backItem())
         player.openInventory(inv)
     }
+
+    private fun backItem(): ItemStack =
+        kr.maeshil.digriss.menu.MainMenu.backItem(Bukkit.getPluginManager().getPlugin("Digriss") as kr.maeshil.digriss.Digriss)
 }

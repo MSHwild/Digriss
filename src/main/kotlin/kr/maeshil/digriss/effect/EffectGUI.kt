@@ -12,6 +12,7 @@ import org.bukkit.inventory.meta.SkullMeta
 class EffectGUI(private val plugin: Digriss) {
 
     val title = "${ChatColor.DARK_PURPLE}${ChatColor.BOLD}킬 이펙트 상점"
+    val BACK_SLOT = 18
 
     fun open(player: Player) {
         val inv: Inventory = Bukkit.createInventory(null, 27, title)
@@ -41,6 +42,7 @@ class EffectGUI(private val plugin: Digriss) {
 
             inv.setItem(index, item)
         }
+        inv.setItem(BACK_SLOT, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
 
         player.openInventory(inv)
     }

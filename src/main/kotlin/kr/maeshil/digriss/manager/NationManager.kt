@@ -41,6 +41,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     private val nationSpawns = mutableMapOf<String, Location>()
     private val pendingCreate = mutableSetOf<UUID>()
     private val teleporting = mutableSetOf<UUID>()
+    // 인출한 돈을 다시 입금해서 금고 입금 퀘스트를 채우는 것을 막기 위한 기록 (인출한 만큼은 입금해도 퀘스트에 안 셈)
+    private val withdrawnCredit = mutableMapOf<UUID, Double>()
 
     val war = NationWar(plugin, this)
     private val menu = NationMenu(plugin, this)
@@ -295,6 +297,13 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         val oldBeaconLoc = nationBeacons[nationName]
         val newLoc = player.location.block.location
 
+        if (Nation.chunkClaims[chunkKeyOf(newLoc)] != nationName) {
+            return deny(player, "${ChatColor.RED}신호기는 우리 국가 영토 안으로만 옮길 수 있습니다. 영토를 먼저 점령하세요.")
+        }
+        if (newLoc != oldBeaconLoc && !newLoc.block.type.isAir && !newLoc.block.isReplaceable) {
+            return deny(player, "${ChatColor.RED}이 자리에는 블록이 있어 신호기를 놓을 수 없습니다. 빈 곳에 서서 다시 시도하세요.")
+        }
+
         if (oldBeaconLoc != null && oldBeaconLoc != newLoc) {
             oldBeaconLoc.block.type = Material.AIR
         }
@@ -354,9 +363,31 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         Sounds.coin(player)
         player.sendMessage("${ChatColor.GREEN}국가 금고에 $amount 원을 입금했습니다. (금고 총액: ${nation.bank}원)")
-        plugin.questManager.addProgress(player, QuestType.BANK_DEPOSIT, amount.toInt())
+        val credit = withdrawnCredit[player.uniqueId] ?: 0.0
+        val counted = (amount - credit).coerceAtLeast(0.0)
+        if (credit > 0) withdrawnCredit[player.uniqueId] = (credit - amount).coerceAtLeast(0.0)
+        if (counted > 0) plugin.questManager.addProgress(player, QuestType.BANK_DEPOSIT, counted.toInt())
         saveNations()
     }
+
+    fun withdrawBank(player: Player, amount: Double) {
+        val economy = econ ?: return deny(player, "${ChatColor.RED}Vault 경제 시스템이 연동되어 있지 않습니다.")
+        val nationName = playerNations[player.uniqueId] ?: return deny(player, "${ChatColor.RED}소속된 국가가 없습니다.")
+        val nation = nations[nationName]!!
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 금고에서 인출할 수 있습니다.")
+        if (nation.bank < amount) return deny(player, "${ChatColor.RED}금고 잔액이 부족합니다. (금고: ${nation.bank}원)")
+
+        nation.bank -= amount
+        economy.depositPlayer(player, amount)
+        withdrawnCredit[player.uniqueId] = (withdrawnCredit[player.uniqueId] ?: 0.0) + amount
+
+        Sounds.coin(player)
+        player.sendMessage("${ChatColor.GREEN}국가 금고에서 $amount 원을 인출했습니다. (금고 잔액: ${nation.bank}원)")
+        notifyNation(nationName, "${ChatColor.GRAY}[금고] 지도자 ${player.name} 님이 ${amount}원을 인출했습니다. (잔액: ${nation.bank}원)")
+        saveNations()
+    }
+
+    fun balanceOf(player: Player): String = econ?.let { String.format("%,.0f", it.getBalance(player)) } ?: "-"
 
     fun upgradeNation(player: Player) {
         val nationName = playerNations[player.uniqueId] ?: return deny(player, "${ChatColor.RED}소속된 국가가 없습니다.")

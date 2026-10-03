@@ -28,6 +28,7 @@ class BundleListener(private val plugin: Digriss) : Listener {
 
         when (holder) {
             is BundleListHolder -> {
+                if (e.rawSlot == BundleGUI.LIST_BACK_SLOT) return kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
                 val bundle = holder.slots[e.rawSlot]?.let { bundleManager.get(it) } ?: return
                 Sounds.click(player)
                 later { BundleGUI.openPreview(player, plugin, bundle) }

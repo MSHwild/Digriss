@@ -18,6 +18,7 @@ object QuestGUI {
 
     val QUEST_SLOTS = listOf(11, 13, 15) // 쉬움, 보통, 어려움 순서
     const val REROLL_SLOT = 22
+    const val BACK_SLOT = 18
     private const val INFO_SLOT = 4
     private const val WEEKLY_SLOT = 20
     private const val STREAK_SLOT = 24
@@ -68,6 +69,7 @@ object QuestGUI {
             else -> item(icon("quest.reroll", Material.HOPPER), "§b§l퀘스트 리롤 §7(하루 1회)", "§7클릭 후 교체할 퀘스트를 고르세요.", "§7완료하지 않은 퀘스트만 교체됩니다.")
         })
 
+        inv.setItem(BACK_SLOT, kr.maeshil.digriss.menu.MainMenu.backItem(Bukkit.getPluginManager().getPlugin("Digriss") as kr.maeshil.digriss.Digriss))
         player.openInventory(inv)
     }
 

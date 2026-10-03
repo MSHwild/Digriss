@@ -26,6 +26,7 @@ class TitleMenuHolder : InventoryHolder {
 class TitleMenu(private val plugin: Digriss) : CommandExecutor, Listener {
 
     private val UNEQUIP_SLOT = 49
+    private val BACK_SLOT = 45
     private val achievements get() = plugin.achievementManager
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -82,6 +83,7 @@ class TitleMenu(private val plugin: Digriss) : CommandExecutor, Listener {
 
         val filler = item(plugin.iconManager.get("common.filler", Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
         for (i in 45 until 54) inv.setItem(i, filler)
+        inv.setItem(BACK_SLOT, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
         inv.setItem(UNEQUIP_SLOT, item(plugin.iconManager.get("achievement.unequip", Material.BARRIER), "§c칭호 해제",
             listOf("§7채팅에 칭호를 표시하지 않습니다.")))
         player.openInventory(inv)
@@ -108,6 +110,7 @@ class TitleMenu(private val plugin: Digriss) : CommandExecutor, Listener {
         if (e.clickedInventory != e.view.topInventory) return
         val player = e.whoClicked as? Player ?: return
 
+        if (e.rawSlot == BACK_SLOT) return kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
         if (e.rawSlot == UNEQUIP_SLOT) {
             achievements.equip(player.uniqueId, null)
             player.sendMessage("§7칭호를 해제했습니다.")

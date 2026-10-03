@@ -58,6 +58,7 @@ class JobManager(private val plugin: JavaPlugin) {
         meta.setDisplayName("§b${job.displayName}")
         meta.lore = job.lore
         meta.persistentDataContainer.set(jobKey, PersistentDataType.STRING, job.name)
+        meta.addItemFlags(*org.bukkit.inventory.ItemFlag.entries.toTypedArray())
         item.itemMeta = meta
         return item
     }

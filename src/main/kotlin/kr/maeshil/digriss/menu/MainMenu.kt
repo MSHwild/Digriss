@@ -45,6 +45,25 @@ class MainMenu(private val plugin: Digriss) : Listener {
     )
     private val bySlot = buttons.associateBy { it.slot }
 
+    companion object {
+        // 다른 메뉴에 넣는 "메뉴로 돌아가기" 버튼
+        fun backItem(plugin: Digriss): ItemStack {
+            val stack = plugin.iconManager.get("common.back", Material.ARROW)
+            val meta = stack.itemMeta ?: return stack
+            meta.setDisplayName("§7← 메뉴로")
+            meta.lore = listOf("§8Shift+F 메뉴로 돌아갑니다")
+            meta.addItemFlags(*ItemFlag.entries.toTypedArray())
+            stack.itemMeta = meta
+            return stack
+        }
+
+        // 클릭 이벤트 안에서 바로 열지 않고 다음 틱에 메인 메뉴 열기
+        fun back(plugin: Digriss, player: Player) {
+            Sounds.click(player)
+            Bukkit.getScheduler().runTask(plugin, Runnable { if (player.isOnline) plugin.mainMenu.open(player) })
+        }
+    }
+
     // 웅크린 채로 F(양손 바꾸기)를 누르면 메뉴 열기. 그냥 F는 원래대로 동작
     @EventHandler(ignoreCancelled = true)
     fun onSwap(e: PlayerSwapHandItemsEvent) {

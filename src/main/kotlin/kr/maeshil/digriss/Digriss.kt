@@ -107,6 +107,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var achievementManager: AchievementManager
         private set
+    lateinit var mainMenu: MainMenu
+        private set
 
     override fun onEnable() {
 
@@ -137,7 +139,7 @@ class Digriss : JavaPlugin() {
         helpManager = HelpManager(this)
         warEventManager = WarEventManager(this)
 
-        // 직업 스킬(Shift+Q) 쿨타임 상시 표시 (스킬이 있는 직업만)
+        // 직업 스킬(F) 쿨타임 상시 표시 (스킬이 있는 직업만)
         ActionBarManager.addProvider { player ->
             val job = jobManager.getJob(player.uniqueId) ?: return@addProvider null
             JobSkillRegistry.get(job) ?: return@addProvider null
@@ -170,7 +172,8 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(QuestListener(this, questManager), this)
         Bukkit.getPluginManager().registerEvents(AllianceListener(this), this)
         Bukkit.getPluginManager().registerEvents(BundleListener(this), this)
-        Bukkit.getPluginManager().registerEvents(MainMenu(this), this) // Shift+F 메뉴
+        mainMenu = MainMenu(this)
+        Bukkit.getPluginManager().registerEvents(mainMenu, this) // Shift+F 메뉴
         val titleMenu = TitleMenu(this)
         Bukkit.getPluginManager().registerEvents(titleMenu, this)
         val nationStorage = NationStorage(this)

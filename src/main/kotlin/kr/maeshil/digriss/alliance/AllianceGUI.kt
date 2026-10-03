@@ -54,6 +54,7 @@ object AllianceGUI {
 
         val filler = item(icon(plugin, "common.filler_dark", Material.BLACK_STAINED_GLASS_PANE), " ")
         for (i in 45 until 54) inv.setItem(i, filler)
+        inv.setItem(45, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
         inv.setItem(49, item(icon(plugin, "alliance.info", Material.BOOK), "§b§l연합 안내",
             "§7연합국끼리는 서로 공격할 수 없고",
             "§7전쟁을 선포할 수 없습니다.",

@@ -79,6 +79,7 @@ class HelpCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter, 
             val c = help.find(name) ?: return@forEach
             inv.setItem(slot, item(ItemStack(c.icon), "§6§l${c.name}", listOf(c.summary, "", "§e클릭하여 보기")))
         }
+        if (18 !in slots) inv.setItem(18, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
         player.openInventory(inv)
     }
 
@@ -97,6 +98,7 @@ class HelpCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter, 
         e.isCancelled = true
         if (e.clickedInventory != e.view.topInventory) return
         val player = e.whoClicked as? Player ?: return
+        if (e.rawSlot == 18 && 18 !in holder.slots) return kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
         val category = holder.slots[e.rawSlot]?.let { help.find(it) } ?: return
         player.closeInventory()
         show(player, category)

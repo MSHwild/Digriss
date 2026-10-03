@@ -61,6 +61,7 @@ class AllianceListener(private val plugin: Digriss) : Listener {
         e.isCancelled = true
         val player = e.whoClicked as? Player ?: return
         if (e.clickedInventory != e.view.topInventory) return
+        if (e.rawSlot == 45) return kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
         val target = holder.slotNations[e.rawSlot] ?: return
         Sounds.click(player)
 

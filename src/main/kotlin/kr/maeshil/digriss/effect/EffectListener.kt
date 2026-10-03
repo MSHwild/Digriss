@@ -19,6 +19,7 @@ class EffectListener(private val plugin: Digriss, private val gui: EffectGUI) : 
 
         val player = event.whoClicked as? Player ?: return
         val slot = event.slot
+        if (slot == gui.BACK_SLOT) return kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
         val effect = EffectRegistry.effects.getOrNull(slot) ?: return
 
         val manager = plugin.killEffectManager

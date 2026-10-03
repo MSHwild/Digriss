@@ -20,7 +20,7 @@ import org.bukkit.inventory.meta.SkullMeta
 import java.text.SimpleDateFormat
 import java.util.Date
 
-enum class MenuType { MAIN, NO_NATION, INVITE, CONFIRM_DISSOLVE, WAR, WAR_LOG }
+enum class MenuType { MAIN, NO_NATION, INVITE, CONFIRM_DISSOLVE, WAR, WAR_LOG, BANK }
 
 class NationMenuHolder(val type: MenuType) : InventoryHolder {
     private lateinit var inv: Inventory
@@ -83,6 +83,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         } else {
             inv.setItem(15, item(icon("nation.invite_none", Material.GRAY_DYE), "§7받은 초대 없음"))
         }
+        inv.setItem(18, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
 
         player.openInventory(inv)
     }
@@ -118,11 +119,10 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         inv.setItem(10, item(icon("nation.claim", Material.GRASS_BLOCK), "§a§l영토 점령",
             "§7현재 서 있는 청크를 국가 영토로 점령합니다.", "", leaderOnly))
 
-        inv.setItem(12, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l금고 입금",
-            "§7좌클릭 §f100원",
-            "§7우클릭 §f1,000원",
-            "§7쉬프트+좌클릭 §f10,000원",
-            "§7쉬프트+우클릭 §f100,000원"))
+        inv.setItem(12, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l국가 금고",
+            "§7금고 잔액 §f${nation.bank}원",
+            "§7입금은 누구나, 인출은 지도자만 할 수 있습니다.",
+            "", "§a클릭하여 열기"))
 
         inv.setItem(14, item(icon("nation.upgrade", Material.EXPERIENCE_BOTTLE), "§b§l국가 업그레이드",
             if (nation.level < 5) "§7필요 금액 §f${core.upgradeCost(nation.level)}원" else "§7이미 최고 레벨입니다.",
@@ -170,7 +170,40 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             inv.setItem(34, item(icon("nation.leave", Material.OAK_DOOR), "§c§l국가 탈퇴",
                 "§7현재 국가에서 탈퇴합니다.", "", "§c클릭하여 탈퇴"))
         }
+        inv.setItem(27, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
 
+        player.openInventory(inv)
+    }
+
+    // ───────────────────────── 메뉴: 금고 ─────────────────────────
+
+    private val BANK_AMOUNTS = listOf(100.0, 1000.0, 10000.0, 100000.0)
+    private val DEPOSIT_SLOTS = listOf(10, 12, 14, 16)
+    private val WITHDRAW_SLOTS = listOf(19, 21, 23, 25)
+
+    private fun openBankMenu(player: Player) {
+        val nationName = core.getNationName(player.uniqueId) ?: return openNoNationMenu(player)
+        val nation = nations[nationName] ?: return
+        val isLeader = nation.leader == player.uniqueId
+
+        val holder = NationMenuHolder(MenuType.BANK)
+        val inv = Bukkit.createInventory(holder, 36, "§8국가 금고 - $nationName")
+        holder.setInventory(inv)
+        fill(inv)
+
+        inv.setItem(4, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l금고 잔액 §f${nation.bank}원",
+            "§7일일 유지비 §f${core.dailyTax(nation.level)}원 §7(매일 자정)",
+            "§7내 소지금 §f${core.balanceOf(player)}원"))
+
+        BANK_AMOUNTS.forEachIndexed { i, amount ->
+            val text = String.format("%,.0f", amount)
+            inv.setItem(DEPOSIT_SLOTS[i], item(icon("bank.deposit", Material.LIME_CONCRETE), "§a§l입금 §f${text}원",
+                "§7내 돈을 국가 금고에 넣습니다.", "", "§a클릭하여 입금"))
+            inv.setItem(WITHDRAW_SLOTS[i], item(icon("bank.withdraw", Material.ORANGE_CONCRETE), "§6§l인출 §f${text}원",
+                "§7국가 금고에서 내 돈으로 꺼냅니다.", "", if (isLeader) "§a클릭하여 인출" else "§c지도자 전용"))
+        }
+
+        inv.setItem(31, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
         player.openInventory(inv)
     }
 
@@ -354,6 +387,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
         when (holder.type) {
             MenuType.NO_NATION -> when (event.slot) {
+                18 -> kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
                 11 -> {
                     player.closeInventory()
                     core.startCreate(player)
@@ -370,17 +404,8 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
             MenuType.MAIN -> when (event.slot) {
                 10 -> { player.closeInventory(); core.claimChunk(player) }
-                12 -> {
-                    val amount = when (event.click) {
-                        ClickType.LEFT -> 100.0
-                        ClickType.RIGHT -> 1000.0
-                        ClickType.SHIFT_LEFT -> 10000.0
-                        ClickType.SHIFT_RIGHT -> 100000.0
-                        else -> return
-                    }
-                    core.depositBank(player, amount)
-                    later { openMainMenu(player) }
-                }
+                12 -> later { openBankMenu(player) }
+                27 -> kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
                 14 -> { core.upgradeNation(player); later { openMainMenu(player) } }
                 16 -> later { plugin.nationStorageManager.open(player) }
                 20 -> { player.closeInventory(); core.centerTP(player) }
@@ -406,6 +431,17 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 val target = holder.slotNations[event.slot] ?: return
                 war.handleClick(player, target, event.click.isRightClick)
                 later { openWarMenu(player) }
+            }
+
+            MenuType.BANK -> {
+                val slot = event.slot
+                when {
+                    slot == 31 -> { later { openMainMenu(player) }; return }
+                    slot in DEPOSIT_SLOTS -> core.depositBank(player, BANK_AMOUNTS[DEPOSIT_SLOTS.indexOf(slot)])
+                    slot in WITHDRAW_SLOTS -> core.withdrawBank(player, BANK_AMOUNTS[WITHDRAW_SLOTS.indexOf(slot)])
+                    else -> return
+                }
+                later { openBankMenu(player) }
             }
 
             MenuType.WAR_LOG -> {

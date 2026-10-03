@@ -34,6 +34,7 @@ object BundleGUI {
     const val PREVIEW_BUY_SLOT = 49
     private const val PREVIEW_DC_SLOT = 53
     private const val LIST_DC_SLOT = 49
+    const val LIST_BACK_SLOT = 45
     private const val CONTENT_LINES = 8 // 목록 설명에 보여줄 내용물 줄 수
 
     private val legacy = LegacyComponentSerializer.legacySection()
@@ -62,6 +63,7 @@ object BundleGUI {
             inv.setItem(22, item(icon(plugin, "common.empty", Material.BARRIER), "§7지금 판매 중인 번들이 없습니다.", emptyList()))
         }
         inv.setItem(LIST_DC_SLOT, dcItem(player, plugin))
+        inv.setItem(LIST_BACK_SLOT, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
         player.openInventory(inv)
     }
 

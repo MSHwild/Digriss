@@ -50,6 +50,7 @@ class QuestListener(private val plugin: JavaPlugin, private val questManager: Qu
         e.isCancelled = true
         val player = e.whoClicked as? Player ?: return
         if (e.clickedInventory != e.view.topInventory) return
+        if (e.rawSlot == QuestGUI.BACK_SLOT) return kr.maeshil.digriss.menu.MainMenu.back(plugin as kr.maeshil.digriss.Digriss, player)
 
         if (e.rawSlot == QuestGUI.REROLL_SLOT || (holder.rerollMode && e.rawSlot in QuestGUI.QUEST_SLOTS)) Sounds.click(player)
         when (e.rawSlot) {
