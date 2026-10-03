@@ -46,6 +46,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     // 건축 내실 점수: 플레이어별 오늘 설치한 블록 수 (날짜가 바뀌면 초기화)
     private val buildCount = mutableMapOf<UUID, Int>()
     private var buildDay = -1
+    // 해제했던 청크 (국가 이름 → 청크들). 다시 점령해도 퀘스트·내실 점수를 또 주지 않음 (점령/해제 반복 방지)
+    private val unclaimedChunks = mutableMapOf<String, MutableSet<String>>()
 
     val war = NationWar(plugin, this)
     private val menu = NationMenu(plugin, this)
@@ -320,11 +322,35 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nation.claims.add(chunkKey)
 
         BlueMapBridge.updateTerritory(nation, player.world.name)
-        addPeace(nationName, 3.0)
 
         Sounds.success(player)
         player.sendMessage("${ChatColor.GREEN}현재 청크를 점령했습니다! (현재 점령지: ${nation.claims.size}/$maxClaims 개)")
-        plugin.questManager.addProgress(player, QuestType.CLAIM_CHUNK)
+        if (unclaimedChunks[nationName]?.remove(chunkKey) != true) {
+            addPeace(nationName, 3.0)
+            plugin.questManager.addProgress(player, QuestType.CLAIM_CHUNK)
+        }
+        saveNations()
+    }
+
+    fun unclaimChunk(player: Player) {
+        val nationName = playerNations[player.uniqueId] ?: return deny(player, "${ChatColor.RED}소속된 국가가 없습니다.")
+        val nation = nations[nationName]!!
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 영토를 해제할 수 있습니다.")
+
+        val chunkKey = chunkKeyOf(player.location)
+        if (Nation.chunkClaims[chunkKey] != nationName) return deny(player, "${ChatColor.RED}여기는 우리 국가 영토가 아닙니다.")
+        nationBeacons[nationName]?.let {
+            if (chunkKeyOf(it) == chunkKey) return deny(player, "${ChatColor.RED}신호기가 있는 청크는 해제할 수 없습니다. 신호기를 먼저 다른 영토로 옮기세요.")
+        }
+
+        Nation.chunkClaims.remove(chunkKey)
+        nation.claims.remove(chunkKey)
+        unclaimedChunks.getOrPut(nationName) { mutableSetOf() }.add(chunkKey)
+
+        BlueMapBridge.updateTerritory(nation, player.world.name)
+
+        Sounds.click(player)
+        player.sendMessage("${ChatColor.YELLOW}현재 청크의 점령을 해제했습니다. (현재 점령지: ${nation.claims.size}/${nation.members.size * 10} 개)")
         saveNations()
     }
 

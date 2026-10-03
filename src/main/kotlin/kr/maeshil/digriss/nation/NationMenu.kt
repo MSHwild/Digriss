@@ -117,8 +117,10 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 "$e §7(${left / 60}시간 ${left % 60}분 남음)§f"
             }))
 
-        inv.setItem(10, item(icon("nation.claim", Material.GRASS_BLOCK), "§a§l영토 점령",
-            "§7현재 서 있는 청크를 국가 영토로 점령합니다.", "", leaderOnly))
+        inv.setItem(10, item(icon("nation.claim", Material.GRASS_BLOCK), "§a§l영토 점령 / 해제",
+            "§7좌클릭 §f현재 서 있는 청크를 점령",
+            "§7우클릭 §f현재 서 있는 청크의 점령 해제",
+            "§8(신호기가 있는 청크는 해제 불가)", "", leaderOnly))
 
         inv.setItem(12, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l국가 금고",
             "§7금고 잔액 §f${nation.bank}원",
@@ -404,7 +406,10 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             }
 
             MenuType.MAIN -> when (event.slot) {
-                10 -> { player.closeInventory(); core.claimChunk(player) }
+                10 -> {
+                    player.closeInventory()
+                    if (event.click.isRightClick) core.unclaimChunk(player) else core.claimChunk(player)
+                }
                 12 -> later { openBankMenu(player) }
                 27 -> kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
                 14 -> { core.upgradeNation(player); later { openMainMenu(player) } }
