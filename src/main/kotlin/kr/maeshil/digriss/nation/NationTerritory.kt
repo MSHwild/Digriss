@@ -117,11 +117,11 @@ class NationTerritory(private val plugin: Digriss, private val core: NationManag
         val myNation = core.getNationName(player.uniqueId)
 
         return when {
-            ownerNation == null -> "§f소속 국가 : 무소속"
-            ownerNation == myNation -> "§a소속 국가 : $ownerNation(내 국가)"
-            plugin.allianceManager.areAllied(myNation, ownerNation) -> "§b소속 국가 : $ownerNation(연합국)"
-            myNation != null && core.war.isAtWar(myNation, ownerNation) -> "§4소속 국가 : $ownerNation(전쟁 중)"
-            else -> "§c소속 국가 : $ownerNation"
+            ownerNation == null -> "§7📍 무소속 지역"
+            ownerNation == myNation -> "§a📍 §l$ownerNation§r §a영토 §7(내 국가)"
+            plugin.allianceManager.areAllied(myNation, ownerNation) -> "§b📍 §l$ownerNation§r §b영토 §7(연합국)"
+            myNation != null && core.war.isAtWar(myNation, ownerNation) -> "§4📍 §c§l$ownerNation§r §4영토 §c(전쟁 중)"
+            else -> "§e📍 §l$ownerNation§r §e영토 §7(다른 국가)"
         }
     }
 }

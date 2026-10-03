@@ -108,6 +108,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             "§e국가원 §f${nation.members.size}명",
             "§e영토 §f${nation.claims.size} / ${nation.members.size * 10} 청크",
             "§a금고 §f${nation.bank}원",
+            "§2내실 점수 §f${nation.peace.toInt()}점 §7(/국가랭킹 내실)",
             "§b일일 유지비 §f${core.dailyTax(nation.level)}원 §7(매일 자정)",
             if (nation.level < 5) "§7다음 업그레이드 §f${core.upgradeCost(nation.level)}원" else "§7최고 레벨 도달",
             if (enemies.isEmpty()) "§7전쟁 중인 국가 §f없음"

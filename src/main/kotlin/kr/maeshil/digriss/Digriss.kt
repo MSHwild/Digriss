@@ -138,6 +138,7 @@ class Digriss : JavaPlugin() {
         bundleManager = BundleManager(this)
         helpManager = HelpManager(this)
         warEventManager = WarEventManager(this)
+        Bukkit.getPluginManager().registerEvents(kr.maeshil.digriss.manager.RandomSpawnManager(this), this) // 첫 접속·무소속 부활 랜덤 스폰
 
         // 직업 스킬(F) 쿨타임 상시 표시 (스킬이 있는 직업만)
         ActionBarManager.addProvider { player ->

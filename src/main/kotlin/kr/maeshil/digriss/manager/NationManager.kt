@@ -43,6 +43,9 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     private val teleporting = mutableSetOf<UUID>()
     // 인출한 돈을 다시 입금해서 금고 입금 퀘스트를 채우는 것을 막기 위한 기록 (인출한 만큼은 입금해도 퀘스트에 안 셈)
     private val withdrawnCredit = mutableMapOf<UUID, Double>()
+    // 건축 내실 점수: 플레이어별 오늘 설치한 블록 수 (날짜가 바뀌면 초기화)
+    private val buildCount = mutableMapOf<UUID, Int>()
+    private var buildDay = -1
 
     val war = NationWar(plugin, this)
     private val menu = NationMenu(plugin, this)
@@ -148,6 +151,36 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     fun beaconOf(nationName: String): Location? = nationBeacons[nationName]
 
+    // ───────────────────────── 내실 점수 ─────────────────────────
+    // 얻는 방법: 퀘스트 완료, 금고 입금(1,000원당 1), 영토 점령, 업그레이드, 자국 영토 건축, 전쟁 없이 유지비 납부
+
+    fun addPeace(nationName: String, amount: Double) {
+        val nation = nations[nationName] ?: return
+        val before = nation.peace
+        nation.peace = (nation.peace + amount).coerceAtLeast(0.0)
+        if (before < PEACE_GOAL && nation.peace >= PEACE_GOAL) {
+            Bukkit.broadcastMessage("${ChatColor.GREEN}🌿 '$nationName' 국가가 내실 점수 ${PEACE_GOAL.toInt()}점을 달성해 태평성대를 맞았습니다!")
+            plugin.achievementManager.unlockNation(nationName, kr.maeshil.digriss.achievement.Achievement.PEACEKEEPER)
+        }
+    }
+
+    fun addPeaceFor(uuid: UUID, amount: Double) {
+        playerNations[uuid]?.let { addPeace(it, amount) }
+    }
+
+    // 자국 영토에 블록을 설치하면 50개마다 1점 (하루 최대 20점)
+    @EventHandler(ignoreCancelled = true)
+    fun onBuild(event: org.bukkit.event.block.BlockPlaceEvent) {
+        val uuid = event.player.uniqueId
+        val nationName = playerNations[uuid] ?: return
+        if (Nation.chunkClaims[chunkKeyOf(event.block.location)] != nationName) return
+        val today = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+        if (today != buildDay) { buildDay = today; buildCount.clear() }
+        val count = (buildCount[uuid] ?: 0) + 1
+        buildCount[uuid] = count
+        if (count % 50 == 0 && count <= 1000) addPeace(nationName, 1.0)
+    }
+
     fun inviteOf(uuid: UUID): String? = nationInvites[uuid]
 
     fun chunkKeyOf(loc: Location): String {
@@ -175,6 +208,10 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     fun upgradeCost(level: Int) = (100.0 + (level - 1) * 50.0) * 2
 
     fun teleportDelaySeconds(level: Int) = if (level >= 2) 3 else 6
+
+    companion object {
+        const val PEACE_GOAL = 1000.0
+    }
 
     fun levelEffectMessage(level: Int): String {
         return when (level) {
@@ -283,6 +320,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nation.claims.add(chunkKey)
 
         BlueMapBridge.updateTerritory(nation, player.world.name)
+        addPeace(nationName, 3.0)
 
         Sounds.success(player)
         player.sendMessage("${ChatColor.GREEN}현재 청크를 점령했습니다! (현재 점령지: ${nation.claims.size}/$maxClaims 개)")
@@ -366,7 +404,10 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         val credit = withdrawnCredit[player.uniqueId] ?: 0.0
         val counted = (amount - credit).coerceAtLeast(0.0)
         if (credit > 0) withdrawnCredit[player.uniqueId] = (credit - amount).coerceAtLeast(0.0)
-        if (counted > 0) plugin.questManager.addProgress(player, QuestType.BANK_DEPOSIT, counted.toInt())
+        if (counted > 0) {
+            plugin.questManager.addProgress(player, QuestType.BANK_DEPOSIT, counted.toInt())
+            addPeace(nationName, counted / 1000.0)
+        }
         saveNations()
     }
 
@@ -406,6 +447,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         nation.bank -= cost
         nation.level += 1
+        addPeace(nationName, nation.level * 20.0)
 
         player.sendMessage("${ChatColor.GREEN}🎉 국가 레벨이 ${nation.level} 레벨로 업그레이드되었습니다!")
         player.sendMessage("${ChatColor.AQUA}해금된 효과: ${levelEffectMessage(nation.level)}")
@@ -441,7 +483,14 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             if (nation.bank >= tax) {
                 nation.bank -= tax
                 leaderPlayer?.sendMessage("${ChatColor.YELLOW}[유지비] 국가 금고에서 일일 유지비 $tax 원이 차감되었습니다. (남은 잔액: ${nation.bank}원)")
+                // 전쟁 없이 하루를 보냈으면 평화 유지 보너스
+                if (war.warsOf(nation.name).isEmpty()) {
+                    val bonus = 10.0 + nation.level * 2
+                    addPeace(nation.name, bonus)
+                    notifyNation(nation.name, "${ChatColor.GREEN}🌿 [내실] 평화롭게 하루를 보내 내실 점수 +${bonus.toInt()} (현재 ${nation.peace.toInt()}점)")
+                }
             } else {
+                addPeace(nation.name, -10.0)
                 leaderPlayer?.let { Sounds.alert(it) }
                 leaderPlayer?.sendMessage("${ChatColor.RED}[경고] 국가 금고 잔액이 부족하여 유지비($tax 원)를 납부하지 못했습니다!")
             }
@@ -617,6 +666,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             config.set("$name.claims", nation.claims)
             config.set("$name.bank", nation.bank)
             config.set("$name.level", nation.level)
+            config.set("$name.peace", nation.peace)
             nationBeacons[name]?.let { config.set("$name.beacon", "${it.world?.name},${it.x},${it.y},${it.z}") }
             nationSpawns[name]?.let { config.set("$name.spawn", "${it.world?.name},${it.x},${it.y},${it.z},${it.yaw},${it.pitch}") }
         }
@@ -637,7 +687,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             val bank = config.getDouble("$name.bank", 0.0)
             val level = config.getInt("$name.level", 1)
 
-            val nationObj = Nations(name, leader, members, claims, bank, level)
+            val nationObj = Nations(name, leader, members, claims, bank, level, config.getDouble("$name.peace", 0.0))
             nations[name] = nationObj
             members.forEach { playerNations[it] = name }
             playerNations[leader] = name

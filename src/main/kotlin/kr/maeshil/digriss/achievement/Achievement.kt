@@ -24,6 +24,7 @@ enum class Achievement(
     DIPLOMAT("외교관", "지도자로서 연합을 맺음", "§b[외교관]", Material.LIGHT_BLUE_BANNER),
     WAR_WINNER("승전", "전쟁에서 승리한 국가 소속", "§6[승전국의 용사]", Material.GOLDEN_SWORD),
     CONQUEROR("정복자", "적국의 신호기를 부숴 국가를 점령", "§4§l[정복자]", Material.TNT),
+    PEACEKEEPER("태평성대", "소속 국가의 내실 점수 1000 달성", "§a§l[태평성대]", Material.OAK_SAPLING),
 
     // ── 퀘스트 / 출석 ──
     QUESTS_10("성실", "일일 퀘스트 10개 완료", "§a[성실한 모험가]", Material.WRITABLE_BOOK),
@@ -35,7 +36,10 @@ enum class Achievement(
     RANK_DIGRISS("전설", "디그리스 랭크 도달", "§2§l[디그리스의 전설]", Material.DRAGON_HEAD),
 
     // ── 운영자 지급 ──
-    BETA_TESTER("베타 테스터", "테스트 서버에 참여해 디그리스를 함께 만든 사람", "§d§l[베타 테스터]", Material.AMETHYST_SHARD, manual = true);
+    BETA_TESTER("베타 테스터", "테스트 서버에 참여해 디그리스를 함께 만든 사람", "§d§l[베타 테스터]", Material.AMETHYST_SHARD, manual = true),
+    SUPPORTER("후원자", "디그리스를 후원해 준 고마운 분", "§a[후원자]", Material.EMERALD, manual = true),
+    SUPPORTER_VIP("VIP 후원자", "디그리스를 크게 후원해 준 분", "§b§l[VIP]", Material.DIAMOND, manual = true),
+    SUPPORTER_MVP("MVP 후원자", "디그리스 최고의 후원자", "§6§l[MVP]", Material.NETHERITE_INGOT, manual = true);
 
     companion object {
         fun of(name: String): Achievement? = entries.firstOrNull { it.name == name }

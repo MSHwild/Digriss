@@ -7,14 +7,15 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
-// /국가랭킹 [영토|금고|인원|레벨]  (기본: 영토)
+// /국가랭킹 [영토|금고|인원|레벨|내실]  (기본: 영토)
 class NationRankCommand : CommandExecutor, TabCompleter {
 
     private val criteria: Map<String, Pair<(Nations) -> Double, (Nations) -> String>> = linkedMapOf(
         "영토" to Pair({ n: Nations -> n.claims.size.toDouble() }, { n: Nations -> "${n.claims.size}청크" }),
         "금고" to Pair({ n: Nations -> n.bank }, { n: Nations -> "${String.format("%,.0f", n.bank)}원" }),
         "인원" to Pair({ n: Nations -> n.members.size.toDouble() }, { n: Nations -> "${n.members.size}명" }),
-        "레벨" to Pair({ n: Nations -> n.level.toDouble() }, { n: Nations -> "Lv.${n.level}" })
+        "레벨" to Pair({ n: Nations -> n.level.toDouble() }, { n: Nations -> "Lv.${n.level}" }),
+        "내실" to Pair({ n: Nations -> n.peace }, { n: Nations -> "${n.peace.toInt()}점" })
     )
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {

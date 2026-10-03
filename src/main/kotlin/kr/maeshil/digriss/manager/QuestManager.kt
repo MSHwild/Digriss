@@ -284,6 +284,11 @@ class QuestManager(private val plugin: Digriss) {
         }
 
         plugin.achievementManager.onQuestComplete(player, pd.streak)
+        plugin.nationManager.addPeaceFor(player.uniqueId, when (def.difficulty) {
+            QuestDifficulty.EASY -> 2.0
+            QuestDifficulty.NORMAL -> 4.0
+            else -> 6.0
+        })
 
         // 주간 보너스: 이번 주에 퀘스트를 완료한 날짜 기록
         pd.weekDays.add(pd.dateKey)
