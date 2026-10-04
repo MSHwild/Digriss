@@ -28,7 +28,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
     private val tagged = HashMap<UUID, Long>() // 전투가 끝나는 시각(ms)
 
     private var enabled = true
-    private var seconds = 15
+    private var seconds = 5
     private var killOnLogout = true
     private var punishReasons = setOf("DISCONNECTED", "TIMED_OUT")
     private var blockedCommands = setOf<String>()
