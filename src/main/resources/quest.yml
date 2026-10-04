@@ -14,6 +14,7 @@
 # difficulty: EASY / NORMAL / HARD
 # war-only: true면 내 국가가 전쟁 중일 때만 뽑힘
 # souls / money를 퀘스트에 적으면 아래 rewards 대신 그 값을 지급
+# dc를 퀘스트에 적으면 완료 시 DC도 추가 지급 (특히 어려운 퀘스트용, 기록: plugins/Digriss/quest-dc.log)
 
 rewards:
   easy:
@@ -83,12 +84,14 @@ quests:
     difficulty: HARD
     target: 3
     name: "플레이어 3명 처치"
+    dc: 10
   war_kill_hard:
     type: WAR_KILL_ENEMY_TERRITORY
     difficulty: HARD
     target: 2
     name: "[전쟁] 적국 영토에서 2킬"
     war-only: true
+    dc: 8
 
 # 연속 출석: 하루 첫 퀘스트 완료 시 (연속 일수 x 값) 추가 지급, max-days일까지만 증가
 # 하루를 놓치면 0이 아니라 절반으로 줄어듭니다
@@ -103,4 +106,4 @@ weekly-bonus:
   required-days: 5
   souls: 100
   money: 50000
-  dc: 1
+  dc: 10

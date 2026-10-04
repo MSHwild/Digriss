@@ -25,5 +25,6 @@ data class QuestDefinition(
     val name: String,
     val warOnly: Boolean,      // 내 국가가 전쟁 중일 때만 뽑힘
     val souls: Long,
-    val money: Double
+    val money: Double,
+    val dc: Long = 0           // 완료 시 추가로 지급하는 DC (특히 어려운 퀘스트용, 0이면 없음)
 )

@@ -86,7 +86,8 @@ object QuestGUI {
             "§7진행도: §f${quest.progress}§7/§f${def.target}",
             progressBar(quest.progress, def.target),
             "",
-            "§7보상: §b영혼 ${def.souls}" + (if (def.money > 0) " §6${questManager.formatMoney(def.money)}원" else "")
+            "§7보상: §b영혼 ${def.souls}" + (if (def.money > 0) " §6${questManager.formatMoney(def.money)}원" else "") +
+                (if (def.dc > 0) " §3DC ${def.dc}" else "")
         )
         if (def.warOnly) lore.add("§4⚔ 전쟁 퀘스트")
         lore.add("")

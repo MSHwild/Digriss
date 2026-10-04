@@ -38,7 +38,7 @@ class QuestManager(private val plugin: Digriss) {
     private var weeklyRequiredDays = 5
     private var weeklySouls = 0L
     private var weeklyMoney = 0.0
-    private var weeklyDC = 1L
+    private var weeklyDC = 10L
 
     // 연속 출석(연속 완료) 보너스 설정
     private var streakSoulsPerDay = 0L
@@ -90,7 +90,8 @@ class QuestManager(private val plugin: Digriss) {
                 warOnly = q.getBoolean("war-only", false),
                 // 퀘스트별 souls/money가 없으면 난이도 기본 보상 사용
                 souls = q.getLong("souls", config.getLong("$diffKey.souls")),
-                money = q.getDouble("money", config.getDouble("$diffKey.money"))
+                money = q.getDouble("money", config.getDouble("$diffKey.money")),
+                dc = q.getLong("dc", 0).coerceAtLeast(0)
             )
         }
         definitions = result
@@ -98,7 +99,7 @@ class QuestManager(private val plugin: Digriss) {
         weeklyRequiredDays = config.getInt("weekly-bonus.required-days", 5)
         weeklySouls = config.getLong("weekly-bonus.souls", 0)
         weeklyMoney = config.getDouble("weekly-bonus.money", 0.0)
-        weeklyDC = config.getLong("weekly-bonus.dc", 1)
+        weeklyDC = config.getLong("weekly-bonus.dc", 10)
         streakSoulsPerDay = config.getLong("streak-bonus.souls-per-day", 2)
         streakMoneyPerDay = config.getDouble("streak-bonus.money-per-day", 500.0)
         streakMaxDays = config.getInt("streak-bonus.max-days", 10).coerceAtLeast(1)
@@ -268,10 +269,15 @@ class QuestManager(private val plugin: Digriss) {
     private fun complete(player: Player, pd: PlayerQuestData, def: QuestDefinition) {
         giveSouls(player, def.souls)
         giveMoney(player, def.money)
+        if (def.dc > 0) {
+            plugin.dcManager.addDC(player, def.dc)
+            logDC(player, def.dc)
+        }
 
         player.sendMessage(
             "§6[퀘스트 완료] ${def.difficulty.color}[${def.difficulty.displayName}] §f${def.name} " +
-                "§7- 보상: §b영혼 ${def.souls}" + (if (def.money > 0) " §6${formatMoney(def.money)}원" else "")
+                "§7- 보상: §b영혼 ${def.souls}" + (if (def.money > 0) " §6${formatMoney(def.money)}원" else "") +
+                (if (def.dc > 0) " §3DC ${def.dc}" else "")
         )
         ActionBarManager.showTemp(player, "§6✔ 퀘스트 완료: §f${def.name}", 3.0)
         Sounds.reward(player)
