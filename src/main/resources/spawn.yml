@@ -10,11 +10,12 @@ world: ""
 min-radius: 300
 max-radius: 3000
 
-# 직사각형 범위 (지구 맵처럼 가로가 긴 맵용). 설정하면 위의 반경 대신 이 범위 안에서 랜덤으로 찾습니다.
+# 직사각형 범위 (지구 맵처럼 가로가 긴 맵용). 설정돼 있으면 위의 반경 대신 이 범위 안에서 랜덤으로 찾습니다.
 # 쓰지 않으려면 아래 area 부분을 통째로 지우거나 앞에 #을 붙이세요.
-# 예) 49152 x 24576 지구 맵: 가장자리 500칸은 빼고
-# area:
-#   min-x: -24000
-#   max-x: 24000
-#   min-z: -11800
-#   max-z: 11800
+# 기본값: 18432 x 9216 지구 맵(Vanilla-Survival 1:100, 중심 0,0)에서 가장자리 200~300칸을 뺀 범위
+# (ChunkyBorder: /chunky shape rectangle → /chunky center 0 0 → /chunky radius 9216 4608 → /chunky border add)
+area:
+  min-x: -9000
+  max-x: 9000
+  min-z: -4400
+  max-z: 4400

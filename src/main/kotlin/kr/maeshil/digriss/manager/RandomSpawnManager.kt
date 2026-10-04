@@ -43,6 +43,7 @@ class RandomSpawnManager(private val plugin: Digriss) : Listener {
             if (plugin.getResource("spawn.yml") != null) plugin.saveResource("spawn.yml", false)
             else YamlConfiguration().apply {
                 set("enabled", true); set("world", ""); set("min-radius", 300); set("max-radius", 3000)
+                set("area.min-x", -9000); set("area.max-x", 9000); set("area.min-z", -4400); set("area.max-z", 4400)
                 save(file)
             }
         }
