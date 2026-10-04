@@ -534,6 +534,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     }
 
     fun centerTP(player: Player) {
+        if (plugin.combatManager.isInCombat(player)) return deny(player, "${ChatColor.RED}전투 중에는 국가 스폰으로 이동할 수 없습니다. (${plugin.combatManager.remainingSeconds(player)}초 남음)")
         val nationName = playerNations[player.uniqueId] ?: return
         val nation = nations[nationName] ?: return
         val target = nationSpawns[nationName] ?: nationBeacons[nationName]?.clone()?.add(0.5, 1.0, 0.5)
@@ -551,6 +552,11 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         plugin.server.scheduler.runTaskLater(plugin, Runnable {
             teleporting.remove(player.uniqueId)
             if (!player.isOnline) return@Runnable
+            if (plugin.combatManager.isInCombat(player)) {
+                player.sendMessage("${ChatColor.RED}전투가 시작되어 이동이 취소되었습니다.")
+                Sounds.fail(player)
+                return@Runnable
+            }
 
             val now = player.location
             if (now.world != start.world || now.distanceSquared(start) > 1.0) {

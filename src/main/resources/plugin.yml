@@ -98,3 +98,6 @@ permissions:
   digriss.admin:
     description: 디그리스 관리자 명령어 사용 권한
     default: op
+  digriss.combat.bypass:
+    description: 전투 중 도주 방지(전투 표시)를 받지 않음 (테스트용)
+    default: false

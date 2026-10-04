@@ -109,6 +109,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var mainMenu: MainMenu
         private set
+    lateinit var combatManager: kr.maeshil.digriss.manager.CombatManager
+        private set
 
     override fun onEnable() {
 
@@ -138,6 +140,8 @@ class Digriss : JavaPlugin() {
         bundleManager = BundleManager(this)
         helpManager = HelpManager(this)
         warEventManager = WarEventManager(this)
+        combatManager = kr.maeshil.digriss.manager.CombatManager(this) // 전투 중 도주(로그아웃·텔레포트) 방지
+        combatManager.start()
         Bukkit.getPluginManager().registerEvents(kr.maeshil.digriss.manager.RandomSpawnManager(this), this) // 첫 접속·무소속 부활 랜덤 스폰
 
         // 직업 스킬(F) 쿨타임 상시 표시 (스킬이 있는 직업만)
