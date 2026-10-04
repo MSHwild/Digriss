@@ -101,7 +101,7 @@ streak-bonus:
   max-days: 10
 
 # 한 주(월요일 시작)에 required-days일 이상 퀘스트를 1개 이상 완료하면 1회 지급
-# DC는 여기서만 지급되며 plugins/Digriss/quest-dc.log에 기록됩니다
+# DC는 여기와 퀘스트별 dc 항목에서만 지급되며 plugins/Digriss/quest-dc.log에 기록됩니다
 weekly-bonus:
   required-days: 5
   souls: 100
