@@ -28,7 +28,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
     private val tagged = HashMap<UUID, Long>() // 전투가 끝나는 시각(ms)
 
     private var enabled = true
-    private var seconds = 5
+    private var seconds = 7
     private var killOnLogout = true
     private var punishReasons = setOf("DISCONNECTED", "TIMED_OUT")
     private var blockedCommands = setOf<String>()
@@ -70,7 +70,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
             // jar에 combat.yml이 없어도 꺼지지 않게 기본값으로 만듦
             if (plugin.getResource("combat.yml") != null) plugin.saveResource("combat.yml", false)
             else YamlConfiguration().apply {
-                set("enabled", true); set("seconds", 5); set("kill-on-logout", true)
+                set("enabled", true); set("seconds", 7); set("kill-on-logout", true)
                 set("punish-reasons", listOf("DISCONNECTED", "TIMED_OUT"))
                 set("blocked-commands", defaultBlocked)
                 save(file)
@@ -78,7 +78,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
         }
         val config = YamlConfiguration.loadConfiguration(file)
         enabled = config.getBoolean("enabled", true)
-        seconds = config.getInt("seconds", 5).coerceIn(3, 120)
+        seconds = config.getInt("seconds", 7).coerceIn(3, 120)
         killOnLogout = config.getBoolean("kill-on-logout", true)
         punishReasons = config.getStringList("punish-reasons").map { it.uppercase() }.toSet()
             .ifEmpty { setOf("DISCONNECTED", "TIMED_OUT") }

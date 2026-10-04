@@ -6,7 +6,7 @@
 enabled: true
 
 # 전투 상태가 유지되는 시간(초). 또 맞거나 때리면 다시 이만큼으로 늘어납니다. (3~120)
-seconds: 5
+seconds: 7
 
 # 전투 중 접속을 끊으면 사망
 kill-on-logout: true
