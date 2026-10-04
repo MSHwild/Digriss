@@ -23,6 +23,8 @@ class RandomSpawnManager(private val plugin: Digriss) : Listener {
     private var worldName = ""
     private var minRadius = 300
     private var maxRadius = 3000
+    // area가 설정돼 있으면 반경 대신 이 직사각형 안에서 찾음 (지구 맵처럼 가로가 긴 맵용): minX, maxX, minZ, maxZ
+    private var area: IntArray? = null
 
     // 위험하거나 서 있기 곤란한 바닥
     private val badGround = setOf(
@@ -49,19 +51,32 @@ class RandomSpawnManager(private val plugin: Digriss) : Listener {
         worldName = config.getString("world", "") ?: ""
         minRadius = config.getInt("min-radius", 300).coerceAtLeast(0)
         maxRadius = config.getInt("max-radius", 3000).coerceAtLeast(minRadius + 1)
+        area = config.getConfigurationSection("area")?.let {
+            val x1 = it.getInt("min-x"); val x2 = it.getInt("max-x")
+            val z1 = it.getInt("min-z"); val z2 = it.getInt("max-z")
+            if (x1 < x2 && z1 < z2) intArrayOf(x1, x2, z1, z2) else null
+        }
     }
 
     private fun world(): World? = Bukkit.getWorld(worldName).takeIf { worldName.isNotEmpty() } ?: Bukkit.getWorlds().firstOrNull()
 
-    // 월드 스폰을 중심으로 min~max 반경 안의 안전한 땅. 30번 시도해도 못 찾으면 null (기본 스폰 사용)
+    // 직사각형(area) 또는 월드 스폰 중심 min~max 반경 안의 안전한 땅. 30번 시도해도 못 찾으면 null (기본 스폰 사용)
     fun findLocation(): Location? {
         val world = world() ?: return null
         val center = world.spawnLocation
         repeat(30) {
-            val angle = Random.nextDouble(0.0, Math.PI * 2)
-            val dist = Random.nextDouble(minRadius.toDouble(), maxRadius.toDouble())
-            val x = center.blockX + (Math.cos(angle) * dist).toInt()
-            val z = center.blockZ + (Math.sin(angle) * dist).toInt()
+            val rect = area
+            val x: Int
+            val z: Int
+            if (rect != null) {
+                x = Random.nextInt(rect[0], rect[1] + 1)
+                z = Random.nextInt(rect[2], rect[3] + 1)
+            } else {
+                val angle = Random.nextDouble(0.0, Math.PI * 2)
+                val dist = Random.nextDouble(minRadius.toDouble(), maxRadius.toDouble())
+                x = center.blockX + (Math.cos(angle) * dist).toInt()
+                z = center.blockZ + (Math.sin(angle) * dist).toInt()
+            }
             if (!world.worldBorder.isInside(Location(world, x + 0.5, 64.0, z + 0.5))) return@repeat
 
             val ground = world.getHighestBlockAt(x, z)
