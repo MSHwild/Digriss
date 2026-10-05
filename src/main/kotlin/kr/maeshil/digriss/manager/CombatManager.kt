@@ -63,6 +63,9 @@ class CombatManager(private val plugin: Digriss) : Listener {
         }, 20L, 20L)
     }
 
+    // /디그리스 리로드 에서 호출. 전투 기능을 켜거나 끄는 것(enabled)은 재시작해야 반영됨
+    fun reload() = load()
+
     private fun load() {
         val file = File(plugin.dataFolder, "combat.yml")
         if (!file.exists()) {

@@ -68,6 +68,16 @@ commands:
   아이콘:
     description: icons.yml을 다시 불러옵니다 (관리자)
     usage: /아이콘 리로드
+  디그리스:
+    description: 설정 파일을 서버 재시작 없이 다시 불러옵니다 (관리자)
+    usage: /디그리스 리로드
+    aliases: [digriss]
+  지도:
+    description: 실시간 지도(BlueMap) 주소를 알려줍니다
+    usage: /지도
+  디스코드:
+    description: 디스코드 초대 주소를 알려줍니다
+    usage: /디스코드
     permission: digriss.admin
   번들:
     description: 판매 중인 번들(상점 패키지) 목록을 엽니다

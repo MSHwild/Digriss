@@ -111,6 +111,10 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var combatManager: kr.maeshil.digriss.manager.CombatManager
         private set
+    lateinit var randomSpawnManager: kr.maeshil.digriss.manager.RandomSpawnManager
+        private set
+    lateinit var linkCommand: kr.maeshil.digriss.command.LinkCommand
+        private set
 
     override fun onEnable() {
 
@@ -142,7 +146,8 @@ class Digriss : JavaPlugin() {
         warEventManager = WarEventManager(this)
         combatManager = kr.maeshil.digriss.manager.CombatManager(this) // 전투 중 도주(로그아웃·텔레포트) 방지
         combatManager.start()
-        Bukkit.getPluginManager().registerEvents(kr.maeshil.digriss.manager.RandomSpawnManager(this), this) // 첫 접속·무소속 부활 랜덤 스폰
+        randomSpawnManager = kr.maeshil.digriss.manager.RandomSpawnManager(this)
+        Bukkit.getPluginManager().registerEvents(randomSpawnManager, this) // 첫 접속·무소속 부활 랜덤 스폰
 
         // 직업 스킬(F) 쿨타임 상시 표시 (스킬이 있는 직업만)
         ActionBarManager.addProvider { player ->
@@ -216,6 +221,9 @@ class Digriss : JavaPlugin() {
         getCommand("칭호")?.setExecutor(titleMenu)
         WarEventCommand(this).let { getCommand("전쟁이벤트")?.apply { setExecutor(it); tabCompleter = it } }
         getCommand("아이콘")?.setExecutor(IconCommand(this))
+        kr.maeshil.digriss.command.ReloadCommand(this).let { getCommand("디그리스")?.apply { setExecutor(it); tabCompleter = it } }
+        linkCommand = kr.maeshil.digriss.command.LinkCommand(this)
+        listOf("지도", "디스코드").forEach { getCommand(it)?.setExecutor(linkCommand) }
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)

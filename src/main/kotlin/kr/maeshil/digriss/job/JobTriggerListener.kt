@@ -54,6 +54,11 @@ class JobTriggerListener(
         }
     }
 
+    @EventHandler
+    fun onJoin(e: org.bukkit.event.player.PlayerJoinEvent) {
+        ReaperSkill.clearStaleInvulnerable(e.player)
+    }
+
     // 접속 종료 시 스킬 상태 정리 (사신 무체화 중 나가도 장비/무적 상태 복구)
     @EventHandler
     fun onQuit(e: PlayerQuitEvent) {

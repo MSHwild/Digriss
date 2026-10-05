@@ -27,6 +27,7 @@ class ReaperSkill : JobSkill {
         val uuid = player.uniqueId
 
         player.isInvulnerable = true
+        player.persistentDataContainer.set(invulnKey(), org.bukkit.persistence.PersistentDataType.BYTE, 1)
         active.add(uuid)
         endsAt[uuid] = System.currentTimeMillis() + (invulnDurationSeconds * 1000).toLong()
         player.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, durationTicks.toInt() + 1, 0, false, false))
@@ -86,6 +87,7 @@ class ReaperSkill : JobSkill {
             if (!active.remove(player.uniqueId)) return
             endsAt.remove(player.uniqueId)
             player.isInvulnerable = false
+            player.persistentDataContainer.remove(invulnKey())
 
             val stash = stashes.remove(player.uniqueId) ?: return
             if (stash.taskId != -1) Bukkit.getScheduler().cancelTask(stash.taskId)
@@ -101,6 +103,17 @@ class ReaperSkill : JobSkill {
             inv.setItemInOffHand(stash.offHand)
             inv.armorContents = stash.armor
             inv.addItem(*displaced.toTypedArray()).values.forEach { player.world.dropItemNaturally(player.location, it) }
+        }
+
+        private fun invulnKey() = org.bukkit.NamespacedKey(Bukkit.getPluginManager().getPlugin("Digriss")!!, "reaper_invuln")
+
+        // 접속할 때, 무체화 중 서버가 꺼져서 무적이 남아 있으면 풀어 줌 (우리가 건 무적만. 관리자가 건 건 건드리지 않음)
+        fun clearStaleInvulnerable(player: Player) {
+            if (player.uniqueId in active) return
+            val key = invulnKey()
+            if (!player.persistentDataContainer.has(key, org.bukkit.persistence.PersistentDataType.BYTE)) return
+            player.persistentDataContainer.remove(key)
+            player.isInvulnerable = false
         }
 
         fun restoreAll() {
