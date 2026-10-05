@@ -8,7 +8,12 @@ enum class QuestType {
     ENEMY_TERRITORY_ENTER,    // 적국 영토 입장 (청크 이동 기준)
     WAR_KILL_ENEMY_TERRITORY, // 전쟁 중 적국 영토에서 킬
     ENEMY_BEACON_VISIT,       // 적 신호기 근처 방문
-    PLAYER_KILL               // 플레이어 킬 (어려움 전용)
+    PLAYER_KILL,              // 플레이어 킬 (어려움 전용)
+    FISHING,                  // 물고기 낚기
+    ORE_MINE,                 // 광석 채굴 (직접 설치한 광석은 제외)
+    CROP_HARVEST,             // 다 자란 작물 수확
+    VILLAGER_TRADE,           // 주민과 거래
+    ENTER_NETHER              // 네더 입장
 }
 
 enum class QuestDifficulty(val displayName: String, val color: String) {

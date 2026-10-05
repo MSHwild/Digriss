@@ -10,6 +10,11 @@
 #   WAR_KILL_ENEMY_TERRITORY 전쟁 중 적국 영토에서 킬
 #   ENEMY_BEACON_VISIT       적 신호기 근처 방문
 #   PLAYER_KILL              플레이어 킬 (HARD 전용, 같은 상대 10분 내 재처치는 제외)
+#   FISHING                  물고기 낚기
+#   ORE_MINE                 광석 채굴 (직접 설치한 광석은 제외, 크리에이티브 제외)
+#   CROP_HARVEST             다 자란 작물 수확 (밀·당근·감자·비트·네더 와트)
+#   VILLAGER_TRADE           주민과 거래
+#   ENTER_NETHER             네더 입장
 #
 # difficulty: EASY / NORMAL / HARD
 # war-only: true면 내 국가가 전쟁 중일 때만 뽑힘
@@ -44,6 +49,21 @@ quests:
     difficulty: EASY
     target: 5000
     name: "국가 금고에 5,000원 입금"
+  fishing_easy:
+    type: FISHING
+    difficulty: EASY
+    target: 5
+    name: "물고기 5마리 낚기"
+  crop_easy:
+    type: CROP_HARVEST
+    difficulty: EASY
+    target: 30
+    name: "다 자란 작물 30개 수확"
+  ore_easy:
+    type: ORE_MINE
+    difficulty: EASY
+    target: 15
+    name: "광석 15개 채굴"
 
   # 보통
   mob_kill_normal:
@@ -67,6 +87,26 @@ quests:
     target: 1
     name: "[전쟁] 적 신호기 근처 방문"
     war-only: true
+  ore_normal:
+    type: ORE_MINE
+    difficulty: NORMAL
+    target: 40
+    name: "광석 40개 채굴"
+  fishing_normal:
+    type: FISHING
+    difficulty: NORMAL
+    target: 15
+    name: "물고기 15마리 낚기"
+  trade_normal:
+    type: VILLAGER_TRADE
+    difficulty: NORMAL
+    target: 5
+    name: "주민과 5번 거래"
+  nether_normal:
+    type: ENTER_NETHER
+    difficulty: NORMAL
+    target: 1
+    name: "네더에 입장"
 
   # 어려움
   mob_kill_hard:
@@ -92,6 +132,21 @@ quests:
     name: "[전쟁] 적국 영토에서 2킬"
     war-only: true
     dc: 8
+  ore_hard:
+    type: ORE_MINE
+    difficulty: HARD
+    target: 100
+    name: "광석 100개 채굴"
+  crop_hard:
+    type: CROP_HARVEST
+    difficulty: HARD
+    target: 150
+    name: "다 자란 작물 150개 수확"
+  trade_hard:
+    type: VILLAGER_TRADE
+    difficulty: HARD
+    target: 20
+    name: "주민과 20번 거래"
 
 # 연속 출석: 하루 첫 퀘스트 완료 시 (연속 일수 x 값) 추가 지급, max-days일까지만 증가
 # 하루를 놓치면 0이 아니라 절반으로 줄어듭니다

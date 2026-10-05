@@ -3,7 +3,16 @@ package kr.maeshil.digriss.quest
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.manager.QuestManager
 import org.bukkit.Bukkit
+import io.papermc.paper.event.player.PlayerTradeEvent
+import org.bukkit.GameMode
+import org.bukkit.Material
+import org.bukkit.World
+import org.bukkit.block.data.Ageable
 import org.bukkit.entity.Enemy
+import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.player.PlayerChangedWorldEvent
+import org.bukkit.event.player.PlayerFishEvent
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -69,6 +78,57 @@ class QuestListener(private val plugin: JavaPlugin, private val questManager: Qu
     @EventHandler
     fun onDrag(e: InventoryDragEvent) {
         if (e.view.topInventory.holder is QuestHolder) e.isCancelled = true
+    }
+
+    // ───────────────────────── 생활 퀘스트 (낚시·채굴·농사·거래·네더) ─────────────────────────
+
+    // 직접 설치한 광석을 부수고 다시 설치하는 반복 방지 (서버를 켜 둔 동안만 기억)
+    private val placedOres = HashSet<String>()
+
+    private fun blockKey(b: org.bukkit.block.Block) = "${b.world.uid}:${b.x},${b.y},${b.z}"
+
+    private fun isOre(type: Material) = type.name.endsWith("_ORE") || type == Material.ANCIENT_DEBRIS
+
+    private val crops = setOf(Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS, Material.NETHER_WART)
+
+    @EventHandler(ignoreCancelled = true)
+    fun onPlace(e: BlockPlaceEvent) {
+        if (!isOre(e.block.type)) return
+        if (placedOres.size > 50000) placedOres.clear()
+        placedOres.add(blockKey(e.block))
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    fun onBreak(e: BlockBreakEvent) {
+        val player = e.player
+        if (player.gameMode == GameMode.CREATIVE) return
+        val block = e.block
+        val type = block.type
+
+        if (isOre(type)) {
+            if (placedOres.remove(blockKey(block))) return // 직접 설치한 광석
+            questManager.addProgress(player, QuestType.ORE_MINE)
+            return
+        }
+        if (type in crops) {
+            val age = block.blockData as? Ageable ?: return
+            if (age.age >= age.maximumAge) questManager.addProgress(player, QuestType.CROP_HARVEST)
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    fun onFish(e: PlayerFishEvent) {
+        if (e.state == PlayerFishEvent.State.CAUGHT_FISH) questManager.addProgress(e.player, QuestType.FISHING)
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    fun onTrade(e: PlayerTradeEvent) {
+        questManager.addProgress(e.player, QuestType.VILLAGER_TRADE)
+    }
+
+    @EventHandler
+    fun onWorldChange(e: PlayerChangedWorldEvent) {
+        if (e.player.world.environment == World.Environment.NETHER) questManager.addProgress(e.player, QuestType.ENTER_NETHER)
     }
 
     // 클릭 이벤트 안에서 바로 인벤토리를 다시 열면 문제가 생길 수 있어 다음 틱에 엶
