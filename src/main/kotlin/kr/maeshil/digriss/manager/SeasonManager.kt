@@ -113,13 +113,13 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
         }
     }
 
-    /** 스코어보드용 한 줄. 예고 기간(join-notice-days)이 아니면 null */
+    /** 스코어보드용 한 줄. 종료일이 없으면 null. 예고 기간(join-notice-days) 안이면 빨간색 */
     fun scoreboardLine(): String? {
         val left = remainingMs() ?: return null
-        if (left > joinNoticeMs) return null
         if (left <= 0) return " §c$name 종료"
+        val color = if (left <= joinNoticeMs) "§c" else "§7"
         val days = left / DAY
-        return if (days >= 1) " §c$name 종료 D-$days" else " §c$name 종료 ${remainingText(left)} 전"
+        return if (days >= 1) " ${color}$name 종료까지 ${days}일" else " §c$name 종료까지 ${remainingText(left)}"
     }
 
     private fun check() {
