@@ -41,6 +41,7 @@ class MainMenu(private val plugin: Digriss) : Listener {
         Button(24, Material.BOOK, "§f§l도움말", listOf("§7서버 기능 설명"), "도움말"),
         Button(19, Material.NAME_TAG, "§6§l업적 · 칭호", listOf("§7달성한 업적과 칭호 장착"), "칭호"),
         Button(25, Material.RED_BANNER, "§4§l전쟁 이벤트", listOf("§7이벤트 시간 · 진행 상황"), "전쟁이벤트"),
+        Button(29, Material.EMERALD_BLOCK, "§a§l상점", listOf("§7블럭 · 음식 · 장비 등을 사고팔기"), "shop", "상점"),
         Button(30, Material.CRAFTING_TABLE, "§e§l레시피 보기", listOf("§7무기 제작법 확인"), "ia weapon_c", "레시피")
     )
     private val bySlot = buttons.associateBy { it.slot }
