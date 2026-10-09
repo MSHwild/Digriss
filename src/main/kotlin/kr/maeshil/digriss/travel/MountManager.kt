@@ -34,6 +34,7 @@ class MountManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     private val file = File(plugin.dataFolder, "travel.yml")
 
+    private var cost = 1000.0
     private var speed = 0.4
     private var jump = 0.9
     private var health = 30.0
@@ -52,6 +53,7 @@ class MountManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     fun load() {
         val c = YamlConfiguration.loadConfiguration(file)
+        cost = c.getDouble("mount.cost", 1000.0).coerceAtLeast(0.0)
         speed = c.getDouble("mount.speed", 0.4).coerceIn(0.1, 1.0)
         jump = c.getDouble("mount.jump", 0.9).coerceIn(0.1, 2.0)
         health = c.getDouble("mount.health", 30.0).coerceIn(1.0, 100.0)
@@ -75,6 +77,12 @@ class MountManager(private val plugin: Digriss) : Listener, CommandExecutor {
         if (plugin.combatManager.isInCombat(player)) return true.also { deny(player, "§c전투 중에는 탈것을 부를 수 없습니다.") }
         if (player.isInsideVehicle) return true.also { deny(player, "§c이미 무언가를 타고 있습니다.") }
         if (player.isFlying || player.isGliding) return true.also { deny(player, "§c땅에 내려와서 불러 주세요.") }
+        if (cost > 0) {
+            val econ = Bukkit.getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy::class.java)?.provider
+                ?: return true.also { deny(player, "§c경제 플러그인이 연동되어 있지 않습니다.") }
+            if (!econ.has(player, cost)) return true.also { deny(player, "§c소지금이 부족합니다. (탈것 ${"%,.0f".format(cost)}원)") }
+            econ.withdrawPlayer(player, cost)
+        }
 
         val horse = player.world.spawnEntity(player.location, EntityType.HORSE) as Horse
         horse.isTamed = true
@@ -95,7 +103,7 @@ class MountManager(private val plugin: Digriss) : Listener, CommandExecutor {
         horse.addPassenger(player)
         player.world.spawnParticle(Particle.CLOUD, horse.location.add(0.0, 1.0, 0.0), 20, 0.5, 0.5, 0.5, 0.02)
         Sounds.play(player, Sound.ENTITY_HORSE_AMBIENT, 1f, 1.2f)
-        player.sendMessage("§a탈것을 불렀습니다! §7(내리면 사라져요. 다시 /탈것 하면 돌려보내기)")
+        player.sendMessage("§a탈것을 불렀습니다!" + (if (cost > 0) " §7(-${"%,.0f".format(cost)}원)" else "") + " §7내리면 사라져요. 다시 /탈것 하면 돌려보내기")
         return true
     }
 
