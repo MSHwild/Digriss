@@ -27,13 +27,14 @@ class ResetCommand(private val plugin: Digriss) : CommandExecutor {
         if (confirmArg == "확인" && pendingConfirm.contains(key)) {
             pendingConfirm.remove(key)
             val moneyReset = executeReset(keepDC = season)
+            if (season) plugin.seasonManager.markReset() // 오픈일에 자동으로 열 수 있게 표시
             plugin.adminLogManager.log(sender, if (season) "시즌 초기화 (DC 유지)" else "서버 전체 데이터 초기화")
             sender.sendMessage("${ChatColor.GREEN}${if (season) "시즌 초기화를 완료했습니다. (DC 유지)" else "서버 전체 데이터를 초기화했습니다."}")
             if (!moneyReset) {
                 sender.sendMessage("${ChatColor.YELLOW}Vault 경제 플러그인을 찾을 수 없어 돈 초기화는 건너뛰었습니다.")
             }
             if (season) {
-                sender.sendMessage("${ChatColor.YELLOW}남은 작업: 서버를 끄고 월드를 원본 지구 지도로 교체, Essentials 홈 정리, season.yml에 다음 시즌 종료일 입력")
+                sender.sendMessage("${ChatColor.YELLOW}남은 작업: 서버를 끄고 월드를 원본 지구 지도로 교체, Essentials 홈 정리. 오픈일이 되면 자동으로 열립니다 (/시즌)")
             }
             Bukkit.broadcastMessage("${ChatColor.RED}[알림] ${if (season) "시즌 데이터가 초기화되었습니다." else "서버 데이터가 전체 초기화되었습니다."}")
             return true

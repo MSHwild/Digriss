@@ -79,15 +79,15 @@ class ScoreboardManager(
             " §f${player.name}",
             " §7랭크  $rankColor${rank.name}",
             " §7직업  §f${job?.displayName ?: "§8없음"}",
-            "",
+            "===============",
             " §7돈  §e${money}원",
             " §7영혼  §b$soul",
             " §7DC  §3$dc",
-            "",
+            "===============",
             " §7국가  §a$nation",
             " §7전쟁  $warText",
             " §7연합  $allyText",
-            "",
+            "===============",
             " §8접속 ${online}명 · puritymc.kr"
         ).let { base ->
             // 시즌 종료가 가까우면 맨 위에 D-day 표시

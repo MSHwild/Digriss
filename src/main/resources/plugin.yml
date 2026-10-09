@@ -82,8 +82,8 @@ commands:
     description: 초보 보호를 스스로 해제합니다
     usage: /보호해제 확인
   시즌:
-    description: 현재 시즌과 종료까지 남은 기간을 확인합니다
-    usage: /시즌
+    description: 현재 시즌과 종료(오픈)까지 남은 기간을 확인합니다
+    usage: /시즌 [종료일|오픈일|오픈]
   거점:
     description: 자원 거점 목록과 주인을 확인합니다 (관리자는 주인 변경)
     usage: /거점 [주인 <거점ID> <국가|없음>]
