@@ -23,7 +23,25 @@ object BlueMapBridge {
     fun onReady(action: () -> Unit) {
         if (!available) return
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss") ?: return
-        BlueMapAPI.onEnable { Bukkit.getScheduler().runTask(plugin, Runnable { action() }) }
+        BlueMapAPI.onEnable { api ->
+            hideListCoordinates(api)
+            Bukkit.getScheduler().runTask(plugin, Runnable { action() })
+        }
+    }
+
+    // 지도 왼쪽 목록에 국가 이름 아래로 보이는 좌표((x | y | z))를 숨기는 스타일을 웹앱에 등록
+    private fun hideListCoordinates(api: BlueMapAPI) {
+        try {
+            val file = api.webApp.webRoot.resolve("assets/digriss.css")
+            java.nio.file.Files.createDirectories(file.parent)
+            java.nio.file.Files.writeString(
+                file,
+                ".side-menu .marker-item .marker-button>.info .stats{display:none}\n"
+            )
+            api.webApp.registerStyle("assets/digriss.css")
+        } catch (e: Exception) {
+            Bukkit.getLogger().warning("[Digriss] BlueMap 좌표 숨김 스타일 등록 실패: ${e.message}")
+        }
     }
 
     // 🌟 BlueMap Color 생성자 (ARGB Int 패킹 방식 사용 - 클래스 충돌 100% 방지)
