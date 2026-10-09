@@ -94,6 +94,7 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
     // ── 보스 등장 장소 ──
     private data class BossSpot(val name: String, val world: String, val x: Int, val z: Int)
     private var spots: List<BossSpot> = emptyList()      // bigevent.yml boss.locations
+    private var addedOnly = true                          // 게임에서 추가한 장소가 있으면 그것만 쓰기
     private var currentSpot: String? = null               // 지금 레이드 장소 이름
     private var lastSpot: String? = null                  // 같은 곳이 연속으로 나오지 않게
     private var plannedSpot: String? = null               // 예고할 때 정해 둔 다음 장소
@@ -150,6 +151,7 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
                 }
             }.getOrNull().also { if (it == null) plugin.logger.warning("[대축제] 보스 장소 '$line'을(를) 읽을 수 없습니다. (예: 이집트 피라미드, 1594, -1535)") }
         }
+        addedOnly = c.getBoolean("boss.added-only", true)
         noticeMinutes = c.getInt("boss.notice-minutes", 10).coerceAtLeast(0)
         timeLimitMinutes = c.getInt("boss.time-limit-minutes", 15).coerceAtLeast(1)
         bossName = ChatColor.translateAlternateColorCodes('&', c.getString("boss.name", "&4&l고대 수호자") ?: "&4&l고대 수호자")
@@ -281,8 +283,10 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
 
     // ───────────────────────── 보스 레이드 ─────────────────────────
 
-    /** 모든 장소 이름 (설정 파일 + 관리자가 추가한 곳) */
-    private fun spotNames(): List<String> = spots.map { it.name } + extraSpots.keys
+    /** 보스가 나올 수 있는 장소 이름. added-only 가 켜져 있고 게임에서 추가한 곳이 있으면 그곳들만 씀 */
+    private fun spotNames(): List<String> =
+        if (addedOnly && extraSpots.isNotEmpty()) extraSpots.keys.toList()
+        else spots.map { it.name } + extraSpots.keys
 
     // 장소 이름 → 실제 위치 (설정 파일 장소는 그 자리 가장 높은 블록 위)
     private fun locationOf(name: String): Location? {
@@ -640,7 +644,9 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
                     }
                     else -> {
                         sender.sendMessage("§6보스 장소 ${spotNames().size}곳 §7(레이드마다 직전과 다른 곳에서 무작위로 나와요)")
-                        spots.forEach { sender.sendMessage("§7- §f${it.name} §8(${it.x}, ${it.z})") }
+                        val configUnused = addedOnly && extraSpots.isNotEmpty()
+                        if (configUnused) sender.sendMessage("§8게임에서 추가한 장소만 씁니다. 아래 회색 장소(bigevent.yml)는 쓰지 않아요.")
+                        spots.forEach { sender.sendMessage((if (configUnused) "§8- ${it.name}" else "§7- §f${it.name}") + " §8(${it.x}, ${it.z})") }
                         extraSpots.forEach { (n, l) -> sender.sendMessage("§7- §b$n §8(${l.blockX}, ${l.blockY}, ${l.blockZ}, 직접 추가)") }
                         sender.sendMessage("§8/빅이벤트 위치 추가 <이름> · 삭제 <이름>")
                     }
