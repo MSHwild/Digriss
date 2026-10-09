@@ -35,7 +35,7 @@ class OpenEventManager(private val plugin: Digriss) : Listener, CommandExecutor,
 
     private var enabled = true
     private var endDate: LocalDate? = null
-    private var loginSouls = 50L
+    private var loginSouls = 10L
     private var loginDC = 1L
     private var windowHours = 72
     private var minPlayMinutes = 10
@@ -57,7 +57,7 @@ class OpenEventManager(private val plugin: Digriss) : Listener, CommandExecutor,
             if (plugin.getResource("openevent.yml") != null) plugin.saveResource("openevent.yml", false)
             else YamlConfiguration().apply {
                 set("enabled", true); set("end-date", "")
-                set("login.souls", 50); set("login.dc", 1)
+                set("login.souls", 10); set("login.dc", 1)
                 set("invite.window-hours", 72); set("invite.min-playtime-minutes", 10); set("invite.block-same-ip", true)
                 set("invite.newcomer-souls", 100); set("invite.newcomer-dc", 3)
                 set("invite.inviter-souls", 100); set("invite.inviter-dc", 5); set("invite.inviter-max", 10)
@@ -67,7 +67,7 @@ class OpenEventManager(private val plugin: Digriss) : Listener, CommandExecutor,
         val c = YamlConfiguration.loadConfiguration(configFile)
         enabled = c.getBoolean("enabled", true)
         endDate = c.getString("end-date")?.takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        loginSouls = c.getLong("login.souls", 50).coerceAtLeast(0)
+        loginSouls = c.getLong("login.souls", 10).coerceAtLeast(0)
         loginDC = c.getLong("login.dc", 1).coerceAtLeast(0)
         windowHours = c.getInt("invite.window-hours", 72).coerceAtLeast(1)
         minPlayMinutes = c.getInt("invite.min-playtime-minutes", 10).coerceAtLeast(0)
