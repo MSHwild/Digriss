@@ -131,6 +131,8 @@ class Digriss : JavaPlugin() {
 
     override fun onEnable() {
 
+        syncConfigFiles()
+
         // 액션바는 provider 등록 전에 먼저 시작
         ActionBarManager.start(this)
 
@@ -268,6 +270,27 @@ class Digriss : JavaPlugin() {
         }, 0L, 20L)
 
         logger.info("Digriss 플러그인이 활성화되었습니다.")
+    }
+
+    // 서버(리눅스)에서 파일을 직접 고치기 어려우므로, 켜질 때마다 jar 안의 최신 설정으로 덮어씀.
+    // 서버마다 다른 값이 들어가는 discord.yml(웹훅), vote.yml(투표 주소)은 덮어쓰지 않고 /디그리스 설정 으로 바꿈.
+    // help.yml은 HelpManager가 따로 처리. 바뀌기 전 파일은 config-old/ 에 보관
+    private fun syncConfigFiles() {
+        val files = listOf("quest.yml", "combat.yml", "spawn.yml", "event.yml", "links.yml", "openevent.yml", "sites.yml", "season.yml")
+        dataFolder.mkdirs()
+        files.forEach { name ->
+            val resource = getResource(name)?.use { it.readBytes() } ?: return@forEach
+            val file = java.io.File(dataFolder, name)
+            if (file.exists()) {
+                if (file.readBytes().contentEquals(resource)) return@forEach
+                val old = java.io.File(dataFolder, "config-old/$name")
+                old.parentFile.mkdirs()
+                file.copyTo(old, overwrite = true)
+                // 예전 형식 season.yml은 SeasonManager가 시즌 번호를 읽어 가야 하므로 그대로 둠
+                if (name == "season.yml" && !org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file).contains("end")) return@forEach
+            }
+            file.writeBytes(resource)
+        }
     }
 
     override fun onDisable() {

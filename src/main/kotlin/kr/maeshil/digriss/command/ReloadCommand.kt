@@ -18,7 +18,8 @@ class ReloadCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (!sender.hasPermission("digriss.admin")) return sender.sendMessage("§c권한이 없습니다.").let { true }
-        if (args.getOrNull(0) != "리로드") return sender.sendMessage("§e사용법: /디그리스 리로드").let { true }
+        if (args.getOrNull(0) == "설정") return setValue(sender, args)
+        if (args.getOrNull(0) != "리로드") return sender.sendMessage("§e사용법: /디그리스 리로드, /디그리스 설정 <디스코드|투표> <주소|끄기>").let { true }
 
         val results = mutableListOf<String>()
         fun step(name: String, action: () -> Unit) {
@@ -50,8 +51,49 @@ class ReloadCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter
         return true
     }
 
-    override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String> =
-        if (args.size == 1 && sender.hasPermission("digriss.admin")) listOf("리로드").filter { it.startsWith(args[0]) } else emptyList()
+    // /디그리스 설정 디스코드 <웹훅 주소|끄기>, /디그리스 설정 투표 <주소>
+    // 파일을 직접 못 고치는 서버용. 웹훅 주소는 비밀번호 같은 것이라 콘솔에서 입력하는 걸 권장
+    private fun setValue(sender: CommandSender, args: Array<out String>): Boolean {
+        val value = args.drop(2).joinToString(" ").trim()
+        when (args.getOrNull(1)) {
+            "디스코드" -> {
+                if (value.isEmpty()) return sender.sendMessage("§e/디그리스 설정 디스코드 <웹훅 주소|끄기>").let { true }
+                val file = File(plugin.dataFolder, "discord.yml")
+                val c = YamlConfiguration.loadConfiguration(file)
+                if (value == "끄기") c.set("enabled", false)
+                else {
+                    if (!value.startsWith("https://discord.com/api/webhooks/") && !value.startsWith("https://discordapp.com/api/webhooks/"))
+                        return sender.sendMessage("§c디스코드 웹훅 주소가 아닙니다. (https://discord.com/api/webhooks/... 로 시작)").let { true }
+                    c.set("enabled", true); c.set("webhook-url", value)
+                }
+                c.save(file)
+                plugin.discordNotifier.load()
+                plugin.adminLogManager.log(sender, "디스코드 웹훅 ${if (value == "끄기") "끔" else "설정"}")
+                sender.sendMessage(if (value == "끄기") "§a디스코드 알림을 껐습니다." else "§a디스코드 알림을 켰습니다. 다음 알림부터 그 채널로 갑니다.")
+            }
+            "투표" -> {
+                if (value.isEmpty()) return sender.sendMessage("§e/디그리스 설정 투표 <마인리스트 서버 페이지 주소>").let { true }
+                val file = File(plugin.dataFolder, "vote.yml")
+                val c = YamlConfiguration.loadConfiguration(file)
+                c.set("vote-url", value)
+                c.save(file)
+                plugin.voteManager.load()
+                plugin.adminLogManager.log(sender, "투표 주소 설정: $value")
+                sender.sendMessage("§a/투표 주소를 바꿨습니다: §f$value")
+            }
+            else -> sender.sendMessage("§e/디그리스 설정 <디스코드|투표> <주소|끄기>")
+        }
+        return true
+    }
+
+    override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String> {
+        if (!sender.hasPermission("digriss.admin")) return emptyList()
+        return when (args.size) {
+            1 -> listOf("리로드", "설정").filter { it.startsWith(args[0]) }
+            2 -> if (args[0] == "설정") listOf("디스코드", "투표").filter { it.startsWith(args[1]) } else emptyList()
+            else -> emptyList()
+        }
+    }
 }
 
 // /지도, /디스코드  — links.yml에 적어둔 주소를 클릭 가능한 링크로 알려줌
