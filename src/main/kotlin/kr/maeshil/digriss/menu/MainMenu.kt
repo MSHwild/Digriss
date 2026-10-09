@@ -26,27 +26,39 @@ class MainMenu(private val plugin: Digriss) : Listener {
 
     private data class Button(val slot: Int, val icon: Material, val name: String, val lore: List<String>, val command: String, val iconKey: String = command)
 
+    // 왼쪽 묶음 / 가운데 세로줄(구분선) / 오른쪽 묶음. 묶음마다 같은 색을 써서 색이 너무 많아 보이지 않게
     private val buttons = listOf(
-        Button(10, Material.BEACON, "§6§l국가", listOf("§7건국, 영토, 금고, 전쟁 관리"), "국가"),
-        Button(11, Material.LIGHT_BLUE_BANNER, "§b§l연합", listOf("§7다른 국가와 연합 맺기"), "연합"),
-        Button(12, Material.CHEST, "§6§l국가 창고", listOf("§7국가원이 함께 쓰는 창고"), "국가창고"),
-        Button(13, Material.WRITABLE_BOOK, "§e§l일일 퀘스트", listOf("§7매일 오전 5시 갱신"), "퀘스트"),
-        Button(14, Material.TOTEM_OF_UNDYING, "§a§l직업 상점", listOf("§7영혼 100으로 직업 구매"), "직업"),
-        Button(15, Material.ARMOR_STAND, "§a§l직업 설정", listOf("§7구매한 직업 장착 / 해제"), "직업설정"),
-        Button(16, Material.FIREWORK_STAR, "§d§l킬 이펙트", listOf("§7영혼으로 처치 연출 구매"), "킬이펙트"),
-        Button(20, Material.GOLD_INGOT, "§6§l번들 상점", listOf("§7DC로 사는 패키지"), "번들"),
-        Button(21, Material.GOLDEN_HELMET, "§d§l내 랭크", listOf("§7내 랭크와 점수 확인"), "랭크"),
-        Button(22, Material.DIAMOND, "§b§l플레이어 랭킹", listOf("§7랭크 순위 TOP 10"), "랭킹"),
-        Button(23, Material.EMERALD, "§a§l국가 랭킹", listOf("§7영토 · 금고 · 인원 · 레벨 순위"), "국가랭킹"),
-        Button(24, Material.BOOK, "§f§l도움말", listOf("§7서버 기능 설명"), "도움말"),
-        Button(19, Material.NAME_TAG, "§6§l업적 · 칭호", listOf("§7달성한 업적과 칭호 장착"), "칭호"),
-        Button(25, Material.RED_BANNER, "§4§l전쟁 이벤트", listOf("§7이벤트 시간 · 진행 상황"), "전쟁이벤트"),
-        Button(29, Material.EMERALD_BLOCK, "§a§l상점", listOf("§7블럭 · 음식 · 장비 등을 사고팔기"), "shop", "상점"),
-        Button(30, Material.CRAFTING_TABLE, "§e§l레시피 보기", listOf("§7무기 제작법 확인"), "ia weapon_c", "레시피")
+        // 국가
+        Button(10, Material.BEACON, "§a국가", listOf("§7건국 · 영토 · 금고 · 전쟁"), "국가"),
+        Button(11, Material.LIGHT_BLUE_BANNER, "§a연합", listOf("§7다른 국가와 손잡기"), "연합"),
+        Button(12, Material.CHEST, "§a국가 창고", listOf("§7국가원이 함께 쓰는 창고"), "국가창고"),
+        // 상점
+        Button(14, Material.EMERALD_BLOCK, "§6상점", listOf("§7블럭 · 음식 · 장비 사고팔기"), "shop", "상점"),
+        Button(15, Material.GOLD_INGOT, "§6번들 상점", listOf("§7DC로 사는 패키지"), "번들"),
+        Button(16, Material.CRAFTING_TABLE, "§6레시피", listOf("§7무기 제작법"), "ia weapon_c", "레시피"),
+        // 성장
+        Button(19, Material.WRITABLE_BOOK, "§e일일 퀘스트", listOf("§7매일 오전 5시 갱신"), "퀘스트"),
+        Button(20, Material.TOTEM_OF_UNDYING, "§e직업", listOf("§7영혼 100으로 직업 구매"), "직업"),
+        Button(21, Material.ARMOR_STAND, "§e직업 설정", listOf("§7구매한 직업 장착 · 해제"), "직업설정"),
+        // 순위
+        Button(23, Material.GOLDEN_HELMET, "§b내 랭크", listOf("§7랭크와 점수"), "랭크"),
+        Button(24, Material.DIAMOND, "§b플레이어 랭킹", listOf("§7랭크 순위"), "랭킹"),
+        Button(25, Material.EMERALD, "§b국가 랭킹", listOf("§7영토 · 금고 · 인원 · 내실"), "국가랭킹"),
+        // 꾸미기 · 전쟁
+        Button(28, Material.NAME_TAG, "§d업적 · 칭호", listOf("§7칭호 장착"), "칭호"),
+        Button(29, Material.FIREWORK_STAR, "§d킬 이펙트", listOf("§7처치 연출 구매"), "킬이펙트"),
+        Button(30, Material.RED_BANNER, "§d전쟁 이벤트", listOf("§7주말 저녁 점수 2배"), "전쟁이벤트"),
+        // 안내
+        Button(32, Material.CAKE, "§f이벤트", listOf("§7접속 보상 · 친구 추천"), "이벤트"),
+        Button(33, Material.FILLED_MAP, "§f실시간 지도", listOf("§7웹 지도 주소"), "지도"),
+        Button(34, Material.BOOK, "§f도움말", listOf("§7서버 기능 설명"), "도움말")
     )
     private val bySlot = buttons.associateBy { it.slot }
 
     companion object {
+        private const val SIZE = 45
+        private const val CLOSE_SLOT = 40
+
         // 다른 메뉴에 넣는 "메뉴로 돌아가기" 버튼
         fun backItem(plugin: Digriss): ItemStack {
             val stack = plugin.iconManager.get("common.back", Material.ARROW)
@@ -75,13 +87,14 @@ class MainMenu(private val plugin: Digriss) : Listener {
     }
 
     fun open(player: Player) {
-        val inv = Bukkit.createInventory(MainMenuHolder(), 36, "§8디그리스 메뉴")
-        val filler = item(icon("common.filler", Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
-        for (i in 0 until inv.size) inv.setItem(i, filler)
+        val inv = Bukkit.createInventory(MainMenuHolder(), SIZE, "§8디그리스")
+        val filler = item(icon("common.filler", Material.BLACK_STAINED_GLASS_PANE), " ", emptyList())
+        val divider = item(icon("common.divider", Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
+        for (i in 0 until inv.size) inv.setItem(i, if (i % 9 == 4 && i in 9..35) divider else filler)
 
         inv.setItem(4, profile(player))
-        buttons.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.iconKey}", b.icon), b.name, b.lore + listOf("", "§e클릭하여 열기"))) }
-        inv.setItem(31, item(icon("common.close", Material.BARRIER), "§c닫기", emptyList()))
+        buttons.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.iconKey}", b.icon), b.name, b.lore + listOf("", "§8클릭해서 열기"))) }
+        inv.setItem(CLOSE_SLOT, item(icon("common.close", Material.BARRIER), "§7닫기", emptyList()))
         player.openInventory(inv)
     }
 
@@ -93,7 +106,7 @@ class MainMenu(private val plugin: Digriss) : Listener {
             meta.owningPlayer = player
             head.itemMeta = meta
         }
-        return item(head, "§f§l${player.name}", listOf(
+        return item(head, "§f${player.name}", listOf(
             "§7랭크 " + ChatColor.translateAlternateColorCodes('&', tier.color + tier.name) + " §8(${plugin.rankManager.getScore(player)}점)",
             "§7영혼 §b${plugin.soulManager.getSouls(player)}",
             "§7DC §3${plugin.dcManager.getDC(player)}",
@@ -122,7 +135,7 @@ class MainMenu(private val plugin: Digriss) : Listener {
         if (e.clickedInventory != e.view.topInventory) return
         val player = e.whoClicked as? Player ?: return
 
-        if (e.rawSlot == 31) {
+        if (e.rawSlot == CLOSE_SLOT) {
             Sounds.click(player)
             player.closeInventory()
             return

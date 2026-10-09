@@ -44,7 +44,7 @@ class ScoreboardManager(
 
         var objective = scoreboard.getObjective("digriss")
         if (objective == null) {
-            objective = scoreboard.registerNewObjective("digriss", "dummy", "§8§m      §r §b§l⚔ §f§lD I G R I S S §b§l⚔ §8§m      ")
+            objective = scoreboard.registerNewObjective("digriss", "dummy", "§6§l디그리스")
             objective.displaySlot = DisplaySlot.SIDEBAR
         } else {
             scoreboard.entries.forEach { scoreboard.resetScores(it) }
@@ -66,7 +66,6 @@ class ScoreboardManager(
             wars.size <= 2 -> "§c" + wars.joinToString(", ")
             else -> "§c${wars[0]} 외 ${wars.size - 1}개국"
         }
-        val equippedEffect = killEffectManager.getEquipped(player)
         val job = jobManager.getJob(uuid)
         val online = Bukkit.getOnlinePlayers().size
         val rankColor = ChatColor.translateAlternateColorCodes('&', rank.color)
@@ -74,21 +73,22 @@ class ScoreboardManager(
         val money = getEconomy()?.let { String.format("%,.0f", it.getBalance(player)) } ?: "§8-"
         val dc = dcManager.getDC(player)
 
+        // 이모지·장식 기호 없이 "항목  값" 형태로만 정리 (내 정보 / 국가 / 서버 순)
         val lines = listOf(
-            "§8§m――――――――――――§r",
-            " §b✦ §7영혼 §8» §b§l$soul",
-            " §6✦ §7돈 §8» §6§l$money§7원",
-            " §3✦ §7DC §8» §3§l$dc",
-            " §d✦ §7랭크 §8» $rankColor§l${rank.name}",
-            " §e✦ §7직업 §8» §e§l${job?.displayName ?: "§8없음"}",
             "",
-            " §a✦ §7국가 §8» §a$nation",
-            " §4⚔ §7전쟁 §8» $warText",
-            " §b🤝 §7연합 §8» $allyText",
-            " §c✦ §7이펙트 §8» §c${equippedEffect?.displayName ?: "§8없음"}",
-            "§8§m――――――――――――§r",
-            " §f접속자 §8» §f§l$online§7명",
-            "§8§m――――――――――――§r"
+            " §f${player.name}",
+            " §7랭크  $rankColor${rank.name}",
+            " §7직업  §f${job?.displayName ?: "§8없음"}",
+            "",
+            " §7돈  §e${money}원",
+            " §7영혼  §b$soul",
+            " §7DC  §3$dc",
+            "",
+            " §7국가  §a$nation",
+            " §7전쟁  $warText",
+            " §7연합  $allyText",
+            "",
+            " §8접속 ${online}명 · puritymc.kr"
         )
 
         lines.reversed().forEachIndexed { index, line ->
