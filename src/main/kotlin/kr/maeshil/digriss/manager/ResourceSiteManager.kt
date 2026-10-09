@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.nation.BlueMapBridge
@@ -26,10 +27,12 @@ import org.bukkit.event.block.BlockExplodeEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.player.PlayerBucketEmptyEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.UUID
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -70,6 +73,8 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
     private var dailyPeace = 5.0
     private var lastPayDate: String = ""
     private var tick = 0
+    private val playerSite = HashMap<UUID, String>()        // 지금 서 있는 거점 (들어오고 나갈 때 안내용)
+    private val lastGuide = HashMap<String, Long>()         // "uuid:거점" → 마지막으로 채팅 안내한 시각
 
     init {
         load()
@@ -185,6 +190,7 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
     private fun update() {
         tick++
         sites.values.forEach { updateSite(it) }
+        checkEnterLeave()
         checkDailyPay()
     }
 
@@ -221,6 +227,42 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
 
         updateBar(site, inside, world)
         if (tick % 2 == 0) drawRing(site, world)
+    }
+
+    // 거점 보호 구역에 들어오면 제목 + 안내, 나가면 액션바
+    private fun checkEnterLeave() {
+        Bukkit.getOnlinePlayers().forEach { p ->
+            val now = siteAt(p.location)?.id
+            val before = playerSite[p.uniqueId]
+            if (now == before) return@forEach
+            if (now == null) playerSite.remove(p.uniqueId) else playerSite[p.uniqueId] = now
+            before?.let { sites[it] }?.let { ActionBarManager.showTemp(p, "§7${it.name}을(를) 벗어났습니다", 2.0) }
+            now?.let { sites[it] }?.let { onEnter(p, it) }
+        }
+    }
+
+    private fun onEnter(p: Player, site: Site) {
+        val owner = site.owner?.let { "§a$it" } ?: "§7없음"
+        p.sendTitle("§6§l자원 거점", "§f${site.name} §7· 주인 $owner", 5, 40, 10)
+        Sounds.play(p, org.bukkit.Sound.BLOCK_BEACON_ACTIVATE, 0.6f, 1.4f)
+
+        // 채팅 안내는 같은 거점에 5분에 한 번만
+        val key = "${p.uniqueId}:${site.id}"
+        val nowMs = System.currentTimeMillis()
+        if (nowMs - (lastGuide[key] ?: 0L) < 5 * 60_000L) return
+        lastGuide[key] = nowMs
+        p.sendMessage("§6[거점] §f${site.name}§7에 들어왔습니다. 주인: $owner")
+        p.sendMessage("§7가운데 빛나는 원 안에서 §e${captureSeconds / 60}분§7 버티면 점령 · 다른 국가가 들어오면 교전(멈춤)")
+        p.sendMessage("§7점령하면 매일 금고 §e${dailyMoney.toLong()}원§7 + §e${site.rewardText}§7 · 거점 주변은 건축/파괴 금지")
+        when {
+            plugin.nationManager.getNationName(p.uniqueId) == null -> p.sendMessage("§c국가가 있어야 점령할 수 있어요.")
+            plugin.newbieProtectionManager.isProtected(p) -> p.sendMessage("§c초보 보호 중에는 점령에 참여할 수 없어요. §7(/보호해제 확인)")
+        }
+    }
+
+    @EventHandler
+    fun onQuit(e: PlayerQuitEvent) {
+        playerSite.remove(e.player.uniqueId)
     }
 
     /** 초당 게이지 증가량. 기술 트리(군사 3단계)가 있으면 빨라짐 */
