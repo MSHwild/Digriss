@@ -84,12 +84,21 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
     private var topDc: List<Long> = listOf(5, 3, 2)
 
     // ── 오늘 기록 (bigevent-data.yml) ──
-    private var bossLocation: Location? = null
+    private val extraSpots = linkedMapOf<String, Location>()   // 관리자가 /빅이벤트 위치 추가 로 넣은 장소
     private var dataDate = ""
     private val playMinutes = mutableMapOf<UUID, Int>()
     private val playRewards = mutableMapOf<UUID, Int>()
     private val welcomed = mutableSetOf<UUID>()
     private val doneKeys = mutableSetOf<String>()     // 이미 한 예고·보스 등장·축제 시작 공지 (두 번 안 하게)
+
+    // ── 보스 등장 장소 ──
+    private data class BossSpot(val name: String, val world: String, val x: Int, val z: Int)
+    private var spots: List<BossSpot> = emptyList()      // bigevent.yml boss.locations
+    private var currentSpot: String? = null               // 지금 레이드 장소 이름
+    private var lastSpot: String? = null                  // 같은 곳이 연속으로 나오지 않게
+    private var plannedSpot: String? = null               // 예고할 때 정해 둔 다음 장소
+    private val returnPoints = mutableMapOf<UUID, Location>() // /빅이벤트 이동 전에 있던 곳 (레이드 끝나고 귀환용)
+    private var returnUntil = 0L                          // 귀환 가능한 시각 (레이드 끝나고 10분)
 
     // ── 보스 레이드 진행 상태 ──
     private var boss: Mob? = null
@@ -129,6 +138,17 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         welcomeDc = c.getLong("welcome.dc", 2)
         bossTimes = c.getStringList("boss.times").mapNotNull { t ->
             runCatching { LocalTime.parse(t.trim()) }.getOrElse { plugin.logger.warning("[대축제] 보스 시간 '$t'을(를) 읽을 수 없습니다. (예: 19:00)"); null }
+        }
+        // "이름, x, z" 또는 "이름, 월드, x, z"
+        spots = c.getStringList("boss.locations").mapNotNull { line ->
+            val parts = line.split(",").map { it.trim() }
+            runCatching {
+                when (parts.size) {
+                    3 -> BossSpot(parts[0], "", parts[1].toInt(), parts[2].toInt())
+                    4 -> BossSpot(parts[0], parts[1], parts[2].toInt(), parts[3].toInt())
+                    else -> null
+                }
+            }.getOrNull().also { if (it == null) plugin.logger.warning("[대축제] 보스 장소 '$line'을(를) 읽을 수 없습니다. (예: 이집트 피라미드, 1594, -1535)") }
         }
         noticeMinutes = c.getInt("boss.notice-minutes", 10).coerceAtLeast(0)
         timeLimitMinutes = c.getInt("boss.time-limit-minutes", 15).coerceAtLeast(1)
@@ -203,14 +223,17 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
             val key = t.toString()
             val untilMin = java.time.Duration.between(now.toLocalTime(), t).toMinutes()
             if (noticeMinutes > 0 && untilMin in 0 until noticeMinutes && !now.toLocalTime().isAfter(t) && doneKeys.add("notice|$key")) {
+                // 예고할 때 장소를 미리 정해서 알려줌 (미리 가서 기다릴 수 있게)
+                plannedSpot = randomSpotName() ?: "월드 스폰"
                 saveData()
-                Bukkit.broadcastMessage("§6[대축제] §c${untilMin + 1}분 뒤 §4보스 레이드§c가 시작됩니다! §7(접속자 모두 함께 잡아요)")
+                Bukkit.broadcastMessage("§6[대축제] §c${untilMin + 1}분 뒤 §e$plannedSpot§c에 §4보스 레이드§c가 시작됩니다! §7(시작하면 [이동]으로 바로 갈 수 있어요)")
                 Sounds.all(Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 0.8f)
-                plugin.discordNotifier.notify("big-event", "⏰ 보스 레이드 예고", "${untilMin + 1}분 뒤 보스 레이드가 시작돼요! 지금 접속하세요.", DiscordNotifier.GOLD)
+                plugin.discordNotifier.notify("big-event", "⏰ 보스 레이드 예고", "${untilMin + 1}분 뒤 **$plannedSpot**에 보스가 나타나요! 지금 접속하세요.", DiscordNotifier.GOLD)
             }
             if (!now.toLocalTime().isBefore(t) && now.toLocalTime().isBefore(t.plusMinutes(5)) && doneKeys.add("boss|$key")) {
                 saveData()
-                if (!isRaidActive()) startRaid()
+                if (!isRaidActive()) startRaid(plannedSpot)
+                plannedSpot = null
             }
         }
     }
@@ -258,16 +281,37 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
 
     // ───────────────────────── 보스 레이드 ─────────────────────────
 
-    private fun spawnPoint(): Location {
-        bossLocation?.let { if (it.world != null) return it.clone() }
-        plugin.logger.warning("[대축제] 보스 위치가 설정되지 않아 월드 스폰에 소환합니다. /빅이벤트 위치 로 설정하세요.")
-        return Bukkit.getWorlds().first().spawnLocation
+    /** 모든 장소 이름 (설정 파일 + 관리자가 추가한 곳) */
+    private fun spotNames(): List<String> = spots.map { it.name } + extraSpots.keys
+
+    // 장소 이름 → 실제 위치 (설정 파일 장소는 그 자리 가장 높은 블록 위)
+    private fun locationOf(name: String): Location? {
+        extraSpots[name]?.let { if (it.world != null) return it.clone() }
+        val s = spots.firstOrNull { it.name == name } ?: return null
+        val world = (if (s.world.isBlank()) null else Bukkit.getWorld(s.world)) ?: Bukkit.getWorlds().first()
+        val y = world.getHighestBlockYAt(s.x, s.z) + 1
+        return Location(world, s.x + 0.5, y.toDouble(), s.z + 0.5)
     }
 
-    fun startRaid(): Boolean {
+    // 직전과 다른 장소 이름 하나 (청크를 불러오지 않음)
+    private fun randomSpotName(): String? = spotNames().filter { it != lastSpot }.ifEmpty { spotNames() }.randomOrNull()
+
+    // 지정한 곳, 아니면 직전과 다른 곳 중 무작위. 장소가 하나도 없으면 월드 스폰
+    private fun pickSpot(name: String?): Pair<String, Location> {
+        if (name != null) locationOf(name)?.let { return name to it }
+        val candidates = spotNames().filter { it != lastSpot }.ifEmpty { spotNames() }
+        candidates.shuffled().forEach { n -> locationOf(n)?.let { return n to it } }
+        plugin.logger.warning("[대축제] 보스 장소가 없어 월드 스폰에 소환합니다. bigevent.yml 의 boss.locations 를 확인하세요.")
+        return "월드 스폰" to Bukkit.getWorlds().first().spawnLocation
+    }
+
+    fun startRaid(spotName: String? = null): Boolean {
         if (isRaidActive()) return false
-        val loc = spawnPoint()
+        val (place, loc) = pickSpot(spotName)
         val world = loc.world ?: return false
+        currentSpot = place
+        lastSpot = place
+        returnPoints.clear()
         val online = Bukkit.getOnlinePlayers().size.coerceAtLeast(1)
         val health = (baseHealth + healthPerPlayer * online).coerceIn(50.0, 2000.0)
 
@@ -300,14 +344,15 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         bossBar?.removeAll()
         bossBar = Bukkit.createBossBar("", BarColor.RED, BarStyle.SEGMENTED_20).also { b -> Bukkit.getOnlinePlayers().forEach { b.addPlayer(it) } }
         world.strikeLightningEffect(loc)
-        Bukkit.broadcastMessage("§4§l[보스 레이드] §c$bossName§c이(가) 깨어났습니다! §7(${timeLimitMinutes}분 안에 쓰러뜨리세요, 체력 ${health.toInt()})")
+        Bukkit.broadcastMessage("§4§l[보스 레이드] §e$place§c에서 $bossName§c이(가) 깨어났습니다! §7(${timeLimitMinutes}분 안에 쓰러뜨리세요, 체력 ${health.toInt()})")
+        Bukkit.broadcastMessage("§7좌표: ${loc.blockX}, ${loc.blockY}, ${loc.blockZ} §8| §7멀어도 괜찮아요, 아래 [이동]을 누르면 바로 가요. 끝나면 §e/빅이벤트 귀환")
         Bukkit.getOnlinePlayers().forEach {
-            it.sendTitle("§4§l보스 레이드", "$bossName §c등장!", 10, 70, 20)
+            it.sendTitle("§4§l보스 레이드", "§e$place §c- $bossName", 10, 70, 20)
             sendJoinRaidLink(it)
         }
         Sounds.all(Sound.ENTITY_WITHER_SPAWN, 0.7f, 0.8f)
-        plugin.discordNotifier.notify("big-event", "👹 보스 레이드 시작!",
-            "${ChatColor.stripColor(bossName)}이(가) 깨어났어요! ${timeLimitMinutes}분 안에 함께 쓰러뜨려요.\n좌표: ${world.name} ${loc.blockX}, ${loc.blockY}, ${loc.blockZ}", DiscordNotifier.RED)
+        plugin.discordNotifier.notify("big-event", "👹 보스 레이드 시작! ($place)",
+            "**$place**에서 ${ChatColor.stripColor(bossName)}이(가) 깨어났어요! ${timeLimitMinutes}분 안에 함께 쓰러뜨려요.\n좌표: ${loc.blockX}, ${loc.blockY}, ${loc.blockZ}", DiscordNotifier.RED)
         return true
     }
 
@@ -483,6 +528,11 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         bossBar?.removeAll()
         bossBar = null
         bossHome?.chunk?.removePluginChunkTicket(plugin)
+        currentSpot = null
+        returnUntil = System.currentTimeMillis() + 10 * 60_000L // 끝나고 10분 동안 /빅이벤트 귀환 가능
+        if (returnPoints.isNotEmpty()) {
+            returnPoints.keys.mapNotNull { Bukkit.getPlayer(it) }.forEach { it.sendMessage("§7원래 있던 곳으로 돌아가려면 §e/빅이벤트 귀환 §7(10분 안에)") }
+        }
 
         val ranking = damageDealt.entries.filter { it.value >= 1.0 }.sortedByDescending { it.value }
         damageDealt.clear()
@@ -527,7 +577,11 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         b.isVisible = true
         Bukkit.getOnlinePlayers().forEach { if (it !in b.players) b.addPlayer(it) }
         val next = nextBossTime(now)
-        b.setTitle("§6§l디그리스 대축제 §8| " + if (next != null) "§7다음 보스 레이드 §f$next" else "§7오늘 보스 레이드는 모두 끝났어요")
+        b.setTitle("§6§l디그리스 대축제 §8| " + when {
+            next == null -> "§7오늘 보스 레이드는 모두 끝났어요"
+            plannedSpot != null -> "§7다음 보스 레이드 §f$next §e$plannedSpot"
+            else -> "§7다음 보스 레이드 §f$next"
+        })
         b.progress = 1.0
     }
 
@@ -548,20 +602,55 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
                 val home = bossHome ?: mob.location
                 val at = home.clone().add((-8..8).random().toDouble(), 0.0, (-8..8).random().toDouble())
                 at.y = (home.world ?: return true).getHighestBlockYAt(at).toDouble() + 1
+                // 처음 이동할 때 있던 곳을 기억 (레이드 끝나고 /빅이벤트 귀환)
+                returnPoints.putIfAbsent(p.uniqueId, p.location.clone())
                 p.teleport(at)
                 Sounds.play(p, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1f)
+                p.sendMessage("§e${currentSpot ?: "보스"}§a(으)로 이동했습니다. §7레이드가 끝나면 /빅이벤트 귀환 으로 돌아갈 수 있어요.")
+            }
+            "귀환" -> {
+                val p = sender as? Player ?: return true
+                if (isRaidActive()) return true.also { deny(p, "§c레이드가 끝난 뒤에 돌아갈 수 있습니다.") }
+                val back = returnPoints[p.uniqueId]
+                if (back == null || System.currentTimeMillis() > returnUntil) return true.also { deny(p, "§c돌아갈 곳이 없습니다. §7(레이드에 [이동]으로 온 사람만, 끝나고 10분 안에)") }
+                if (plugin.combatManager.isInCombat(p)) return true.also { deny(p, "§c전투 중에는 이동할 수 없습니다.") }
+                returnPoints.remove(p.uniqueId)
+                p.teleport(back)
+                Sounds.play(p, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1f)
+                p.sendMessage("§a원래 있던 곳으로 돌아왔습니다.")
             }
             "위치" -> {
                 if (!admin) return true.also { sender.sendMessage("§c권한이 없습니다.") }
-                val p = sender as? Player ?: return true
-                bossLocation = p.location.clone()
-                saveData()
-                p.sendMessage("§a보스 등장 위치를 지금 위치로 저장했습니다. §7(${p.world.name} ${p.location.blockX}, ${p.location.blockY}, ${p.location.blockZ})")
-                plugin.adminLogManager.log(sender, "대축제 보스 위치 설정")
+                when (args.getOrNull(1)) {
+                    "추가" -> {
+                        val p = sender as? Player ?: return true
+                        val name = args.drop(2).joinToString(" ").ifBlank { return true.also { p.sendMessage("§e/빅이벤트 위치 추가 <장소 이름>") } }
+                        if (name.contains('.')) return true.also { p.sendMessage("§c장소 이름에 . 은 쓸 수 없습니다.") }
+                        extraSpots[name] = p.location.clone()
+                        saveData()
+                        p.sendMessage("§a보스 장소 '§f$name§a'을(를) 지금 위치로 추가했습니다. §7(${p.location.blockX}, ${p.location.blockY}, ${p.location.blockZ})")
+                        plugin.adminLogManager.log(sender, "대축제 보스 장소 추가: $name")
+                    }
+                    "삭제" -> {
+                        val name = args.drop(2).joinToString(" ")
+                        if (extraSpots.remove(name) == null) return true.also { sender.sendMessage("§c직접 추가한 장소만 지울 수 있습니다. §7(bigevent.yml 장소는 파일에서)") }
+                        saveData()
+                        sender.sendMessage("§e보스 장소 '$name'을(를) 지웠습니다.")
+                        plugin.adminLogManager.log(sender, "대축제 보스 장소 삭제: $name")
+                    }
+                    else -> {
+                        sender.sendMessage("§6보스 장소 ${spotNames().size}곳 §7(레이드마다 직전과 다른 곳에서 무작위로 나와요)")
+                        spots.forEach { sender.sendMessage("§7- §f${it.name} §8(${it.x}, ${it.z})") }
+                        extraSpots.forEach { (n, l) -> sender.sendMessage("§7- §b$n §8(${l.blockX}, ${l.blockY}, ${l.blockZ}, 직접 추가)") }
+                        sender.sendMessage("§8/빅이벤트 위치 추가 <이름> · 삭제 <이름>")
+                    }
+                }
             }
             "보스" -> {
                 if (!admin) return true.also { sender.sendMessage("§c권한이 없습니다.") }
-                if (startRaid()) plugin.adminLogManager.log(sender, "대축제 보스 레이드 직접 시작")
+                val name = args.drop(1).joinToString(" ").ifBlank { null }
+                if (name != null && name !in spotNames()) return true.also { sender.sendMessage("§c그런 장소가 없습니다. §7(/빅이벤트 위치 로 목록 확인)") }
+                if (startRaid(name)) plugin.adminLogManager.log(sender, "대축제 보스 레이드 직접 시작 (${currentSpot})")
                 else sender.sendMessage("§c이미 보스 레이드가 진행 중입니다.")
             }
             "종료" -> {
@@ -594,14 +683,21 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         if (sender is Player && isFestival(now)) {
             sender.sendMessage("§7- 내 접속 보상: §f${playRewards[sender.uniqueId] ?: 0}/$playMax §8(접속 ${playMinutes[sender.uniqueId] ?: 0}분)")
         }
-        if (isRaidActive()) sender.sendMessage("§c지금 보스 레이드 진행 중! §e/빅이벤트 이동")
-        if (admin) sender.sendMessage("§8관리자: /빅이벤트 위치 | 보스 | 종료  §7(보스 위치: ${bossLocation?.let { "${it.world?.name} ${it.blockX}, ${it.blockY}, ${it.blockZ}" } ?: "§c미설정"}§7)")
+        sender.sendMessage("§7- 보스 장소: §f${spotNames().size}곳 §7(전 세계 곳곳, 레이드마다 바뀜)")
+        if (isRaidActive()) sender.sendMessage("§c지금 §e$currentSpot§c에서 보스 레이드 진행 중! §e/빅이벤트 이동")
+        else plannedSpot?.let { sender.sendMessage("§e다음 보스 장소: §f$it") }
+        if (admin) sender.sendMessage("§8관리자: /빅이벤트 위치 [추가|삭제] | 보스 [장소] | 종료")
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String> {
-        if (args.size != 1) return emptyList()
-        val options = listOf("이동") + if (sender.hasPermission("digriss.admin")) listOf("위치", "보스", "종료") else emptyList()
-        return options.filter { it.startsWith(args[0]) }
+        val admin = sender.hasPermission("digriss.admin")
+        return when {
+            args.size == 1 -> (listOf("이동", "귀환") + if (admin) listOf("위치", "보스", "종료") else emptyList()).filter { it.startsWith(args[0]) }
+            args.size == 2 && admin && args[0] == "위치" -> listOf("추가", "삭제").filter { it.startsWith(args[1]) }
+            args.size == 2 && admin && args[0] == "보스" -> spotNames().filter { it.startsWith(args[1]) }
+            args.size == 3 && admin && args[0] == "위치" && args[1] == "삭제" -> extraSpots.keys.filter { it.startsWith(args[2]) }
+            else -> emptyList()
+        }
     }
 
     // ───────────────────────── 보상 / 저장 ─────────────────────────
@@ -622,7 +718,9 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
     private fun loadData() {
         if (!dataFile.exists()) return
         val c = YamlConfiguration.loadConfiguration(dataFile)
-        bossLocation = c.getLocation("boss-location")
+        c.getConfigurationSection("extra-locations")?.getKeys(false)?.forEach { n -> c.getLocation("extra-locations.$n")?.let { extraSpots[n] = it } }
+        c.getLocation("boss-location")?.let { extraSpots.putIfAbsent("관리자 지정 장소", it) } // 예전 /빅이벤트 위치 로 저장한 곳
+        plannedSpot = c.getString("planned-spot")
         dataDate = c.getString("date", "") ?: ""
         c.getConfigurationSection("play-minutes")?.getKeys(false)?.forEach { k -> runCatching { playMinutes[UUID.fromString(k)] = c.getInt("play-minutes.$k") } }
         c.getConfigurationSection("play-rewards")?.getKeys(false)?.forEach { k -> runCatching { playRewards[UUID.fromString(k)] = c.getInt("play-rewards.$k") } }
@@ -632,7 +730,8 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
 
     private fun saveData() {
         val c = YamlConfiguration()
-        c.set("boss-location", bossLocation)
+        extraSpots.forEach { (n, l) -> c.set("extra-locations.$n", l) }
+        c.set("planned-spot", plannedSpot)
         c.set("date", dataDate)
         playMinutes.forEach { (k, v) -> c.set("play-minutes.$k", v) }
         playRewards.forEach { (k, v) -> c.set("play-rewards.$k", v) }
