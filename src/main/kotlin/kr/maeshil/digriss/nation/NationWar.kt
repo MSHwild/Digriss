@@ -83,6 +83,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         truceRequests[declarer]?.remove(accepter)
         truceRequests[accepter]?.remove(declarer)
         addRecord("START", declarer, accepter)
+        plugin.diplomacyManager.onWarStart(declarer, accepter) // 무역 협정·조공 종료
         Bukkit.broadcastMessage("${ChatColor.RED}[전쟁] '$declarer' 국가와 '$accepter' 국가의 전쟁이 시작되었습니다! 이제 서로의 신호기를 점령할 수 있습니다. (최대 3일, 이후 자동 휴전)")
         Sounds.all(org.bukkit.Sound.EVENT_RAID_HORN, 1.0f, 1.0f)
         plugin.discordNotifier.notify("war-start", "⚔ 전쟁 시작!",
@@ -109,6 +110,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
     fun removeNation(name: String, endDetail: String, except: String? = null) {
         warsOf(name).filter { it != except }.forEach { addRecord("END", name, it, endDetail) }
         plugin.allianceManager.removeNation(name)
+        plugin.diplomacyManager.removeNation(name)
         plugin.warScoreManager.removeNation(name)
         activeWars.removeAll { it.split("|").contains(name) }
         warStarts.keys.removeAll { it.split("|").contains(name) }
@@ -135,6 +137,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
             if (r.a == old || r.b == old) warLog[i] = r.copy(a = if (r.a == old) new else r.a, b = if (r.b == old) new else r.b)
         }
         plugin.allianceManager.rename(old, new)
+        plugin.diplomacyManager.rename(old, new)
         plugin.warScoreManager.rename(old, new)
         save()
     }
@@ -157,6 +160,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         if (nations[target] == null) return core.deny(player, "${ChatColor.RED}존재하지 않는 국가입니다.")
         if (isAtWar(myName, target)) return core.deny(player, "${ChatColor.RED}이미 전쟁 중입니다.")
         if (plugin.allianceManager.areAllied(myName, target)) return core.deny(player, "${ChatColor.RED}연합국에는 전쟁을 선포할 수 없습니다. 먼저 /연합 에서 연합을 해제하세요.")
+        if (plugin.diplomacyManager.hasPact(myName, target)) return core.deny(player, "${ChatColor.RED}불가침 조약을 맺은 국가에는 전쟁을 선포할 수 없습니다. /외교 에서 파기하면 ${kr.maeshil.digriss.manager.DiplomacyManager.PACT_BREAK_HOURS}시간 뒤에 가능해요.")
 
         val requests = warRequests.getOrPut(target) { mutableSetOf() }
         if (!requests.add(myName)) return core.deny(player, "${ChatColor.RED}이미 전쟁을 선포했습니다. 상대의 수락을 기다리는 중입니다.")
@@ -175,6 +179,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
             return core.deny(player, "${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
         }
         if (plugin.allianceManager.areAllied(myName, from)) return core.deny(player, "${ChatColor.RED}연합국과는 전쟁할 수 없습니다.")
+        if (plugin.diplomacyManager.hasPact(myName, from)) return core.deny(player, "${ChatColor.RED}불가침 조약을 맺은 국가와는 전쟁할 수 없습니다.")
         startWar(from, myName)
     }
 

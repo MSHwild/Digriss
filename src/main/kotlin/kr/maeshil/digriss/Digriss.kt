@@ -128,6 +128,12 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var resourceSiteManager: kr.maeshil.digriss.manager.ResourceSiteManager
         private set
+    lateinit var diplomacyManager: kr.maeshil.digriss.manager.DiplomacyManager
+        private set
+    lateinit var tradeManager: kr.maeshil.digriss.trade.TradeManager
+        private set
+    lateinit var marketManager: kr.maeshil.digriss.trade.MarketManager
+        private set
 
     override fun onEnable() {
 
@@ -157,6 +163,7 @@ class Digriss : JavaPlugin() {
         jobSkillManager = JobSkillManager(this)
 
         allianceManager = AllianceManager(this) // NationManager가 사용하므로 먼저 생성
+        diplomacyManager = kr.maeshil.digriss.manager.DiplomacyManager(this) // 불가침 조약·무역 협정·조공 (전쟁 선포 때 확인하므로 먼저 생성)
         warScoreManager = WarScoreManager(this)
         nationStorageManager = NationStorageManager(this)
         nationTechManager = kr.maeshil.digriss.manager.NationTechManager(this) // 국가 기술 트리 (국가 매니저가 사용)
@@ -260,6 +267,16 @@ class Digriss : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(voteManager, this)
         getCommand("투표")?.setExecutor(voteManager)
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
+        kr.maeshil.digriss.diplomacy.DiplomacyGUI(this).let { // /외교
+            Bukkit.getPluginManager().registerEvents(it, this)
+            getCommand("외교")?.apply { setExecutor(it); tabCompleter = it }
+        }
+        tradeManager = kr.maeshil.digriss.trade.TradeManager(this) // /거래 (1:1)
+        Bukkit.getPluginManager().registerEvents(tradeManager, this)
+        getCommand("거래")?.apply { setExecutor(tradeManager); tabCompleter = tradeManager }
+        marketManager = kr.maeshil.digriss.trade.MarketManager(this) // /거래소
+        Bukkit.getPluginManager().registerEvents(marketManager, this)
+        getCommand("거래소")?.apply { setExecutor(marketManager); tabCompleter = marketManager }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
         Bukkit.getScheduler().runTaskTimer(this, Runnable { saveAll() }, 6000L, 6000L)
@@ -300,6 +317,8 @@ class Digriss : JavaPlugin() {
         if (::resourceSiteManager.isInitialized) resourceSiteManager.shutdown()
         // 번들 편집 창이 열린 채로 꺼지면 넣은 아이템이 저장되지 않으므로 리스너 해제 전에 닫아서 저장
         Bukkit.getOnlinePlayers().filter { it.openInventory.topInventory.holder is BundleEditHolder }.forEach { it.closeInventory() }
+        // 진행 중인 1:1 거래는 취소하고 넣어 둔 아이템을 돌려줌
+        if (::tradeManager.isInitialized) tradeManager.cancelAll()
         HandlerList.unregisterAll(this)
         saveAll()
         if (::nationManager.isInitialized) nationManager.disable()

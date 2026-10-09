@@ -43,7 +43,7 @@ class ResetCommand(private val plugin: Digriss) : CommandExecutor {
         pendingConfirm.add(key)
         sender.sendMessage("${ChatColor.RED}${ChatColor.BOLD}경고: 이 작업은 되돌릴 수 없습니다.")
         if (season) {
-            sender.sendMessage("${ChatColor.RED}DC를 뺀 모든 데이터가 삭제됩니다: 영혼, 돈, 직업, 국가·영토·창고·기술, 자원 거점, K/D, 랭크, 칭호, 킬이펙트, 퀘스트")
+            sender.sendMessage("${ChatColor.RED}DC를 뺀 모든 데이터가 삭제됩니다: 영혼, 돈, 직업, 국가·영토·창고·기술·외교, 자원 거점, 거래소, K/D, 랭크, 칭호, 킬이펙트, 퀘스트")
             sender.sendMessage("${ChatColor.YELLOW}정말로 진행하려면 10초 안에 ${ChatColor.WHITE}/초기화 시즌 확인${ChatColor.YELLOW}을 입력하세요.")
         } else {
             sender.sendMessage("${ChatColor.RED}영혼, 돈, DC, 국가, K/D, 랭크, 킬이펙트 등 모든 유저 데이터가 삭제됩니다.")
@@ -67,6 +67,8 @@ class ResetCommand(private val plugin: Digriss) : CommandExecutor {
         if (!keepDC) plugin.dcManager.resetAll()
         plugin.nationManager.resetAll()
         plugin.allianceManager.resetAll()
+        plugin.diplomacyManager.resetAll()
+        plugin.marketManager.resetAll()
         plugin.warScoreManager.resetAll()
         plugin.nationStorageManager.resetAll()
         plugin.nationTechManager.resetAll()

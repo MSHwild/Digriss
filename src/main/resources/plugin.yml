@@ -115,6 +115,15 @@ commands:
     description: 번들을 삭제합니다 (관리자)
     usage: /번들삭제 <이름>
     permission: digriss.admin
+  외교:
+    description: 다른 국가와 불가침 조약 · 무역 협정 · 조공 · 원조
+    usage: /외교 [국가]
+  거래:
+    description: 다른 플레이어와 1:1로 아이템과 돈을 거래합니다
+    usage: /거래 [닉네임|수락|거절]
+  거래소:
+    description: 아이템을 올려 팔거나 다른 사람이 올린 물품을 삽니다
+    usage: /거래소 [등록 <가격>|내물품|보관함]
   국가랭킹:
     description: 국가 순위를 확인합니다
     usage: /국가랭킹 [영토|금고|인원|레벨]

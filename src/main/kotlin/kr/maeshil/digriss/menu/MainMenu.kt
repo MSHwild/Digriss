@@ -51,13 +51,17 @@ class MainMenu(private val plugin: Digriss) : Listener {
         // 안내
         Button(32, Material.CAKE, "§f이벤트", listOf("§7접속 보상 · 친구 추천"), "이벤트"),
         Button(33, Material.FILLED_MAP, "§f실시간 지도", listOf("§7웹 지도 주소"), "지도"),
-        Button(34, Material.BOOK, "§f도움말", listOf("§7서버 기능 설명"), "도움말")
+        Button(34, Material.BOOK, "§f도움말", listOf("§7서버 기능 설명"), "도움말"),
+        // 교류
+        Button(37, Material.EMERALD, "§3거래소", listOf("§7아이템을 올려 팔고 사기"), "거래소"),
+        Button(38, Material.PLAYER_HEAD, "§31:1 거래", listOf("§7다른 플레이어와 아이템 · 돈 교환"), "거래"),
+        Button(39, Material.WRITABLE_BOOK, "§3외교", listOf("§7불가침 조약 · 무역 협정 · 조공 · 원조"), "외교")
     )
     private val bySlot = buttons.associateBy { it.slot }
 
     companion object {
-        private const val SIZE = 45
-        private const val CLOSE_SLOT = 40
+        private const val SIZE = 54
+        private const val CLOSE_SLOT = 49
 
         // 다른 메뉴에 넣는 "메뉴로 돌아가기" 버튼
         fun backItem(plugin: Digriss): ItemStack {
@@ -90,7 +94,7 @@ class MainMenu(private val plugin: Digriss) : Listener {
         val inv = Bukkit.createInventory(MainMenuHolder(), SIZE, "§8디그리스")
         val filler = item(icon("common.filler", Material.BLACK_STAINED_GLASS_PANE), " ", emptyList())
         val divider = item(icon("common.divider", Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
-        for (i in 0 until inv.size) inv.setItem(i, if (i % 9 == 4 && i in 9..35) divider else filler)
+        for (i in 0 until inv.size) inv.setItem(i, if (i % 9 == 4 && i in 9..44) divider else filler)
 
         inv.setItem(4, profile(player))
         buttons.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.iconKey}", b.icon), b.name, b.lore + listOf("", "§8클릭해서 열기"))) }
