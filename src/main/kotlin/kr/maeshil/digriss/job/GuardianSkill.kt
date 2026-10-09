@@ -39,7 +39,7 @@ class GuardianSkill : JobSkill {
         for (ally in player.world.getNearbyPlayers(player.location, barrierRadius)) {
             if (ally == player || !plugin.allianceManager.isFriendly(player, ally)) continue
             ally.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, ticks, 0, false, true))
-            ally.sendMessage("§9🛡 ${player.name}님의 배리어가 피해를 줄여줍니다.")
+            ally.sendMessage("§9${player.name}님의 배리어가 피해를 줄여줍니다.")
             shielded++
         }
         drawBarrier(player)
@@ -54,7 +54,7 @@ class GuardianSkill : JobSkill {
                     taunts[target.uniqueId] = Taunt(player.uniqueId, until)
                     target.addPotionEffect(PotionEffect(PotionEffectType.GLOWING, ticks, 0, false, false))
                     Sounds.alert(target)
-                    target.sendMessage("§c🛡 ${player.name}님에게 도발당했습니다! §7${durationSeconds}초간 다른 대상에게 주는 피해가 절반이 됩니다.")
+                    target.sendMessage("§c${player.name}님에게 도발당했습니다! §7${durationSeconds}초간 다른 대상에게 주는 피해가 절반이 됩니다.")
                 }
                 is Mob -> target.target = player
                 else -> continue
@@ -63,7 +63,7 @@ class GuardianSkill : JobSkill {
             taunted++
         }
 
-        player.sendMessage("§9🛡 수호 태세! §7도발 ${taunted}명, 배리어 아군 ${shielded}명")
+        player.sendMessage("§9수호 태세! §7도발 ${taunted}명, 배리어 아군 ${shielded}명")
         return true
     }
 
@@ -103,7 +103,7 @@ class GuardianSkill : JobSkill {
             if (e.entity.uniqueId == taunt.guardian) return
 
             e.damage *= TAUNT_DAMAGE_MULTIPLIER
-            ActionBarManager.showTemp(attacker, "§c🛡 도발 중: 수호자 외 대상 피해 감소", 1.0)
+            ActionBarManager.showTemp(attacker, "§c도발 중: 수호자 외 대상 피해 감소", 1.0)
         }
 
         @EventHandler

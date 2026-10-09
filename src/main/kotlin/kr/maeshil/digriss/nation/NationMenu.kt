@@ -299,11 +299,11 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         records.forEachIndexed { index, r ->
             val mine = myName != null && (r.a == myName || r.b == myName)
             val (material, title, line) = when (r.type) {
-                "START" -> Triple(Material.IRON_SWORD, "§c⚔ 전쟁 시작",
+                "START" -> Triple(Material.IRON_SWORD, "§c전쟁 시작",
                     "§f${r.a} §7의 선포를 §f${r.b} §7이(가) 수락")
-                "TRUCE" -> Triple(Material.WHITE_BANNER, "§a☮ 휴전",
+                "TRUCE" -> Triple(Material.WHITE_BANNER, "§a휴전",
                     "§f${r.a} §7과(와) §f${r.b} §7이(가) 휴전")
-                "CONQUER" -> Triple(Material.TNT, "§4☠ 국가 점령",
+                "CONQUER" -> Triple(Material.TNT, "§4국가 점령",
                     "§f${r.a} §7이(가) §f${r.b} §7을(를) 점령")
                 else -> Triple(Material.BARRIER, "§7전쟁 종료",
                     "§f${r.a} §7소멸 → §f${r.b} §7와(과)의 전쟁 종료")
@@ -313,7 +313,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             if (r.detail.isNotEmpty()) lore.add("§7${r.detail}")
             if (mine) {
                 lore.add("")
-                lore.add("§e★ 우리 국가 관련 기록")
+                lore.add("§e우리 국가 관련 기록")
             }
             inv.setItem(index, item(material, title, *lore.toTypedArray()))
         }

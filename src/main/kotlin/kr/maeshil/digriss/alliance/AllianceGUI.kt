@@ -39,7 +39,7 @@ object AllianceGUI {
             val info = listOf("§7국가원 §f${n.members.size}명 §8| §7영토 §f${n.claims.size}개 §8| §7Lv.${n.level}", "")
             val item = when {
                 alliance.areAllied(myNation, name) -> item(icon(plugin, "alliance.allied", Material.LIGHT_BLUE_BANNER), "§b§l$name §7(연합국)",
-                    info + listOf("§b🤝 연합 중", if (isLeader) "§c쉬프트+클릭: 연합 해제" else ""))
+                    info + listOf("§b연합 중", if (isLeader) "§c쉬프트+클릭: 연합 해제" else ""))
                 plugin.nationManager.isAtWarBetween(myNation, name) -> item(icon(plugin, "alliance.at_war", Material.RED_BANNER), "§4§l$name §7(전쟁 중)",
                     info + listOf("§c전쟁 중인 국가와는 연합할 수 없습니다."))
                 alliance.hasRequest(myNation, name) -> item(icon(plugin, "alliance.request_received", Material.YELLOW_BANNER), "§e§l$name §7(연합 요청 받음)",

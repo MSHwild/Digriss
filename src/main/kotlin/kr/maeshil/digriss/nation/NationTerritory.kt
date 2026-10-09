@@ -88,7 +88,7 @@ class NationTerritory(private val plugin: Digriss, private val core: NationManag
             owner.isEmpty() -> "§7무소속 지역" to "§8누구의 영토도 아닙니다"
             owner == myNation -> "§a$owner" to "§2내 국가 영토"
             plugin.allianceManager.areAllied(myNation, owner) -> "§b$owner" to "§3연합국 영토"
-            myNation != null && core.war.isAtWar(myNation, owner) -> "§4⚔ $owner ⚔" to "§c전쟁 중인 국가의 영토입니다"
+            myNation != null && core.war.isAtWar(myNation, owner) -> "§4$owner" to "§c전쟁 중인 국가의 영토입니다"
             else -> "§c$owner" to "§7다른 국가의 영토"
         }
         player.sendTitle(title, subtitle, 5, 30, 10)
@@ -117,11 +117,11 @@ class NationTerritory(private val plugin: Digriss, private val core: NationManag
         val myNation = core.getNationName(player.uniqueId)
 
         return when {
-            ownerNation == null -> "§7📍 무소속 지역"
-            ownerNation == myNation -> "§a📍 §l$ownerNation§r §a영토 §7(내 국가)"
-            plugin.allianceManager.areAllied(myNation, ownerNation) -> "§b📍 §l$ownerNation§r §b영토 §7(연합국)"
-            myNation != null && core.war.isAtWar(myNation, ownerNation) -> "§4📍 §c§l$ownerNation§r §4영토 §c(전쟁 중)"
-            else -> "§e📍 §l$ownerNation§r §e영토 §7(다른 국가)"
+            ownerNation == null -> "§7무소속 지역"
+            ownerNation == myNation -> "§a§l$ownerNation§r §a영토 §7(내 국가)"
+            plugin.allianceManager.areAllied(myNation, ownerNation) -> "§b§l$ownerNation§r §b영토 §7(연합국)"
+            myNation != null && core.war.isAtWar(myNation, ownerNation) -> "§4§c§l$ownerNation§r §4영토 §c(전쟁 중)"
+            else -> "§e§l$ownerNation§r §e영토 §7(다른 국가)"
         }
     }
 }

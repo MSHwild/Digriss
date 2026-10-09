@@ -14,7 +14,7 @@ class WarEventCommand(private val plugin: Digriss) : CommandExecutor, TabComplet
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val sub = args.getOrNull(0) ?: "상태"
         if (sub == "상태") {
-            sender.sendMessage("§6⚔ 국가전쟁 이벤트: ${event.statusText()}")
+            sender.sendMessage("§6국가전쟁 이벤트: ${event.statusText()}")
             return true
         }
         if (!sender.hasPermission("digriss.admin")) {

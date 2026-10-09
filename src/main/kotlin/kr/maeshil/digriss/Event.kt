@@ -36,9 +36,9 @@ class Event(private val plugin: Digriss) : Listener {
         val killer = victim.killer?.takeIf { it != victim } // 자기 화살·TNT로 죽은 건 킬로 치지 않음
 
         event.deathMessage = if (killer != null) {
-            "${ChatColor.RED}☠ ${ChatColor.GOLD}${victim.name}${ChatColor.RED}님이 ${ChatColor.GOLD}${killer.name}${ChatColor.RED}님에게 처치당했습니다."
+            "${ChatColor.RED}${ChatColor.GOLD}${victim.name}${ChatColor.RED}님이 ${ChatColor.GOLD}${killer.name}${ChatColor.RED}님에게 처치당했습니다."
         } else {
-            "${ChatColor.RED}☠ ${ChatColor.GOLD}${victim.name}${ChatColor.RED}님이 사망했습니다."
+            "${ChatColor.RED}${ChatColor.GOLD}${victim.name}${ChatColor.RED}님이 사망했습니다."
         }
 
         val victimStreak = killStreaks[victim.name] ?: 0
@@ -64,7 +64,7 @@ class Event(private val plugin: Digriss) : Listener {
                 plugin.soulManager.addSouls(killer, bonus)
                 Sounds.all(org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.4f, 1.2f)
                 plugin.server.broadcastMessage(
-                    "${ChatColor.RED}⚔ ${ChatColor.GOLD}${killer.name}${ChatColor.RED}님이 " +
+                    "${ChatColor.RED}${ChatColor.GOLD}${killer.name}${ChatColor.RED}님이 " +
                         "${ChatColor.GOLD}${victim.name}${ChatColor.RED}님의 ${ChatColor.YELLOW}${victimStreak}킬스트릭${ChatColor.RED}을 끊었습니다! " +
                         "${ChatColor.AQUA}(보너스 영혼 +$bonus)"
                 )
@@ -74,7 +74,7 @@ class Event(private val plugin: Digriss) : Listener {
             plugin.questManager.onPlayerKill(killer, victim)
             plugin.warScoreManager.recordKill(killer, victim)
             val rankGain = plugin.rankManager.onKill(killer, victim, newStreak)
-            val streakText = if (newStreak >= 2) "  §6🔥 ${newStreak}킬스트릭" else ""
+            val streakText = if (newStreak >= 2) "  §6${newStreak}킬스트릭" else ""
             ActionBarManager.showTemp(killer, "§a+$rankGain 랭크점수  §b+${baseSouls + bonus} 영혼$streakText", 2.0)
 
             // 킬이펙트 재생

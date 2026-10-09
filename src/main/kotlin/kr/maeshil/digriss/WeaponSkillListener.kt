@@ -24,8 +24,8 @@ class WeaponSkillListener(private val plugin: Digriss) : Listener {
         ActionBarManager.addProvider { player ->
             val weapon = ItemAttributeUtil.getWeaponData(player.inventory.itemInMainHand) ?: return@addProvider null
             val remain = remainingMillis(player.uniqueId, weapon)
-            if (remain > 0) "${ChatColor.RED}⏳ ${weapon.displayName} ${"%.1f".format(remain / 1000.0)}초"
-            else "${ChatColor.GREEN}⚔ ${weapon.displayName} 준비 완료"
+            if (remain > 0) "${ChatColor.RED}${weapon.displayName} ${"%.1f".format(remain / 1000.0)}초"
+            else "${ChatColor.GREEN}${weapon.displayName} 준비 완료"
         }
     }
 

@@ -163,7 +163,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         val gain = if (amount > 0) amount * plugin.nationTechManager.peaceMultiplier(nationName) else amount // 내정 3단계
         nation.peace = (nation.peace + gain).coerceAtLeast(0.0)
         if (before < PEACE_GOAL && nation.peace >= PEACE_GOAL) {
-            Bukkit.broadcastMessage("${ChatColor.GREEN}🌿 '$nationName' 국가가 내실 점수 ${PEACE_GOAL.toInt()}점을 달성해 태평성대를 맞았습니다!")
+            Bukkit.broadcastMessage("${ChatColor.GREEN}'$nationName' 국가가 내실 점수 ${PEACE_GOAL.toInt()}점을 달성해 태평성대를 맞았습니다!")
             plugin.achievementManager.unlockNation(nationName, kr.maeshil.digriss.achievement.Achievement.PEACEKEEPER)
         }
     }
@@ -546,11 +546,11 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nation.level += 1
         addPeace(nationName, nation.level * 20.0)
 
-        player.sendMessage("${ChatColor.GREEN}🎉 국가 레벨이 ${nation.level} 레벨로 업그레이드되었습니다!")
+        player.sendMessage("${ChatColor.GREEN}국가 레벨이 ${nation.level} 레벨로 업그레이드되었습니다!")
         player.sendMessage("${ChatColor.AQUA}해금된 효과: ${levelEffectMessage(nation.level)}")
 
         nation.members.forEach { uuid -> Bukkit.getPlayer(uuid)?.let { territory.applyLevelEffects(it) } }
-        notifyNation(nationName, "${ChatColor.AQUA}🎉 국가 레벨이 Lv.${nation.level}(으)로 올랐습니다!")
+        notifyNation(nationName, "${ChatColor.AQUA}국가 레벨이 Lv.${nation.level}(으)로 올랐습니다!")
         Sounds.nation(nationName) { Sounds.bigReward(it) }
         if (nation.level >= 5) plugin.achievementManager.unlockNation(nationName, kr.maeshil.digriss.achievement.Achievement.NATION_MAX)
 
@@ -584,7 +584,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
                 if (war.warsOf(nation.name).isEmpty()) {
                     val bonus = 10.0 + nation.level * 2
                     addPeace(nation.name, bonus)
-                    notifyNation(nation.name, "${ChatColor.GREEN}🌿 [내실] 평화롭게 하루를 보내 내실 점수 +${bonus.toInt()} (현재 ${nation.peace.toInt()}점)")
+                    notifyNation(nation.name, "${ChatColor.GREEN}[내실] 평화롭게 하루를 보내 내실 점수 +${bonus.toInt()} (현재 ${nation.peace.toInt()}점)")
                 }
             } else {
                 addPeace(nation.name, -10.0)
@@ -779,7 +779,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         plugin.resourceSiteManager.transferNation(defenderNationName, attackerNationName)
         plugin.nationTechManager.removeNation(defenderNationName)
 
-        Bukkit.broadcastMessage("${ChatColor.RED}⚔ '$defenderNationName' 국가가 '$attackerNationName' 국가에 의해 점령 및 멸망했습니다!")
+        Bukkit.broadcastMessage("${ChatColor.RED}'$defenderNationName' 국가가 '$attackerNationName' 국가에 의해 점령 및 멸망했습니다!")
         Sounds.all(org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.0f)
         plugin.discordNotifier.notify("conquer", "💀 국가 멸망",
             "**$defenderNationName** 국가가 **$attackerNationName** 국가에 의해 점령당했습니다!\n영토 ${defenderNation.claims.size}개와 금고를 빼앗겼어요.",

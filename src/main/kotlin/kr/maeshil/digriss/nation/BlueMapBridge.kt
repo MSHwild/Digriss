@@ -90,7 +90,7 @@ object BlueMapBridge {
                     }
 
                     val marker = POIMarker.builder()
-                        .label("🏛️ $nationName")
+                        .label("$nationName")
                         .position(loc.x, 64.0, loc.z)
                         .build()
 

@@ -279,7 +279,7 @@ class QuestManager(private val plugin: Digriss) {
                 "§7- 보상: §b영혼 ${def.souls}" + (if (def.money > 0) " §6${formatMoney(def.money)}원" else "") +
                 (if (def.dc > 0) " §3DC ${def.dc}" else "")
         )
-        ActionBarManager.showTemp(player, "§6✔ 퀘스트 완료: §f${def.name}", 3.0)
+        ActionBarManager.showTemp(player, "§6퀘스트 완료: §f${def.name}", 3.0)
         Sounds.reward(player)
 
         // 그날 첫 완료면 연속 출석 갱신 + 보너스
@@ -336,7 +336,7 @@ class QuestManager(private val plugin: Digriss) {
             "§d§l[주간 보너스] §f이번 주 ${weeklyRequiredDays}일 퀘스트 달성! " +
                 "§b영혼 $weeklySouls §6${formatMoney(weeklyMoney)}원 §3DC $weeklyDC"
         )
-        ActionBarManager.showTemp(player, "§d★ 주간 보너스 획득!", 3.0)
+        ActionBarManager.showTemp(player, "§d주간 보너스 획득!", 3.0)
         Sounds.bigReward(player)
     }
 

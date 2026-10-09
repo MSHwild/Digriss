@@ -98,6 +98,10 @@ commands:
     description: 번들의 아이템을 수정합니다 (관리자)
     usage: /번들수정 <이름>
     permission: digriss.admin
+  번들지급:
+    description: 번들을 DC 없이 지급합니다. 접속 중이 아니면 다음 접속 때 지급 (OP·콘솔, Tebex용)
+    usage: /번들지급 <닉네임> <번들 이름>
+    permission: digriss.admin
   번들삭제:
     description: 번들을 삭제합니다 (관리자)
     usage: /번들삭제 <이름>

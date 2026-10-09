@@ -170,10 +170,10 @@ class Digriss : JavaPlugin() {
             val remain = jobSkillManager.getRemaining(uuid)
             val reaperActive = ReaperSkill.remainingSeconds(uuid)
             when {
-                reaperActive != null -> "§b👻 무체화 중 ${"%.1f".format(reaperActive)}초"
-                job == JobType.SHADOW_ASSASSIN && AssassinStealthManager.isActive(uuid) -> "§5👁 은신 중 (기습 대기)"
-                remain > 0 -> "§e⏳ ${job.displayName} ${remain}초"
-                else -> "§b✦ ${job.displayName} 준비 완료"
+                reaperActive != null -> "§b무체화 중 ${"%.1f".format(reaperActive)}초"
+                job == JobType.SHADOW_ASSASSIN && AssassinStealthManager.isActive(uuid) -> "§5은신 중 (기습 대기)"
+                remain > 0 -> "§e${job.displayName} ${remain}초"
+                else -> "§b${job.displayName} 준비 완료"
             }
         }
 
@@ -227,7 +227,8 @@ class Digriss : JavaPlugin() {
             Bukkit.getPluginManager().registerEvents(cmd, this)
         }
         BundleCommand(this).let { cmd ->
-            listOf("번들", "번들생성", "번들수정", "번들삭제").forEach { getCommand(it)?.apply { setExecutor(cmd); tabCompleter = cmd } }
+            listOf("번들", "번들생성", "번들수정", "번들삭제", "번들지급").forEach { getCommand(it)?.apply { setExecutor(cmd); tabCompleter = cmd } }
+            Bukkit.getPluginManager().registerEvents(cmd, this) // 접속 안 한 사람에게 지급 대기 중인 번들
         }
         getCommand("칭호")?.setExecutor(titleMenu)
         WarEventCommand(this).let { getCommand("전쟁이벤트")?.apply { setExecutor(it); tabCompleter = it } }

@@ -65,7 +65,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
             if (now - start < warDurationMs) return@forEach
             val parts = key.split("|")
             if (parts.size != 2) return@forEach
-            Bukkit.broadcastMessage("${ChatColor.YELLOW}⏳ [전쟁] '${parts[0]}' 국가와 '${parts[1]}' 국가의 전쟁 기간(3일)이 끝나 자동으로 휴전합니다.")
+            Bukkit.broadcastMessage("${ChatColor.YELLOW}[전쟁] '${parts[0]}' 국가와 '${parts[1]}' 국가의 전쟁 기간(3일)이 끝나 자동으로 휴전합니다.")
             endWar(parts[0], parts[1])
         }
     }
@@ -83,7 +83,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         truceRequests[declarer]?.remove(accepter)
         truceRequests[accepter]?.remove(declarer)
         addRecord("START", declarer, accepter)
-        Bukkit.broadcastMessage("${ChatColor.RED}⚔ [전쟁] '$declarer' 국가와 '$accepter' 국가의 전쟁이 시작되었습니다! 이제 서로의 신호기를 점령할 수 있습니다. (최대 3일, 이후 자동 휴전)")
+        Bukkit.broadcastMessage("${ChatColor.RED}[전쟁] '$declarer' 국가와 '$accepter' 국가의 전쟁이 시작되었습니다! 이제 서로의 신호기를 점령할 수 있습니다. (최대 3일, 이후 자동 휴전)")
         Sounds.all(org.bukkit.Sound.EVENT_RAID_HORN, 1.0f, 1.0f)
         plugin.discordNotifier.notify("war-start", "⚔ 전쟁 시작!",
             "**$declarer** 국가와 **$accepter** 국가의 전쟁이 시작되었습니다.\n서로의 신호기를 점령할 수 있어요. (최대 3일, 이후 자동 휴전)",
@@ -97,7 +97,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         truceRequests[a]?.remove(b)
         truceRequests[b]?.remove(a)
         addRecord("TRUCE", a, b)
-        Bukkit.broadcastMessage("${ChatColor.GREEN}☮ [휴전] '$a' 국가와 '$b' 국가가 휴전했습니다.")
+        Bukkit.broadcastMessage("${ChatColor.GREEN}[휴전] '$a' 국가와 '$b' 국가가 휴전했습니다.")
         Sounds.all(org.bukkit.Sound.BLOCK_BELL_USE, 1.0f, 1.0f)
         plugin.discordNotifier.notify("truce", "☮ 휴전", "**$a** 국가와 **$b** 국가가 휴전했습니다.",
             kr.maeshil.digriss.manager.DiscordNotifier.GREEN)
@@ -164,7 +164,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         player.sendMessage("${ChatColor.GREEN}'$target' 국가에 전쟁을 선포했습니다. 상대가 수락하면 전쟁이 시작됩니다.")
         Sounds.success(player)
         Sounds.nation(target) { Sounds.alert(it) }
-        core.notifyNation(target, "${ChatColor.RED}⚔ '$myName' 국가가 전쟁을 선포했습니다! /국가 → 전쟁 관리에서 수락 또는 거절하세요.")
+        core.notifyNation(target, "${ChatColor.RED}'$myName' 국가가 전쟁을 선포했습니다! /국가 → 전쟁 관리에서 수락 또는 거절하세요.")
     }
 
     private fun acceptWar(player: Player, from: String) {
@@ -208,7 +208,7 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         player.sendMessage("${ChatColor.GREEN}'$target' 국가에 휴전을 요청했습니다.")
         Sounds.success(player)
         Sounds.nation(target) { Sounds.notify(it) }
-        core.notifyNation(target, "${ChatColor.GREEN}☮ '$myName' 국가가 휴전을 요청했습니다! 지도자는 /국가 → 전쟁 관리에서 응답하세요.")
+        core.notifyNation(target, "${ChatColor.GREEN}'$myName' 국가가 휴전을 요청했습니다! 지도자는 /국가 → 전쟁 관리에서 응답하세요.")
     }
 
     private fun acceptTruce(player: Player, from: String) {

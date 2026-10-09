@@ -63,10 +63,10 @@ class AchievementManager(private val plugin: Digriss) {
         if (d.title == null) d.title = a // 첫 칭호는 자동 장착
         save()
 
-        if (a.manual) Bukkit.broadcastMessage("§6🏆 §f${player.name}§e님이 칭호 ${a.title}§e을(를) 받았습니다!")
-        else Bukkit.broadcastMessage("§6🏆 §f${player.name}§e님이 업적 §f[${a.displayName}]§e을(를) 달성했습니다! §7칭호 ${a.title}")
+        if (a.manual) Bukkit.broadcastMessage("§6§f${player.name}§e님이 칭호 ${a.title}§e을(를) 받았습니다!")
+        else Bukkit.broadcastMessage("§6§f${player.name}§e님이 업적 §f[${a.displayName}]§e을(를) 달성했습니다! §7칭호 ${a.title}")
         player.player?.let { p ->
-            p.sendTitle("§6🏆 ${a.displayName}", "§7칭호 ${a.title} §7획득 §8(/칭호)", 10, 60, 20)
+            p.sendTitle("§6${a.displayName}", "§7칭호 ${a.title} §7획득 §8(/칭호)", 10, 60, 20)
             Sounds.bigReward(p)
         }
     }

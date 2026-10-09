@@ -74,8 +74,8 @@ class TitleMenu(private val plugin: Digriss) : CommandExecutor, Listener {
                 ""
             )
             lore += when {
-                !unlocked -> "§8🔒 미달성"
-                a == equipped -> "§a★ 장착 중"
+                !unlocked -> "§8미달성"
+                a == equipped -> "§a장착 중"
                 else -> "§e클릭: 칭호 장착"
             }
             inv.setItem(i, item(base, if (unlocked) "§6§l${a.displayName}" else "§7${a.displayName}", lore, glow = a == equipped))

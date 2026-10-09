@@ -36,7 +36,7 @@ class NationRankCommand : CommandExecutor, TabCompleter {
 
         sender.sendMessage("§8§m          §r §6§l국가 랭킹 §7($type) §8§m          ")
         ranked.take(10).forEachIndexed { i, n ->
-            val medal = when (i) { 0 -> "§6🥇"; 1 -> "§7🥈"; 2 -> "§c🥉"; else -> "§8${i + 1}." }
+            val medal = when (i) { 0 -> "§61."; 1 -> "§72."; 2 -> "§c3."; else -> "§8${i + 1}." }
             sender.sendMessage(" $medal §f${n.name} §8- §e${display(n)}")
         }
         sender.sendMessage("§7다른 기준: §f/국가랭킹 ${criteria.keys.joinToString("§7|§f")}")

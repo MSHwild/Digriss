@@ -23,9 +23,9 @@ class ReloadCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter
         val results = mutableListOf<String>()
         fun step(name: String, action: () -> Unit) {
             runCatching(action)
-                .onSuccess { results += "§a✔ §f$name" }
+                .onSuccess { results += "§a성공 §f$name" }
                 .onFailure {
-                    results += "§c✘ §f$name §7(${it.message?.lineSequence()?.firstOrNull() ?: it.javaClass.simpleName})"
+                    results += "§c실패 §f$name §7(${it.message?.lineSequence()?.firstOrNull() ?: it.javaClass.simpleName})"
                     plugin.logger.warning("[리로드] $name 실패: ${it.message}")
                 }
         }
@@ -74,8 +74,8 @@ class LinkCommand(private val plugin: Digriss) : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val (title, url) = when (command.name) {
-            "지도" -> "§b🗺 실시간 지도" to map
-            else -> "§9💬 디스코드" to discord
+            "지도" -> "§b실시간 지도" to map
+            else -> "§9디스코드" to discord
         }
         if (url.isEmpty()) {
             sender.sendMessage("$title §7아직 준비 중이에요.")

@@ -49,7 +49,7 @@ object QuestGUI {
             "§7이번 주 완료 일수: §f$days§7/§f${required}일",
             progressBar(days.coerceAtMost(required), required),
             "",
-            if (pd.weeklyClaimed) "§a✔ 이번 주 보너스 수령 완료" else "§7월요일부터 ${required}일 이상 퀘스트를 완료하면 지급"))
+            if (pd.weeklyClaimed) "§a이번 주 보너스 수령 완료" else "§7월요일부터 ${required}일 이상 퀘스트를 완료하면 지급"))
 
         // 연속 출석
         val streak = questManager.currentStreak(pd)
@@ -59,7 +59,7 @@ object QuestGUI {
             "§7하루 첫 퀘스트를 완료하면 1일씩 늘어납니다.",
             "§7하루를 놓치면 절반으로 줄어듭니다.",
             "",
-            if (todayDone) "§a✔ 오늘 출석 완료"
+            if (todayDone) "§a오늘 출석 완료"
             else "§7오늘 첫 완료 시 추가 보상: §b영혼 ${questManager.streakBonusSouls(nextStreak)} §6${questManager.formatMoney(questManager.streakBonusMoney(nextStreak))}원"))
 
         // 리롤 버튼
@@ -89,10 +89,10 @@ object QuestGUI {
             "§7보상: §b영혼 ${def.souls}" + (if (def.money > 0) " §6${questManager.formatMoney(def.money)}원" else "") +
                 (if (def.dc > 0) " §3DC ${def.dc}" else "")
         )
-        if (def.warOnly) lore.add("§4⚔ 전쟁 퀘스트")
+        if (def.warOnly) lore.add("§4전쟁 퀘스트")
         lore.add("")
         lore.add(when {
-            quest.done -> "§a✔ 완료 (보상 지급됨)"
+            quest.done -> "§a완료 (보상 지급됨)"
             rerollMode -> "§e▶ 클릭하면 이 퀘스트를 교체합니다"
             else -> "§7진행 중"
         })

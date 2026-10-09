@@ -97,7 +97,7 @@ class AllianceManager(private val plugin: Digriss) {
         player.sendMessage("§a'$target' 국가에 연합을 요청했습니다.")
         Sounds.success(player)
         Sounds.nation(target) { Sounds.notify(it) }
-        notifyNation(target, "§b🤝 '$me' 국가가 연합을 요청했습니다! §7/연합 에서 수락 또는 거절하세요.")
+        notifyNation(target, "§b'$me' 국가가 연합을 요청했습니다! §7/연합 에서 수락 또는 거절하세요.")
     }
 
     fun accept(player: Player, from: String) {
@@ -129,7 +129,7 @@ class AllianceManager(private val plugin: Digriss) {
         val me = leaderNation(player) ?: return
         if (!alliances.remove(key(me, target))) return
         save()
-        Bukkit.broadcastMessage("§7💔 [연합 해제] '$me' 국가가 '$target' 국가와의 연합을 해제했습니다.")
+        Bukkit.broadcastMessage("§7[연합 해제] '$me' 국가가 '$target' 국가와의 연합을 해제했습니다.")
         listOf(me, target).forEach { n -> Sounds.nation(n) { Sounds.play(it, org.bukkit.Sound.BLOCK_GLASS_BREAK, 0.8f, 0.8f) } }
     }
 
@@ -138,7 +138,7 @@ class AllianceManager(private val plugin: Digriss) {
         requests[a]?.remove(b)
         requests[b]?.remove(a)
         save()
-        Bukkit.broadcastMessage("§b🤝 [연합] '$a' 국가와 '$b' 국가가 연합을 맺었습니다!")
+        Bukkit.broadcastMessage("§b[연합] '$a' 국가와 '$b' 국가가 연합을 맺었습니다!")
         listOf(a, b).forEach { n -> Sounds.nation(n) { Sounds.bigReward(it) } }
         listOf(a, b).mapNotNull { Nation.nations[it]?.leader }.forEach {
             plugin.achievementManager.unlock(Bukkit.getOfflinePlayer(it), kr.maeshil.digriss.achievement.Achievement.DIPLOMAT)

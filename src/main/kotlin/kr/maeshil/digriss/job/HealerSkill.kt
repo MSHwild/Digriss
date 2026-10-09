@@ -32,11 +32,11 @@ class HealerSkill : JobSkill {
             ally.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, regenTicks, 1, false, true))
             cleansed.forEach { ally.removePotionEffect(it) }
             ally.world.spawnParticle(Particle.HEART, ally.location.add(0.0, 2.0, 0.0), 6, 0.4, 0.3, 0.4, 0.0)
-            if (ally != player) ally.sendMessage("§d✨ ${player.name}님의 생명의 축복으로 회복되었습니다!")
+            if (ally != player) ally.sendMessage("§d${player.name}님의 생명의 축복으로 회복되었습니다!")
             healed++
         }
         drawBloom(player)
-        player.sendMessage("§d✨ 생명의 축복! §7아군 ${healed}명을 회복했습니다.")
+        player.sendMessage("§d생명의 축복! §7아군 ${healed}명을 회복했습니다.")
         return true
     }
 

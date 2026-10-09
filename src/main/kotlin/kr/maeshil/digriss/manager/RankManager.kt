@@ -158,7 +158,7 @@ class RankManager(private val plugin: Digriss) {
         if (after.minScore > before.minScore) {
             player.sendTitle("${color}${after.name}", "§f랭크 승급!", 5, 50, 15)
             Sounds.bigReward(player)
-            Bukkit.broadcastMessage("§6🎖 ${player.name}§e님이 ${color}${after.name}§e 랭크로 승급했습니다!")
+            Bukkit.broadcastMessage("§6${player.name}§e님이 ${color}${after.name}§e 랭크로 승급했습니다!")
             plugin.achievementManager.onRankReached(player, after.name)
         } else {
             player.sendTitle("${color}${after.name}", "§7랭크 강등", 5, 40, 15)

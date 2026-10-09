@@ -22,6 +22,7 @@ class BundleManager(private val plugin: Digriss) {
 
     private val file = File(plugin.dataFolder, "bundles.yml")
     private val logFile = File(plugin.dataFolder, "bundle-purchase.log")
+    private val pendingFile = File(plugin.dataFolder, "bundle-pending.yml") // 접속하지 않은 사람에게 지급할 번들
     private val zone = ZoneId.of("Asia/Seoul")
     private val timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
@@ -125,6 +126,35 @@ class BundleManager(private val plugin: Digriss) {
         player.inventory.addItem(*bundle.items.map { it.clone() }.toTypedArray())
         log(player, bundle)
         return Result.Success
+    }
+
+    // ───────────────────────── 관리자·콘솔 지급 (/번들지급) ─────────────────────────
+
+    /** DC를 받지 않고 번들 아이템을 줌. 인벤토리가 가득 차면 발밑에 떨어뜨림 */
+    fun give(player: Player, bundle: Bundle, by: String) {
+        val leftover = player.inventory.addItem(*bundle.items.map { it.clone() }.toTypedArray())
+        leftover.values.forEach { player.world.dropItemNaturally(player.location, it) }
+        val time = ZonedDateTime.now(zone).format(timeFormat)
+        runCatching { logFile.appendText("$time | ${player.uniqueId} | ${player.name} | ${bundle.name} | 지급 (by $by)\n") }
+            .onFailure { plugin.logger.severe("[번들] bundle-purchase.log 기록 실패: ${it.message}") }
+    }
+
+    /** 접속 중이 아닌 사람: 다음 접속 때 지급되도록 저장 */
+    fun addPending(uuid: UUID, bundleName: String) {
+        val c = YamlConfiguration.loadConfiguration(pendingFile)
+        c.set(uuid.toString(), c.getStringList(uuid.toString()) + bundleName)
+        runCatching { c.save(pendingFile) }.onFailure { plugin.logger.severe("[번들] bundle-pending.yml 저장 실패: ${it.message}") }
+    }
+
+    /** 접속했을 때 대기 중인 번들을 꺼냄 (꺼내면 파일에서 지움) */
+    fun takePending(uuid: UUID): List<String> {
+        if (!pendingFile.exists()) return emptyList()
+        val c = YamlConfiguration.loadConfiguration(pendingFile)
+        val list = c.getStringList(uuid.toString())
+        if (list.isEmpty()) return emptyList()
+        c.set(uuid.toString(), null)
+        runCatching { c.save(pendingFile) }.onFailure { plugin.logger.severe("[번들] bundle-pending.yml 저장 실패: ${it.message}") }
+        return list
     }
 
     // 실제 인벤토리를 건드리지 않고 복사본에 넣어 보며 공간 확인

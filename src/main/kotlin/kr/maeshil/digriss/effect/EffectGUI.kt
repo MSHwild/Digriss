@@ -30,7 +30,7 @@ class EffectGUI(private val plugin: Digriss) {
             effect.description.forEach { lore.add(ChatColor.translateAlternateColorCodes('&', it)) }
             lore.add("")
             when {
-                equipped -> lore.add("${ChatColor.GREEN}★ 장착중")
+                equipped -> lore.add("${ChatColor.GREEN}장착중")
                 owned -> lore.add("${ChatColor.YELLOW}보유중 - 클릭시 장착")
                 else -> {
                     lore.add("${ChatColor.GRAY}가격: ${ChatColor.AQUA}${effect.price} 영혼")

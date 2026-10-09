@@ -94,7 +94,7 @@ class WarEventManager(private val plugin: Digriss) {
         val key = "${now.toLocalDate()}|${slot.day}|${slot.start}"
         if (noticedSlot == key) return
         noticedSlot = key
-        Bukkit.broadcastMessage("§6⚔ [전쟁 이벤트] §e${noticeMinutes}분 뒤 국가전쟁 이벤트가 시작됩니다! §7(전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배)")
+        Bukkit.broadcastMessage("§6[전쟁 이벤트] §e${noticeMinutes}분 뒤 국가전쟁 이벤트가 시작됩니다! §7(전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배)")
         Sounds.all(Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 0.8f)
         plugin.discordNotifier.notify("war-event-notice", "⏰ 전쟁 이벤트 예고",
             "${noticeMinutes}분 뒤 국가전쟁 이벤트가 시작돼요!\n전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배", DiscordNotifier.GOLD)
@@ -104,8 +104,8 @@ class WarEventManager(private val plugin: Digriss) {
         active = true
         startedAt = System.currentTimeMillis()
         currentEndsAt = endsAt
-        Bukkit.broadcastMessage("§4§l⚔ 국가전쟁 이벤트 시작! §e전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배 §7(${remainingText()} 동안)")
-        Bukkit.getOnlinePlayers().forEach { it.sendTitle("§4§l⚔ 전쟁 이벤트 ⚔", "§e전쟁 점수 ${scoreMultiplier}배!", 10, 60, 20) }
+        Bukkit.broadcastMessage("§4§l국가전쟁 이벤트 시작! §e전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배 §7(${remainingText()} 동안)")
+        Bukkit.getOnlinePlayers().forEach { it.sendTitle("§4§l전쟁 이벤트", "§e전쟁 점수 ${scoreMultiplier}배!", 10, 60, 20) }
         Sounds.all(Sound.EVENT_RAID_HORN, 1f, 0.9f)
         plugin.discordNotifier.notify("war-event", "⚔ 국가전쟁 이벤트 시작!",
             "전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배 (${remainingText()} 동안)\n지금 접속해서 전쟁에 참여하세요! `puritymc.kr`", DiscordNotifier.RED)
@@ -120,7 +120,7 @@ class WarEventManager(private val plugin: Digriss) {
         manualEndsAt = null
         bar?.removeAll()
         bar = null
-        Bukkit.broadcastMessage("§6⚔ [전쟁 이벤트] §f국가전쟁 이벤트가 끝났습니다. 수고하셨습니다!")
+        Bukkit.broadcastMessage("§6[전쟁 이벤트] §f국가전쟁 이벤트가 끝났습니다. 수고하셨습니다!")
         Sounds.all(Sound.BLOCK_BELL_USE, 1f, 0.8f)
         plugin.discordNotifier.notify("war-event", "🔔 전쟁 이벤트 종료", "국가전쟁 이벤트가 끝났습니다. 수고하셨습니다!", DiscordNotifier.GRAY)
     }
@@ -129,7 +129,7 @@ class WarEventManager(private val plugin: Digriss) {
         val b = bar ?: return
         // 이벤트 중에 들어온 사람도 보이게
         Bukkit.getOnlinePlayers().forEach { if (it !in b.players) b.addPlayer(it) }
-        b.setTitle("§4⚔ 국가전쟁 이벤트 §f- 전쟁 점수 §e${scoreMultiplier}배 §8| §7남은 시간 §f${remainingText()}")
+        b.setTitle("§4국가전쟁 이벤트 §f- 전쟁 점수 §e${scoreMultiplier}배 §8| §7남은 시간 §f${remainingText()}")
         val total = (currentEndsAt - startedAt).coerceAtLeast(1)
         b.progress = ((currentEndsAt - System.currentTimeMillis()).toDouble() / total).coerceIn(0.0, 1.0)
     }

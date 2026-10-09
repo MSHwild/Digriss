@@ -45,7 +45,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
         if (!enabled) return
         Bukkit.getPluginManager().registerEvents(this, plugin)
         ActionBarManager.addProvider { p ->
-            if (isInCombat(p)) "§c⚔ 전투 중 ${remainingSeconds(p)}초 §7(도주하면 사망)" else null
+            if (isInCombat(p)) "§c전투 중 ${remainingSeconds(p)}초 §7(도주하면 사망)" else null
         }
         // 1초마다 전투가 끝난 사람 정리
         Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
@@ -56,7 +56,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
                 if (end > now) continue
                 it.remove()
                 Bukkit.getPlayer(uuid)?.let { p ->
-                    p.sendMessage("§a⚔ 전투가 끝났습니다. 이제 안전합니다.")
+                    p.sendMessage("§a전투가 끝났습니다. 이제 안전합니다.")
                     Sounds.success(p)
                 }
             }
@@ -106,7 +106,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
         val wasTagged = isInCombat(p)
         tagged[p.uniqueId] = System.currentTimeMillis() + seconds * 1000L
         if (!wasTagged) {
-            p.sendMessage("§c⚔ ${enemy.name}님과 전투가 시작됐습니다! ${seconds}초 동안 접속을 끊거나 이동 명령어를 쓰면 안 됩니다.")
+            p.sendMessage("§c${enemy.name}님과 전투가 시작됐습니다! ${seconds}초 동안 접속을 끊거나 이동 명령어를 쓰면 안 됩니다.")
             Sounds.alert(p)
         }
     }
@@ -131,7 +131,7 @@ class CombatManager(private val plugin: Digriss) : Listener {
         if (!inCombat || !killOnLogout || Bukkit.isStopping()) return
         if (e.reason.name !in punishReasons) return
 
-        Bukkit.broadcastMessage("§c⚔ [전투 도주] §6${p.name}§c님이 전투 중 접속을 끊어 사망했습니다!")
+        Bukkit.broadcastMessage("§c[전투 도주] §6${p.name}§c님이 전투 중 접속을 끊어 사망했습니다!")
         p.health = 0.0
     }
 

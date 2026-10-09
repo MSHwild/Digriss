@@ -89,12 +89,12 @@ class WarScoreManager(private val plugin: Digriss) {
         plugin.soulManager.addSouls(killer, souls)
         val mine = war[killerNation] ?: 0
         val theirs = war[victimNation] ?: 0
-        val message = "§4⚔ 전쟁 점수 §a$killerNation $mine §7: §c$theirs $victimNation"
+        val message = "§4전쟁 점수 §a$killerNation $mine §7: §c$theirs $victimNation"
         Nation.nations[killerNation]?.members?.forEach { Bukkit.getPlayer(it)?.sendMessage(message) }
         Nation.nations[victimNation]?.members?.forEach {
-            Bukkit.getPlayer(it)?.sendMessage("§4⚔ 전쟁 점수 §c$victimNation $theirs §7: §a$mine $killerNation")
+            Bukkit.getPlayer(it)?.sendMessage("§4전쟁 점수 §c$victimNation $theirs §7: §a$mine $killerNation")
         }
-        killer.sendMessage("§b전쟁 킬 보너스 영혼 +$souls" + if (event.isActive()) " §6(⚔ 이벤트: 점수 +$points)" else "")
+        killer.sendMessage("§b전쟁 킬 보너스 영혼 +$souls" + if (event.isActive()) " §6(이벤트: 점수 +$points)" else "")
         Sounds.play(killer, org.bukkit.Sound.ENTITY_ARROW_HIT_PLAYER, 0.8f, 1.0f)
     }
 
@@ -106,7 +106,7 @@ class WarScoreManager(private val plugin: Digriss) {
         val scoreA = war[a] ?: 0
         val scoreB = war[b] ?: 0
         if (scoreA == scoreB) {
-            Bukkit.broadcastMessage("§7☮ [전쟁 결과] '$a' $scoreA : $scoreB '$b' 무승부로 끝났습니다.")
+            Bukkit.broadcastMessage("§7[전쟁 결과] '$a' $scoreA : $scoreB '$b' 무승부로 끝났습니다.")
             rewardRank(a, RANK_DRAW, contrib, "무승부")
             rewardRank(b, RANK_DRAW, contrib, "무승부")
             return false
@@ -124,7 +124,7 @@ class WarScoreManager(private val plugin: Digriss) {
         winNation.bank += amount
 
         Bukkit.broadcastMessage(
-            "§6🏆 [전쟁 결과] '$winner' 국가가 '$loser' 국가에게 ${maxOf(scoreA, scoreB)} : ${minOf(scoreA, scoreB)}로 승리! " +
+            "§6[전쟁 결과] '$winner' 국가가 '$loser' 국가에게 ${maxOf(scoreA, scoreB)} : ${minOf(scoreA, scoreB)}로 승리! " +
                 "§e배상금 ${String.format("%,.0f", amount)}원§6을 가져갑니다."
         )
         return amount > 0

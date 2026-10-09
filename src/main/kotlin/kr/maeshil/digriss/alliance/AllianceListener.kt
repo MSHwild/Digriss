@@ -49,7 +49,7 @@ class AllianceListener(private val plugin: Digriss) : Listener {
             }
             plugin.allianceManager.areAllied(attackerNation, victimNation) -> {
                 e.isCancelled = true
-                ActionBarManager.showTemp(attacker, "§b🤝 연합국 국가원은 공격할 수 없습니다.", 1.0)
+                ActionBarManager.showTemp(attacker, "§b연합국 국가원은 공격할 수 없습니다.", 1.0)
             }
         }
     }
