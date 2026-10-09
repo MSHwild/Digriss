@@ -3,7 +3,7 @@ package kr.maeshil.digriss.nation
 import java.util.UUID
 
 data class Nations(
-    val name: String,
+    var name: String,
     var leader: UUID,
     val members: MutableList<UUID> = mutableListOf(),
     val claims: MutableList<String> = mutableListOf(),

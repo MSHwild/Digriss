@@ -148,6 +148,9 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         inv.setItem(24, item(icon("nation.beacon_move", Material.LODESTONE), "§b§l신호기 이동",
             "§7현재 위치로 신호기를 옮깁니다.", "§7기존 신호기는 제거됩니다.", "", leaderOnly))
 
+        inv.setItem(26, item(icon("nation.rename", Material.NAME_TAG), "§e§l국가 이름 변경",
+            "§7국가 이름을 새로 정합니다.", "§8(전쟁 중에는 변경 불가)", "", leaderOnly))
+
         inv.setItem(28, item(icon("nation.invite", Material.PLAYER_HEAD), "§a§l국가원 초대",
             "§7접속 중인 무소속 유저를 초대합니다.", "", "§a클릭하여 선택"))
 
@@ -417,6 +420,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 20 -> { player.closeInventory(); core.centerTP(player) }
                 22 -> { player.closeInventory(); core.setNationSpawn(player) }
                 24 -> { player.closeInventory(); core.setNationBeacon(player) }
+                26 -> { player.closeInventory(); core.startRename(player) }
                 28 -> later { openInviteMenu(player) }
                 30 -> later { openWarMenu(player) }
                 32 -> later { AllianceGUI.open(player, plugin) }

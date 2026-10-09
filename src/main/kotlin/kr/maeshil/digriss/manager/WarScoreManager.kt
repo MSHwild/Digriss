@@ -164,6 +164,16 @@ class WarScoreManager(private val plugin: Digriss) {
         if (removedScores || removedContrib) save()
     }
 
+    // 국가 이름이 바뀌면 전쟁 점수 기록의 이름을 바꿈
+    fun rename(old: String, new: String) {
+        fun fix(k: String) = k.split("|").map { if (it == old) new else it }.sorted().joinToString("|")
+        val s = scores.entries.map { (k, m) -> fix(k) to m.mapKeys { if (it.key == old) new else it.key }.toMutableMap() }
+        scores.clear(); s.forEach { scores[it.first] = it.second }
+        val c = contributions.entries.map { fix(it.key) to it.value }
+        contributions.clear(); c.forEach { contributions[it.first] = it.second }
+        save()
+    }
+
     fun resetAll() {
         scores.clear()
         contributions.clear()

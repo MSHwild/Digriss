@@ -164,6 +164,15 @@ class AllianceManager(private val plugin: Digriss) {
         save()
     }
 
+    // 국가 이름이 바뀌면 연합 목록과 요청의 이름을 바꿈
+    fun rename(old: String, new: String) {
+        val fixed = alliances.map { k -> k.split("|").map { if (it == old) new else it }.sorted().joinToString("|") }
+        alliances.clear(); alliances.addAll(fixed)
+        requests.remove(old)?.let { requests[new] = it }
+        requests.values.forEach { if (it.remove(old)) it.add(new) }
+        save()
+    }
+
     fun resetAll() {
         alliances.clear()
         requests.clear()

@@ -114,6 +114,26 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         save()
     }
 
+    /** 국가 이름이 바뀔 때 전쟁 키·요청·기록의 이름을 함께 바꿈 */
+    fun rename(old: String, new: String) {
+        fun fix(key: String) = key.split("|").map { if (it == old) new else it }.sorted().joinToString("|")
+        val wars = activeWars.map(::fix); activeWars.clear(); activeWars.addAll(wars)
+        val starts = warStarts.mapKeys { fix(it.key) }; warStarts.clear(); warStarts.putAll(starts)
+        fun renameRequests(m: MutableMap<String, MutableSet<String>>) {
+            m.remove(old)?.let { m[new] = it }
+            m.values.forEach { if (it.remove(old)) it.add(new) }
+        }
+        renameRequests(warRequests)
+        renameRequests(truceRequests)
+        for (i in warLog.indices) {
+            val r = warLog[i]
+            if (r.a == old || r.b == old) warLog[i] = r.copy(a = if (r.a == old) new else r.a, b = if (r.b == old) new else r.b)
+        }
+        plugin.allianceManager.rename(old, new)
+        plugin.warScoreManager.rename(old, new)
+        save()
+    }
+
     fun resetAll() {
         activeWars.clear()
         warStarts.clear()

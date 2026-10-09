@@ -79,6 +79,16 @@ class NationStorageManager(private val plugin: Digriss) {
         return items.filterNotNull().filter { !it.type.isAir }
     }
 
+    // 국가 이름이 바뀌면 창고 내용을 새 이름으로 옮김 (열려 있던 창은 닫힘)
+    fun rename(old: String, new: String) {
+        val inv = inventories.remove(old)
+        val items = inv?.contents?.toList() ?: saved.remove(old)
+        inv?.viewers?.toList()?.forEach { it.closeInventory() }
+        saved.remove(old)
+        if (items != null) saved[new] = items
+        save()
+    }
+
     fun resetAll() {
         inventories.values.forEach { inv -> inv.viewers.toList().forEach { it.closeInventory() } }
         inventories.clear()

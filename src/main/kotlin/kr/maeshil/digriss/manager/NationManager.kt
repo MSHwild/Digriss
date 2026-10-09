@@ -40,6 +40,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     private val nationBeacons = mutableMapOf<String, Location>()
     private val nationSpawns = mutableMapOf<String, Location>()
     private val pendingCreate = mutableSetOf<UUID>()
+    private val pendingRename = mutableSetOf<UUID>()
     private val teleporting = mutableSetOf<UUID>()
     // 인출한 돈을 다시 입금해서 금고 입금 퀘스트를 채우는 것을 막기 위한 기록 (인출한 만큼은 입금해도 퀘스트에 안 셈)
     private val withdrawnCredit = mutableMapOf<UUID, Double>()
@@ -243,15 +244,19 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     @EventHandler(priority = EventPriority.LOWEST)
     fun onChat(event: AsyncPlayerChatEvent) {
         val player = event.player
-        if (!pendingCreate.contains(player.uniqueId)) return
+        val renaming = pendingRename.contains(player.uniqueId)
+        if (!pendingCreate.contains(player.uniqueId) && !renaming) return
 
         event.isCancelled = true
         val input = event.message.trim()
         pendingCreate.remove(player.uniqueId)
+        pendingRename.remove(player.uniqueId)
 
         later {
             if (input == "취소") {
-                player.sendMessage("${ChatColor.GRAY}국가 건국을 취소했습니다.")
+                player.sendMessage("${ChatColor.GRAY}${if (renaming) "국가 이름 변경" else "국가 건국"}을 취소했습니다.")
+            } else if (renaming) {
+                renameNation(player, input)
             } else {
                 createNation(player, input)
             }
@@ -266,6 +271,55 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     }
 
     // ───────────────────────── 국가 로직 ─────────────────────────
+
+    // ───────────────────────── 국가 이름 변경 (지도자) ─────────────────────────
+
+    fun startRename(player: Player) {
+        val nationName = playerNations[player.uniqueId] ?: return
+        val nation = nations[nationName] ?: return
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 이름을 바꿀 수 있습니다.")
+        if (war.warsOf(nationName).isNotEmpty()) return deny(player, "${ChatColor.RED}전쟁 중에는 국가 이름을 바꿀 수 없습니다.")
+        pendingRename.add(player.uniqueId)
+        Sounds.notify(player)
+        player.sendMessage("${ChatColor.GOLD}새 국가 이름을 채팅으로 입력하세요. (취소: '취소' 입력)")
+    }
+
+    private fun renameNation(player: Player, newName: String) {
+        val oldName = playerNations[player.uniqueId] ?: return
+        val nation = nations[oldName] ?: return
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 이름을 바꿀 수 있습니다.")
+        if (war.warsOf(oldName).isNotEmpty()) return deny(player, "${ChatColor.RED}전쟁 중에는 국가 이름을 바꿀 수 없습니다.")
+        if (!Regex("^[가-힣a-zA-Z0-9_]{2,12}$").matches(newName)) {
+            return deny(player, "${ChatColor.RED}국가 이름은 2~12자의 한글/영문/숫자/_ 만 사용할 수 있습니다.")
+        }
+        if (newName == oldName) return deny(player, "${ChatColor.RED}지금 이름과 같습니다.")
+        if (nations.containsKey(newName)) return deny(player, "${ChatColor.RED}이미 존재하는 국가 이름입니다.")
+
+        // 국가 이름을 키로 쓰는 곳을 모두 새 이름으로 옮김
+        nations.remove(oldName)
+        nation.name = newName
+        nations[newName] = nation
+        playerNations.entries.forEach { if (it.value == oldName) it.setValue(newName) }
+        nationInvites.entries.forEach { if (it.value == oldName) it.setValue(newName) }
+        nationBeacons.remove(oldName)?.let { nationBeacons[newName] = it }
+        nationSpawns.remove(oldName)?.let { nationSpawns[newName] = it }
+        unclaimedChunks.remove(oldName)?.let { unclaimedChunks[newName] = it }
+        Nation.chunkClaims.entries.forEach { if (it.value == oldName) it.setValue(newName) }
+        war.rename(oldName, newName)
+        plugin.nationStorageManager.rename(oldName, newName)
+
+        // 지도 표시도 새 이름으로 다시 그림
+        BlueMapBridge.removeNationMarker(oldName)
+        BlueMapBridge.removeTerritory(oldName)
+        nationBeacons[newName]?.let {
+            BlueMapBridge.addNationMarker(newName, it)
+            BlueMapBridge.updateTerritory(nation, it.world?.name ?: return@let)
+        }
+
+        saveNations()
+        Sounds.bigReward(player)
+        Bukkit.broadcastMessage("${ChatColor.GOLD}[국가 시스템] '$oldName' 국가가 '${ChatColor.YELLOW}$newName${ChatColor.GOLD}'(으)로 이름을 바꿨습니다!")
+    }
 
     private fun createNation(player: Player, nationName: String) {
         if (!Regex("^[가-힣a-zA-Z0-9_]{2,12}$").matches(nationName)) {
