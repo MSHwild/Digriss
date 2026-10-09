@@ -1,4 +1,4 @@
-package kr.maeshil.digriss.command
+package kr.maeshil.digriss.event
 
 import kr.maeshil.digriss.Digriss
 import org.bukkit.command.Command

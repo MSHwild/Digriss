@@ -31,10 +31,10 @@ import kr.maeshil.digriss.help.HelpCommand
 import kr.maeshil.digriss.menu.MainMenu
 import kr.maeshil.digriss.achievement.TitleMenu
 import kr.maeshil.digriss.command.IconCommand
-import kr.maeshil.digriss.command.WarEventCommand
+import kr.maeshil.digriss.event.WarEventCommand
 import kr.maeshil.digriss.manager.AchievementManager
 import kr.maeshil.digriss.manager.IconManager
-import kr.maeshil.digriss.manager.WarEventManager
+import kr.maeshil.digriss.event.WarEventManager
 import kr.maeshil.digriss.manager.AdminLogManager
 import kr.maeshil.digriss.manager.AllianceManager
 import kr.maeshil.digriss.manager.BundleManager
@@ -114,7 +114,7 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var linkCommand: kr.maeshil.digriss.command.LinkCommand
         private set
-    lateinit var openEventManager: kr.maeshil.digriss.manager.OpenEventManager
+    lateinit var openEventManager: kr.maeshil.digriss.event.OpenEventManager
         private set
     lateinit var voteManager: kr.maeshil.digriss.manager.VoteManager
         private set
@@ -134,7 +134,7 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var marketManager: kr.maeshil.digriss.trade.MarketManager
         private set
-    lateinit var bigEventManager: kr.maeshil.digriss.manager.BigEventManager
+    lateinit var bigEventManager: kr.maeshil.digriss.event.BigEventManager
         private set
 
     override fun onEnable() {
@@ -259,7 +259,7 @@ class Digriss : JavaPlugin() {
         kr.maeshil.digriss.command.ReloadCommand(this).let { getCommand("디그리스")?.apply { setExecutor(it); tabCompleter = it } }
         linkCommand = kr.maeshil.digriss.command.LinkCommand(this)
         listOf("지도", "디스코드").forEach { getCommand(it)?.setExecutor(linkCommand) }
-        openEventManager = kr.maeshil.digriss.manager.OpenEventManager(this) // 오픈 이벤트 (접속 보상, 친구 추천)
+        openEventManager = kr.maeshil.digriss.event.OpenEventManager(this) // 오픈 이벤트 (접속 보상, 친구 추천)
         Bukkit.getPluginManager().registerEvents(openEventManager, this)
         listOf("이벤트", "추천").forEach {
             getCommand(it)?.setExecutor(openEventManager)
@@ -279,7 +279,7 @@ class Digriss : JavaPlugin() {
         marketManager = kr.maeshil.digriss.trade.MarketManager(this) // /거래소
         Bukkit.getPluginManager().registerEvents(marketManager, this)
         getCommand("거래소")?.apply { setExecutor(marketManager); tabCompleter = marketManager }
-        bigEventManager = kr.maeshil.digriss.manager.BigEventManager(this) // 디그리스 대축제 (접속 보상 · 보스 레이드)
+        bigEventManager = kr.maeshil.digriss.event.BigEventManager(this) // 디그리스 대축제 (접속 보상 · 보스 레이드)
         Bukkit.getPluginManager().registerEvents(bigEventManager, this)
         getCommand("빅이벤트")?.apply { setExecutor(bigEventManager); tabCompleter = bigEventManager }
 

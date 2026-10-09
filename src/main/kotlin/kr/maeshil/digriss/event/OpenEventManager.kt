@@ -1,4 +1,4 @@
-package kr.maeshil.digriss.manager
+package kr.maeshil.digriss.event
 
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit

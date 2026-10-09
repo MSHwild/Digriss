@@ -1,7 +1,8 @@
-package kr.maeshil.digriss.manager
+package kr.maeshil.digriss.event
 
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
+import kr.maeshil.digriss.manager.DiscordNotifier
 import org.bukkit.Bukkit
 import org.bukkit.Sound
 import org.bukkit.boss.BarColor
