@@ -33,16 +33,20 @@ object BlueMapBridge {
     // 지도 왼쪽 목록에 국가 이름 아래로 보이는 좌표((x | y | z))를 숨기는 스타일을 웹앱에 등록
     private fun hideListCoordinates(api: BlueMapAPI) {
         try {
-            val file = api.webApp.webRoot.resolve("assets/digriss.css")
-            java.nio.file.Files.createDirectories(file.parent)
-            java.nio.file.Files.writeString(
-                file,
-                ".side-menu .marker-item .marker-button>.info .stats{display:none}\n" +
+            val css = ".side-menu .marker-item .marker-button>.info .stats{display:none}\n" +
                     // 마커 이름 상자는 폭 0인 부모 안의 absolute라 글자 폭만큼 좁아져서 한글이 한 글자씩 세로로 꺾임 → 내용 길이만큼 넓힘
                     "#map-container .bm-marker-html .bm-marker-poi-label,#map-container .bm-marker-labelpopup,#map-container .bm-marker-popup" +
                     "{width:max-content!important;max-width:30em!important;word-break:keep-all!important}\n"
-            )
-            api.webApp.registerStyle("assets/digriss.css")
+            // 브라우저가 예전 css를 캐시해 두고 안 바꾸므로, 내용이 바뀌면 파일 이름도 바뀌게 함
+            val assets = api.webApp.webRoot.resolve("assets")
+            java.nio.file.Files.createDirectories(assets)
+            java.nio.file.Files.list(assets).use { files ->
+                files.filter { it.fileName.toString().startsWith("digriss") && it.fileName.toString().endsWith(".css") }
+                    .forEach { runCatching { java.nio.file.Files.delete(it) } }
+            }
+            val name = "digriss-${Integer.toHexString(css.hashCode())}.css"
+            java.nio.file.Files.writeString(assets.resolve(name), css)
+            api.webApp.registerStyle("assets/$name")
         } catch (e: Exception) {
             Bukkit.getLogger().warning("[Digriss] BlueMap 좌표 숨김 스타일 등록 실패: ${e.message}")
         }
