@@ -96,6 +96,8 @@ class WarEventManager(private val plugin: Digriss) {
         noticedSlot = key
         Bukkit.broadcastMessage("§6⚔ [전쟁 이벤트] §e${noticeMinutes}분 뒤 국가전쟁 이벤트가 시작됩니다! §7(전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배)")
         Sounds.all(Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 0.8f)
+        plugin.discordNotifier.notify("war-event-notice", "⏰ 전쟁 이벤트 예고",
+            "${noticeMinutes}분 뒤 국가전쟁 이벤트가 시작돼요!\n전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배", DiscordNotifier.GOLD)
     }
 
     private fun start(endsAt: Long) {
@@ -105,6 +107,8 @@ class WarEventManager(private val plugin: Digriss) {
         Bukkit.broadcastMessage("§4§l⚔ 국가전쟁 이벤트 시작! §e전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배 §7(${remainingText()} 동안)")
         Bukkit.getOnlinePlayers().forEach { it.sendTitle("§4§l⚔ 전쟁 이벤트 ⚔", "§e전쟁 점수 ${scoreMultiplier}배!", 10, 60, 20) }
         Sounds.all(Sound.EVENT_RAID_HORN, 1f, 0.9f)
+        plugin.discordNotifier.notify("war-event", "⚔ 국가전쟁 이벤트 시작!",
+            "전쟁 점수 ${scoreMultiplier}배 · 전쟁 킬 영혼 ${soulMultiplier}배 (${remainingText()} 동안)\n지금 접속해서 전쟁에 참여하세요! `puritymc.kr`", DiscordNotifier.RED)
         bar = Bukkit.createBossBar("", BarColor.RED, BarStyle.SEGMENTED_10).also { b ->
             Bukkit.getOnlinePlayers().forEach { b.addPlayer(it) }
         }
@@ -118,6 +122,7 @@ class WarEventManager(private val plugin: Digriss) {
         bar = null
         Bukkit.broadcastMessage("§6⚔ [전쟁 이벤트] §f국가전쟁 이벤트가 끝났습니다. 수고하셨습니다!")
         Sounds.all(Sound.BLOCK_BELL_USE, 1f, 0.8f)
+        plugin.discordNotifier.notify("war-event", "🔔 전쟁 이벤트 종료", "국가전쟁 이벤트가 끝났습니다. 수고하셨습니다!", DiscordNotifier.GRAY)
     }
 
     private fun updateBar() {

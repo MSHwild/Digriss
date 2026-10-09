@@ -85,6 +85,9 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         addRecord("START", declarer, accepter)
         Bukkit.broadcastMessage("${ChatColor.RED}⚔ [전쟁] '$declarer' 국가와 '$accepter' 국가의 전쟁이 시작되었습니다! 이제 서로의 신호기를 점령할 수 있습니다. (최대 3일, 이후 자동 휴전)")
         Sounds.all(org.bukkit.Sound.EVENT_RAID_HORN, 1.0f, 1.0f)
+        plugin.discordNotifier.notify("war-start", "⚔ 전쟁 시작!",
+            "**$declarer** 국가와 **$accepter** 국가의 전쟁이 시작되었습니다.\n서로의 신호기를 점령할 수 있어요. (최대 3일, 이후 자동 휴전)",
+            kr.maeshil.digriss.manager.DiscordNotifier.RED)
         save()
     }
 
@@ -96,6 +99,8 @@ class NationWar(private val plugin: Digriss, private val core: NationManager) {
         addRecord("TRUCE", a, b)
         Bukkit.broadcastMessage("${ChatColor.GREEN}☮ [휴전] '$a' 국가와 '$b' 국가가 휴전했습니다.")
         Sounds.all(org.bukkit.Sound.BLOCK_BELL_USE, 1.0f, 1.0f)
+        plugin.discordNotifier.notify("truce", "☮ 휴전", "**$a** 국가와 **$b** 국가가 휴전했습니다.",
+            kr.maeshil.digriss.manager.DiscordNotifier.GREEN)
         if (plugin.warScoreManager.settle(a, b)) core.saveNations() // 전쟁 점수 정산 (배상금)
         save()
     }

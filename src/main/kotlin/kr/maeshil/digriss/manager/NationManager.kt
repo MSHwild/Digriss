@@ -318,6 +318,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         saveNations()
         Sounds.bigReward(player)
+        plugin.discordNotifier.notify("nation-rename", "✏ 국가 이름 변경", "**$oldName** 국가가 **$newName**(으)로 이름을 바꿨습니다.", DiscordNotifier.BLUE)
         Bukkit.broadcastMessage("${ChatColor.GOLD}[국가 시스템] '$oldName' 국가가 '${ChatColor.YELLOW}$newName${ChatColor.GOLD}'(으)로 이름을 바꿨습니다!")
     }
 
@@ -350,6 +351,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         BlueMapBridge.updateTerritory(newNation, loc.world.name)
 
         player.sendMessage("${ChatColor.GREEN}'$nationName' 국가를 성공적으로 건국했습니다!")
+        plugin.discordNotifier.notify("nation-create", "🏛 새 국가 탄생", "**$nationName** 국가가 세워졌습니다!", DiscordNotifier.BLUE)
         plugin.achievementManager.unlock(player, kr.maeshil.digriss.achievement.Achievement.FOUNDER)
         Sounds.bigReward(player)
         Sounds.play(player, org.bukkit.Sound.BLOCK_BEACON_ACTIVATE, 1f, 1f)
@@ -642,6 +644,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         BlueMapBridge.removeNationMarker(nationName)
         BlueMapBridge.removeTerritory(nationName)
 
+        plugin.discordNotifier.notify("nation-dissolve", "💥 국가 해체", "**$nationName** 국가가 해체되었습니다.", DiscordNotifier.GRAY)
         player.sendMessage("${ChatColor.RED}국가가 해체되었습니다.")
         Sounds.play(player, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.8f)
         saveNations()
@@ -759,6 +762,9 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         Bukkit.broadcastMessage("${ChatColor.RED}⚔ '$defenderNationName' 국가가 '$attackerNationName' 국가에 의해 점령 및 멸망했습니다!")
         Sounds.all(org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.0f)
+        plugin.discordNotifier.notify("conquer", "💀 국가 멸망",
+            "**$defenderNationName** 국가가 **$attackerNationName** 국가에 의해 점령당했습니다!\n영토 ${defenderNation.claims.size}개와 금고를 빼앗겼어요.",
+            DiscordNotifier.GOLD)
         plugin.achievementManager.unlock(attacker, kr.maeshil.digriss.achievement.Achievement.CONQUEROR)
         attacker.sendMessage("${ChatColor.GOLD}${defenderNation.claims.size}개의 영토와 금고 잔액 ${defenderNation.bank}원을 모두 흡수했습니다!")
 

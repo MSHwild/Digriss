@@ -1,0 +1,27 @@
+# ───────────────────────── 디스코드 알림 ─────────────────────────
+# 전쟁 시작·휴전·점령, 건국·해체·이름 변경, 전쟁 이벤트를 디스코드 채널로 자동으로 보냅니다.
+# 수정 후 /디그리스 리로드 로 바로 적용됩니다.
+#
+# 설정 방법
+#   1. 디스코드에서 알림을 받을 채널의 톱니바퀴(채널 편집) → 연동 → 웹후크 → 새 웹후크
+#   2. "웹후크 URL 복사"를 눌러 아래 webhook-url 에 붙여넣기
+#   3. enabled 를 true 로 바꾸기
+# 주의: 웹후크 주소를 아는 사람은 누구나 그 채널에 글을 쓸 수 있으니 남에게 보여주지 마세요.
+
+enabled: false
+webhook-url: ""
+
+# 디스코드에 보일 보낸이 이름과 메시지 아래 작은 글씨
+username: "디그리스"
+footer: "puritymc.kr"
+
+# 보내고 싶지 않은 알림은 false 로
+events:
+  war-start: true         # 전쟁 시작
+  truce: true             # 휴전 (전쟁 기간 종료 포함)
+  conquer: true           # 국가 점령·멸망
+  nation-create: true     # 건국
+  nation-dissolve: true   # 국가 해체
+  nation-rename: true     # 국가 이름 변경
+  war-event-notice: true  # 전쟁 이벤트 시작 예고
+  war-event: true         # 전쟁 이벤트 시작/종료

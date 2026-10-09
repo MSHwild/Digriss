@@ -116,6 +116,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var openEventManager: kr.maeshil.digriss.manager.OpenEventManager
         private set
+    lateinit var discordNotifier: kr.maeshil.digriss.manager.DiscordNotifier
+        private set
 
     override fun onEnable() {
 
@@ -124,6 +126,7 @@ class Digriss : JavaPlugin() {
 
         // 매니저 초기화 (nationManager는 scoreboardManager보다 먼저!)
         adminLogManager = AdminLogManager(this)
+        discordNotifier = kr.maeshil.digriss.manager.DiscordNotifier(this) // 전쟁·국가 소식을 디스코드로
         iconManager = IconManager(this)
         achievementManager = AchievementManager(this)
         soulManager = SoulManager(this)
