@@ -80,7 +80,20 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
             configFile.renameTo(File(plugin.dataFolder, "season-old.yml"))
             plugin.logger.info("[시즌] season.yml을 새 형식으로 바꿨습니다. (예전 파일: season-old.yml)")
         }
-        if (!configFile.exists()) plugin.saveResource("season.yml", false)
+        if (!configFile.exists()) {
+            if (plugin.getResource("season.yml") != null) plugin.saveResource("season.yml", false)
+            else YamlConfiguration().apply {
+                // jar 안에 season.yml이 없을 때(IntelliJ 아티팩트 빌드 등) 최소한의 기본값
+                set("season", oldSeason ?: 3); set("end", "10-31 23:59"); set("open", "01-01 00:00")
+                set("min-season-days", 180)
+                set("warn", listOf("30d", "14d", "7d", "3d", "1d", "12h", "1h", "10m", "1m"))
+                set("open-warn", listOf("14d", "7d", "3d", "1d", "1h", "10m"))
+                set("join-notice-days", 30)
+                set("reset-text", "DC를 뺀 모든 것(월드, 아이템, 돈, 영혼, 직업, 국가, 랭크, 칭호, 킬 이펙트)이 초기화됩니다.")
+                set("lock-message", "다음 시즌을 준비 중입니다. 디스코드에서 오픈 소식을 확인해 주세요.")
+                save(configFile)
+            }
+        }
 
         val c = YamlConfiguration.loadConfiguration(configFile)
         endTemplate = c.getString("end", "10-31 23:59") ?: "10-31 23:59"
