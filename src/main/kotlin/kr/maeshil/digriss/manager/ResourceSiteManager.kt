@@ -180,6 +180,13 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
 
     fun sitesOwnedBy(nation: String): List<Site> = sites.values.filter { it.owner == nation }
 
+    /** 모든 거점 (워프 역참 등에서 사용) */
+    fun allSites(): List<Site> = sites.values.toList()
+
+    fun worldOfSite(site: Site): World? = worldOf(site)
+
+    fun protectRadius(): Double = protectRadius
+
     private fun dist2(x: Double, z: Double, site: Site): Double {
         val dx = x - (site.x + 0.5); val dz = z - (site.z + 0.5)
         return dx * dx + dz * dz

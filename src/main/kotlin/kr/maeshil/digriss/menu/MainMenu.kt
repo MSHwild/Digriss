@@ -57,7 +57,10 @@ class MainMenu(private val plugin: Digriss) : Listener {
         Button(38, Material.PLAYER_HEAD, "§31:1 거래", listOf("§7다른 플레이어와 아이템 · 돈 교환"), "거래"),
         Button(39, Material.WRITABLE_BOOK, "§3외교", listOf("§7불가침 조약 · 무역 협정 · 조공 · 원조"), "외교"),
         // 이벤트
-        Button(41, Material.DRAGON_EGG, "§6대축제", listOf("§7접속 보상 · 보스 레이드 일정"), "빅이벤트")
+        Button(41, Material.DRAGON_EGG, "§6대축제", listOf("§7접속 보상 · 보스 레이드 일정"), "빅이벤트"),
+        // 이동
+        Button(42, Material.LODESTONE, "§d워프", listOf("§7역참으로 순간이동"), "워프"),
+        Button(43, Material.SADDLE, "§d탈것", listOf("§7빠른 말 부르기"), "탈것")
     )
     private val bySlot = buttons.associateBy { it.slot }
 
