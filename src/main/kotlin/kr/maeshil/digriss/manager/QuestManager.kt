@@ -101,7 +101,7 @@ class QuestManager(private val plugin: Digriss) {
         weeklyMoney = config.getDouble("weekly-bonus.money", 0.0)
         weeklyDC = config.getLong("weekly-bonus.dc", 10)
         streakSoulsPerDay = config.getLong("streak-bonus.souls-per-day", 2)
-        streakMoneyPerDay = config.getDouble("streak-bonus.money-per-day", 500.0)
+        streakMoneyPerDay = config.getDouble("streak-bonus.money-per-day", 100.0)
         streakMaxDays = config.getInt("streak-bonus.max-days", 10).coerceAtLeast(1)
 
         QuestDifficulty.entries.forEach { d ->
