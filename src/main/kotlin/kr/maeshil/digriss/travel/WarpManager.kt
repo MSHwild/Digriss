@@ -46,10 +46,10 @@ class WarpManager(private val plugin: Digriss) : Listener, CommandExecutor, TabC
     private val dataFile = File(plugin.dataFolder, "warp-data.yml") // 게임에서 추가한 역참
 
     private var warmupSeconds = 5
-    private var cooldownSeconds = 60
-    private var costMin = 100.0
-    private var costPer1000 = 100.0
-    private var costMax = 1500.0
+    private var cooldownSeconds = 300
+    private var costMin = 5000.0
+    private var costPer1000 = 1000.0
+    private var costMax = 15000.0
     private var includeSites = true
     private var siteOffset = 30
     private var points: List<Warp> = emptyList()
@@ -67,10 +67,10 @@ class WarpManager(private val plugin: Digriss) : Listener, CommandExecutor, TabC
     fun load() {
         val c = YamlConfiguration.loadConfiguration(file)
         warmupSeconds = c.getInt("warp.warmup-seconds", 5).coerceAtLeast(0)
-        cooldownSeconds = c.getInt("warp.cooldown-seconds", 60).coerceAtLeast(0)
-        costMin = c.getDouble("warp.cost-min", 100.0).coerceAtLeast(0.0)
-        costPer1000 = c.getDouble("warp.cost-per-1000", 100.0).coerceAtLeast(0.0)
-        costMax = c.getDouble("warp.cost-max", 1500.0).coerceAtLeast(costMin)
+        cooldownSeconds = c.getInt("warp.cooldown-seconds", 300).coerceAtLeast(0)
+        costMin = c.getDouble("warp.cost-min", 5000.0).coerceAtLeast(0.0)
+        costPer1000 = c.getDouble("warp.cost-per-1000", 1000.0).coerceAtLeast(0.0)
+        costMax = c.getDouble("warp.cost-max", 15000.0).coerceAtLeast(costMin)
         includeSites = c.getBoolean("warp.include-sites", true)
         siteOffset = c.getInt("warp.site-offset", 30)
         points = c.getStringList("warp.points").mapNotNull { line ->
