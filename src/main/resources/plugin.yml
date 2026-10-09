@@ -78,7 +78,6 @@ commands:
   디스코드:
     description: 디스코드 초대 주소를 알려줍니다
     usage: /디스코드
-    permission: digriss.admin
   번들:
     description: 판매 중인 번들(상점 패키지) 목록을 엽니다
     usage: /번들
