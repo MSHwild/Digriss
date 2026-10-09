@@ -33,6 +33,8 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
     private var warnAt: List<Long> = emptyList()      // 남은 시간(ms) 기준, 큰 것부터
     private var joinNoticeMs = 30L * DAY
     private var resetText = ""
+    private var lockAfterEnd = true
+    private var lockMessage = ""
     private val fired = HashSet<Long>()              // 이번 종료일에 이미 보낸 예고
     private var endedNotified = false
 
@@ -70,6 +72,8 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
         warnAt = c.getStringList("warn").mapNotNull { parseDuration(it) }.sortedDescending()
         joinNoticeMs = c.getLong("join-notice-days", 30).coerceAtLeast(0) * DAY
         resetText = c.getString("reset-text", "") ?: ""
+        lockAfterEnd = c.getBoolean("lock-after-end", true)
+        lockMessage = c.getString("lock-message", "새 시즌을 준비 중입니다. 디스코드에서 오픈 소식을 확인해 주세요.") ?: ""
 
         // 종료일이 바뀌면 예고를 처음부터 다시 보냄
         val d = YamlConfiguration.loadConfiguration(dataFile)
@@ -129,6 +133,10 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
                 Bukkit.getOnlinePlayers().forEach { it.sendTitle("§c§l$name 종료", "§f곧 새 시즌이 시작됩니다", 10, 80, 20) }
                 Sounds.all(org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0.8f)
                 plugin.discordNotifier.notify("season", "$name 종료", "$name 이(가) 끝났습니다. 곧 초기화 후 새 시즌이 시작됩니다!", DiscordNotifier.RED)
+                // 제목을 볼 시간을 준 뒤 OP가 아닌 사람은 내보냄
+                if (lockAfterEnd) Bukkit.getScheduler().runTaskLater(plugin, Runnable {
+                    Bukkit.getOnlinePlayers().filter { !canJoinLocked(it) }.forEach { it.kickPlayer(kickText()) }
+                }, 200L)
             }
             return
         }
@@ -153,6 +161,22 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
             "$name 이(가) **$endText**에 끝납니다.\n$resetText", DiscordNotifier.GOLD)
     }
 
+    /** 시즌이 끝나 잠긴 상태인지 (OP만 접속 가능) */
+    fun isLocked(): Boolean = lockAfterEnd && (remainingMs() ?: 1) <= 0
+
+    private fun canJoinLocked(p: org.bukkit.entity.Player) = p.isOp || p.hasPermission("digriss.season.bypass")
+
+    private fun kickText() = "§c§l시즌 종료
+
+§f$lockMessage"
+
+    // 시즌이 끝나면 OP가 아닌 사람은 접속 불가 (새 시즌 종료일을 정하거나 lock-after-end: false 후 /디그리스 리로드 하면 풀림)
+    @EventHandler
+    fun onLogin(e: org.bukkit.event.player.PlayerLoginEvent) {
+        if (!isLocked() || canJoinLocked(e.player)) return
+        e.disallow(org.bukkit.event.player.PlayerLoginEvent.Result.KICK_OTHER, kickText())
+    }
+
     @EventHandler
     fun onJoin(e: PlayerJoinEvent) {
         val left = remainingMs() ?: return
@@ -169,7 +193,7 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
         sender.sendMessage("§6§l[ $name ]")
         when {
             left == null -> sender.sendMessage("§7아직 종료일이 정해지지 않았습니다.")
-            left <= 0 -> sender.sendMessage("§c시즌이 끝났습니다. 곧 초기화가 진행됩니다.")
+            left <= 0 -> sender.sendMessage("§c시즌이 끝났습니다. 곧 초기화가 진행됩니다." + if (isLocked()) " §7(지금은 OP만 접속 가능)" else "")
             else -> sender.sendMessage("§f종료: §e$endText §7(${remainingText(left)} 남음)")
         }
         if (resetText.isNotBlank()) sender.sendMessage("§7$resetText")

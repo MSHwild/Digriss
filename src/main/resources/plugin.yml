@@ -126,6 +126,9 @@ permissions:
   digriss.admin:
     description: 디그리스 관리자 명령어 사용 권한
     default: op
+  digriss.season.bypass:
+    description: 시즌이 끝나 잠긴 서버에도 접속 가능 (OP는 자동으로 가능)
+    default: op
   digriss.combat.bypass:
     description: 전투 중 도주 방지(전투 표시)를 받지 않음 (테스트용)
     default: false
