@@ -26,7 +26,9 @@ class NationTechHolder : InventoryHolder {
 
 /**
  * 국가 기술 트리: 군사 / 경제 / 내정 세 갈래, 각 3단계.
- * 지도자가 국가 금고 돈 + 국가 창고 재료로 배움 (앞 단계 필요). 재료는 자원 거점 특산품 위주
+ * 지도자가 국가 금고 돈 + 기술 자재로 배움 (앞 단계 필요).
+ * 기술 자재는 자원 거점 보상의 절반이 따로 쌓이는 곳 → 꺼낼 수도, 직접 넣을 수도 없어서 노가다로는 못 모음.
+ * 국가를 점령하면 진 국가의 기술 자재를 가져감.
  * 데이터: nation-tech.yml (국가 이름 → 갈래별 단계)
  */
 class NationTechManager(private val plugin: Digriss) : Listener {
@@ -40,30 +42,30 @@ class NationTechManager(private val plugin: Digriss) : Listener {
     private class Tier(val name: String, val effect: String, val materials: Map<Material, Int>)
 
     private val tiers = mapOf(
-        // 재료 (괄호 = 그 재료가 나오는 자원 거점). 거점이 없어도 직접 캐서 낼 수 있는 양으로 맞춤
+        // 기술 자재 (괄호 = 나오는 거점, 하루에 기술 자재로 들어오는 양). 거점 하나로 1단계 약 4일, 2단계 약 5일, 3단계 약 8일
         Branch.MILITARY to listOf(
             Tier("훈련", "전쟁 상대에게 주는 피해 +5%",
-                mapOf(Material.IRON_INGOT to 64)),                                   // 호주, 루르
+                mapOf(Material.IRON_INGOT to 48)),                                   // 호주 12, 루르 6
             Tier("요새화", "우리 영토에서 받는 피해 -5%",
-                mapOf(Material.IRON_INGOT to 96, Material.DIAMOND to 6)),            // + 남아공
+                mapOf(Material.IRON_INGOT to 64, Material.DIAMOND to 10)),           // + 남아공 2
             Tier("강습", "자원 거점 점령 속도 +25%",
-                mapOf(Material.DIAMOND to 16, Material.NETHERITE_SCRAP to 2))       // + 아이슬란드
+                mapOf(Material.DIAMOND to 16, Material.NETHERITE_SCRAP to 8))       // + 아이슬란드 1
         ),
         Branch.ECONOMY to listOf(
             Tier("세제 개편", "일일 유지비 -20%",
-                mapOf(Material.GOLD_INGOT to 32)),                                   // 골드코스트
+                mapOf(Material.GOLD_INGOT to 32)),                                   // 황금 해안 8
             Tier("교역로", "자원 거점 보상 +25%",
-                mapOf(Material.GOLD_INGOT to 64, Material.EMERALD to 16)),           // + 콜롬비아
+                mapOf(Material.GOLD_INGOT to 48, Material.EMERALD to 20)),           // + 콜롬비아 4
             Tier("국고", "국가원 퀘스트 돈 보상의 10%가 금고에 추가",
-                mapOf(Material.EMERALD to 32, Material.DIAMOND to 8))
+                mapOf(Material.EMERALD to 32, Material.DIAMOND to 12))
         ),
         Branch.INTERNAL to listOf(
             Tier("개척", "영토 한도 국가원당 10 → 12청크",
-                mapOf(Material.SPRUCE_LOG to 128, Material.COAL_BLOCK to 8)),        // 시베리아, 페르시아만·텍사스
+                mapOf(Material.SPRUCE_LOG to 128, Material.COAL_BLOCK to 16)),       // 시베리아 32, 페르시아만·텍사스 8
             Tier("창고 확장", "국가 창고 +1줄",
-                mapOf(Material.COPPER_INGOT to 64, Material.IRON_INGOT to 32)),      // 안데스
+                mapOf(Material.COPPER_INGOT to 80, Material.IRON_INGOT to 32)),      // 안데스 16
             Tier("번영", "내실 점수 +20%",
-                mapOf(Material.REDSTONE to 96, Material.LAPIS_LAZULI to 48))         // 바오터우
+                mapOf(Material.REDSTONE to 128, Material.LAPIS_LAZULI to 64))        // 바오터우 16 + 8
         )
     )
 
@@ -72,10 +74,13 @@ class NationTechManager(private val plugin: Digriss) : Listener {
         val REQUIRED_LEVEL = listOf(1, 3, 5)
         private val TIER_SLOTS = listOf(3, 5, 7) // 줄 안에서의 칸 (헤더는 1번 칸)
         private const val BACK_SLOT = 36
+        private const val MATERIAL_SLOT = 40
     }
 
     private val file = File(plugin.dataFolder, "nation-tech.yml")
     private val levels = HashMap<String, MutableMap<Branch, Int>>()
+    private val materialFile = File(plugin.dataFolder, "nation-tech-materials.yml")
+    private val materials = HashMap<String, MutableMap<Material, Int>>() // 국가 → 기술 자재
 
     init {
         if (file.exists()) {
@@ -84,6 +89,41 @@ class NationTechManager(private val plugin: Digriss) : Listener {
                 levels[nation] = Branch.entries.associateWith { c.getInt("$nation.${it.key}", 0).coerceIn(0, 3) }.toMutableMap()
             }
         }
+        if (materialFile.exists()) {
+            val c = YamlConfiguration.loadConfiguration(materialFile)
+            c.getKeys(false).forEach { nation ->
+                val sec = c.getConfigurationSection(nation) ?: return@forEach
+                materials[nation] = sec.getKeys(false).mapNotNull { k ->
+                    Material.matchMaterial(k)?.let { it to sec.getInt(k) }
+                }.toMap().toMutableMap()
+            }
+        }
+    }
+
+    private fun saveMaterials() {
+        val c = YamlConfiguration()
+        materials.forEach { (nation, m) -> m.forEach { (type, n) -> if (n > 0) c.set("$nation.${type.name}", n) } }
+        runCatching { c.save(materialFile) }.onFailure { plugin.logger.severe("[기술] nation-tech-materials.yml 저장 실패: ${it.message}") }
+    }
+
+    // ───────────────────────── 기술 자재 ─────────────────────────
+
+    fun materialCount(nation: String, type: Material): Int = materials[nation]?.get(type) ?: 0
+
+    /** 자원 거점 보상 중 기술 자재 몫을 쌓음 */
+    fun addMaterials(nation: String, items: List<ItemStack>) {
+        if (items.isEmpty()) return
+        val m = materials.getOrPut(nation) { HashMap() }
+        items.forEach { m[it.type] = (m[it.type] ?: 0) + it.amount }
+        saveMaterials()
+    }
+
+    /** 국가 점령: 진 국가의 기술 자재를 이긴 국가가 가져감 */
+    fun absorbMaterials(from: String, to: String) {
+        val loot = materials.remove(from) ?: return
+        val m = materials.getOrPut(to) { HashMap() }
+        loot.forEach { (type, n) -> m[type] = (m[type] ?: 0) + n }
+        saveMaterials()
     }
 
     private fun save() {
@@ -121,15 +161,22 @@ class NationTechManager(private val plugin: Digriss) : Listener {
 
     // ───────────────────────── 국가 변화 ─────────────────────────
 
-    fun renameNation(old: String, new: String) { levels.remove(old)?.let { levels[new] = it; save() } }
-    fun removeNation(name: String) { if (levels.remove(name) != null) save() }
-    fun resetAll() { levels.clear(); save() }
+    fun renameNation(old: String, new: String) {
+        levels.remove(old)?.let { levels[new] = it; save() }
+        materials.remove(old)?.let { materials[new] = it; saveMaterials() }
+    }
+    fun removeNation(name: String) {
+        if (levels.remove(name) != null) save()
+        if (materials.remove(name) != null) saveMaterials()
+    }
+    fun resetAll() { levels.clear(); save(); materials.clear(); saveMaterials() }
 
     private fun koName(type: Material): String = when (type) {
         Material.IRON_INGOT -> "철 주괴"; Material.DIAMOND -> "다이아몬드"; Material.NETHERITE_SCRAP -> "네더라이트 조각"
         Material.GOLD_INGOT -> "금 주괴"; Material.EMERALD -> "에메랄드"; Material.SPRUCE_LOG -> "가문비나무 원목"
         Material.COAL_BLOCK -> "석탄 블록"; Material.COPPER_INGOT -> "구리 주괴"; Material.REDSTONE -> "레드스톤"
-        Material.LAPIS_LAZULI -> "청금석"
+        Material.LAPIS_LAZULI -> "청금석"; Material.COAL -> "석탄"; Material.WHEAT -> "밀"
+        Material.COCOA_BEANS -> "코코아 콩"; Material.GLOWSTONE_DUST -> "발광석 가루"
         else -> type.name.lowercase()
     }
 
@@ -147,8 +194,8 @@ class NationTechManager(private val plugin: Digriss) : Listener {
 
         inv.setItem(4, item(ItemStack(Material.BEACON), "§f$nationName §7(Lv.${nation.level})",
             "§7금고 §f${nation.bank.toLong()}원",
-            "§7지도자가 금고 돈과 국가 창고 재료로 기술을 배웁니다.",
-            "§7재료는 자원 거점에서 매일 들어오거나 직접 넣을 수 있어요.",
+            "§7지도자가 금고 돈과 기술 자재로 기술을 배웁니다.",
+            "§7기술 자재는 자원 거점 보상의 절반이 매일 쌓여요.",
             "§7앞 단계를 배워야 다음 단계를 배울 수 있어요."))
 
         Branch.entries.forEach { b ->
@@ -173,7 +220,7 @@ class NationTechManager(private val plugin: Digriss) : Listener {
                         val bankOk = nation.bank >= COSTS[i]
                         lore += "§7비용 ${if (bankOk) "§a" else "§c"}${COSTS[i].toLong()}원"
                         tier.materials.forEach { (type, need) ->
-                            val have = plugin.nationStorageManager.count(nationName, type)
+                            val have = materialCount(nationName, type)
                             lore += "§7 - ${koName(type)} ${if (have >= need) "§a" else "§c"}${have.coerceAtMost(need)}/$need"
                         }
                         lore += "§7필요 국가 레벨 §f${REQUIRED_LEVEL[i]}"
@@ -184,6 +231,11 @@ class NationTechManager(private val plugin: Digriss) : Listener {
                 inv.setItem(row + TIER_SLOTS[i], item(base, "${b.color}${i + 1}단계 · ${tier.name}", *lore.toTypedArray()))
             }
         }
+        val held = materials[nationName]?.filterValues { it > 0 }.orEmpty()
+        val heldLore = listOf("§7자원 거점 보상의 절반이 매일 여기 쌓여요.", "§7꺼내거나 직접 넣을 수 없고, 기술을 배울 때만 쓰여요.", "") +
+            if (held.isEmpty()) listOf("§8아직 없음 · 자원 거점을 점령해 보세요 (/거점)")
+            else held.entries.sortedBy { koName(it.key) }.map { (type, n) -> "§7 - ${koName(type)} §f$n" }
+        inv.setItem(MATERIAL_SLOT, item(plugin.iconManager.get("tech.materials", Material.BARREL), "§e기술 자재", *heldLore.toTypedArray()))
         inv.setItem(BACK_SLOT, item(plugin.iconManager.get("common.back", Material.ARROW), "§7← 국가 메뉴로"))
         player.openInventory(inv)
     }
@@ -233,14 +285,16 @@ class NationTechManager(private val plugin: Digriss) : Listener {
             nation.level < REQUIRED_LEVEL[tierIndex] -> return nm.deny(player, "§c국가 레벨 ${REQUIRED_LEVEL[tierIndex]} 이상이어야 합니다.")
             nation.bank < COSTS[tierIndex] -> return nm.deny(player, "§c금고가 부족합니다. (필요 ${COSTS[tierIndex].toLong()}원, 현재 ${nation.bank.toLong()}원)")
         }
-        val materials = tiers.getValue(branch)[tierIndex].materials
-        val missing = materials.filter { (type, need) -> plugin.nationStorageManager.count(nationName, type) < need }
+        val cost = tiers.getValue(branch)[tierIndex].materials
+        val missing = cost.filter { (type, need) -> materialCount(nationName, type) < need }
         if (missing.isNotEmpty()) {
-            return nm.deny(player, "§c국가 창고에 재료가 부족합니다: " + missing.entries.joinToString(", ") { (type, need) ->
-                "${koName(type)} ${plugin.nationStorageManager.count(nationName, type)}/$need"
-            })
+            return nm.deny(player, "§c기술 자재가 부족합니다: " + missing.entries.joinToString(", ") { (type, need) ->
+                "${koName(type)} ${materialCount(nationName, type)}/$need"
+            } + " §7(자원 거점을 점령하면 매일 쌓여요)")
         }
-        if (!plugin.nationStorageManager.take(nationName, materials)) return nm.deny(player, "§c국가 창고에 재료가 부족합니다.")
+        val held = materials.getOrPut(nationName) { HashMap() }
+        cost.forEach { (type, need) -> held[type] = (held[type] ?: 0) - need }
+        saveMaterials()
         nation.bank -= COSTS[tierIndex]
         levels.getOrPut(nationName) { Branch.entries.associateWith { 0 }.toMutableMap() }[branch] = tierIndex + 1
         save()

@@ -6,7 +6,6 @@ import kr.maeshil.digriss.nation.Nation
 import kr.maeshil.digriss.nation.NationStorageHolder
 import org.bukkit.Bukkit
 import org.bukkit.Location
-import org.bukkit.Material
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
@@ -63,21 +62,6 @@ class NationStorageManager(private val plugin: Digriss) {
         val leftover = inventoryOf(name).addItem(*items.map { it.clone() }.toTypedArray())
         save()
         return leftover.values.sumOf { it.amount }
-    }
-
-    /** 창고에 있는 이 재료 개수 (이름·마법이 없는 기본 아이템만 셈) */
-    fun count(name: String, type: Material): Int {
-        val plain = ItemStack(type)
-        return inventoryOf(name).contents.filterNotNull().filter { it.isSimilar(plain) }.sumOf { it.amount }
-    }
-
-    /** 재료가 전부 있으면 빼고 true, 하나라도 모자라면 아무것도 빼지 않고 false (기술 비용용) */
-    fun take(name: String, cost: Map<Material, Int>): Boolean {
-        if (cost.any { (type, amount) -> count(name, type) < amount }) return false
-        val inv = inventoryOf(name)
-        cost.forEach { (type, amount) -> inv.removeItem(ItemStack(type, amount)) }
-        save()
-        return true
     }
 
     // 국가 해체: 창고 아이템을 지정 위치(지도자 위치)에 떨어뜨림

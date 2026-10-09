@@ -782,6 +782,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nations.remove(defenderNationName)
         war.removeNation(defenderNationName, "국가 멸망으로 종료", attackerNationName)
         plugin.resourceSiteManager.transferNation(defenderNationName, attackerNationName)
+        plugin.nationTechManager.absorbMaterials(defenderNationName, attackerNationName) // 진 국가의 기술 자재를 가져감
         plugin.nationTechManager.removeNation(defenderNationName)
 
         Bukkit.broadcastMessage("${ChatColor.RED}'$defenderNationName' 국가가 '$attackerNationName' 국가에 의해 점령 및 멸망했습니다!")

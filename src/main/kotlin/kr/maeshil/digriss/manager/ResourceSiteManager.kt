@@ -253,7 +253,7 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
         lastGuide[key] = nowMs
         p.sendMessage("§6[거점] §f${site.name}§7에 들어왔습니다. 주인: $owner")
         p.sendMessage("§7가운데 빛나는 원 안에서 §e${captureSeconds / 60}분§7 버티면 점령 · 다른 국가가 들어오면 교전(멈춤)")
-        p.sendMessage("§7점령하면 매일 금고 §e${dailyMoney.toLong()}원§7 + §e${site.rewardText}§7 · 거점 주변은 건축/파괴 금지")
+        p.sendMessage("§7점령하면 매일 금고 §e${dailyMoney.toLong()}원§7 + §e${site.rewardText}§7 (절반은 기술 자재) · 거점 주변은 건축/파괴 금지")
         when {
             plugin.nationManager.getNationName(p.uniqueId) == null -> p.sendMessage("§c국가가 있어야 점령할 수 있어요.")
             plugin.newbieProtectionManager.isProtected(p) -> p.sendMessage("§c초보 보호 중에는 점령에 참여할 수 없어요. §7(/보호해제 확인)")
@@ -345,10 +345,20 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
             val mult = plugin.nationTechManager.siteRewardMultiplier(owner)
             nation.bank += dailyMoney * mult
             val items = site.rewards.map { it.clone().apply { amount = (amount * mult).toInt().coerceAtLeast(1) } }
-            val leftover = plugin.nationStorageManager.deposit(owner, items)
+            // 절반(올림)은 기술 자재로, 나머지는 국가 창고로 (네더라이트 조각 1개처럼 적은 건 기술 자재 우선)
+            val techItems = items.map { it.clone().apply { amount = (it.amount + 1) / 2 } }
+            val storageItems = items.mapNotNull { item ->
+                val rest = item.amount - (item.amount + 1) / 2
+                if (rest > 0) item.clone().apply { amount = rest } else null
+            }
+            plugin.nationTechManager.addMaterials(owner, techItems)
+            val leftover = if (storageItems.isEmpty()) 0 else plugin.nationStorageManager.deposit(owner, storageItems)
             plugin.nationManager.addPeace(owner, dailyPeace)
+            val techText = techItems.joinToString(", ") { "${koName(it.type)} ${it.amount}개" }
+            val storageText = storageItems.joinToString(", ") { "${koName(it.type)} ${it.amount}개" }
             plugin.nationManager.notifyNation(owner,
-                "§6[거점] §f${site.name} 수입: 금고 +${(dailyMoney * mult).toLong()}원, 국가 창고에 ${site.rewardText}" +
+                "§6[거점] §f${site.name} 수입: 금고 +${(dailyMoney * mult).toLong()}원, 기술 자재 $techText" +
+                    (if (storageItems.isNotEmpty()) ", 국가 창고 $storageText" else "") +
                     if (leftover > 0) " §c(창고가 가득 차서 ${leftover}개는 받지 못했습니다)" else "")
             paid = true
         }
