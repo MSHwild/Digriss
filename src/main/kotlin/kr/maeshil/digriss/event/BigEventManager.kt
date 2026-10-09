@@ -271,24 +271,22 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         val online = Bukkit.getOnlinePlayers().size.coerceAtLeast(1)
         val health = (baseHealth + healthPerPlayer * online).coerceIn(50.0, 2000.0)
 
-        val mob = world.spawnEntity(loc, EntityType.HUSK) as Mob // 허스크: 햇빛에 타지 않음
+        // 거대 철골렘: 원래 플레이어 편이라 raidTick에서 가까운 플레이어를 계속 공격 대상으로 지정함
+        val golem = world.spawnEntity(loc, EntityType.IRON_GOLEM) as org.bukkit.entity.IronGolem
+        golem.isPlayerCreated = false
+        val mob: Mob = golem
         mob.customName = bossName
         mob.isCustomNameVisible = true
         mob.removeWhenFarAway = false
         mob.isPersistent = true
-        mob.canPickupItems = false
+        mob.isGlowing = true // 리소스팩 없이도 멀리서 보이게 빛나는 테두리
         mob.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.baseValue = health
         mob.health = health
-        mob.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = 2.5
+        mob.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = 2.0 // 약 5.4블록 높이
         mob.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)?.baseValue = bossDamage
         mob.getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE)?.baseValue = 1.0
-        mob.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.28
+        mob.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.3
         mob.getAttribute(Attribute.GENERIC_FOLLOW_RANGE)?.baseValue = 40.0
-        mob.equipment?.let { eq ->
-            eq.helmet = ItemStack(Material.NETHERITE_HELMET); eq.helmetDropChance = 0f
-            eq.chestplate = ItemStack(Material.NETHERITE_CHESTPLATE); eq.chestplateDropChance = 0f
-            eq.setItemInMainHand(ItemStack(Material.NETHERITE_AXE)); eq.itemInMainHandDropChance = 0f
-        }
         mob.addPotionEffect(PotionEffect(PotionEffectType.FIRE_RESISTANCE, Int.MAX_VALUE, 0, false, false))
 
         boss = mob
@@ -337,6 +335,17 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
 
         // 보스가 너무 멀리 끌려가면 제자리로
         if (mob.world != home.world || mob.location.distanceSquared(home) > 30.0 * 30.0) mob.teleport(home)
+
+        // 철골렘은 플레이어를 먼저 공격하지 않으므로 가장 가까운 플레이어를 계속 노리게 함
+        val current = mob.target as? Player
+        if (current == null || !current.isValid || current.isDead || current.world != mob.world ||
+            current.location.distanceSquared(mob.location) > 30.0 * 30.0 || current !in nearbyPlayers(mob, 30.0)) {
+            mob.target = nearbyPlayers(mob, 30.0).minByOrNull { it.location.distanceSquared(mob.location) }
+        }
+
+        // 보스 주변 영혼 불꽃 (분노하면 붉은 불꽃)
+        mob.world.spawnParticle(if (enraged) Particle.FLAME else Particle.SOUL_FIRE_FLAME,
+            mob.location.clone().add(0.0, 2.5, 0.0), 12, 1.2, 1.8, 1.2, 0.01)
 
         // 체력 30% 이하 → 분노
         val max = mob.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value ?: mob.health
@@ -429,6 +438,23 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
     @EventHandler(ignoreCancelled = true)
     fun onBossEnvDamage(e: EntityDamageEvent) {
         if (boss?.uniqueId == e.entity.uniqueId && e.cause in envCauses) e.isCancelled = true
+    }
+
+    // 철골렘 보스와 졸개 좀비는 원래 서로 적이라, 서로 노리거나 때리지 않게 막음 (보스는 플레이어만 노림)
+    @EventHandler(ignoreCancelled = true)
+    fun onTarget(e: org.bukkit.event.entity.EntityTargetEvent) {
+        val bossId = boss?.uniqueId ?: return
+        val target = e.target ?: return
+        if (e.entity.uniqueId == bossId && target !is Player) e.isCancelled = true
+        if (e.entity.uniqueId in minions && target.uniqueId == bossId) e.isCancelled = true
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    fun onBossMinionDamage(e: EntityDamageByEntityEvent) {
+        val bossId = boss?.uniqueId ?: return
+        val a = e.damager.uniqueId
+        val v = e.entity.uniqueId
+        if ((a == bossId && v in minions) || (a in minions && v == bossId)) e.isCancelled = true
     }
 
     @EventHandler(ignoreCancelled = true)
