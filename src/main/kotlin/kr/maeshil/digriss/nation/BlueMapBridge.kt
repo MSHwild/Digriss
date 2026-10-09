@@ -37,7 +37,9 @@ object BlueMapBridge {
             java.nio.file.Files.createDirectories(file.parent)
             java.nio.file.Files.writeString(
                 file,
-                ".side-menu .marker-item .marker-button>.info .stats{display:none}\n"
+                ".side-menu .marker-item .marker-button>.info .stats{display:none}\n" +
+                    // 마커를 클릭했을 때 뜨는 이름 상자가 좁아서 한글이 한 글자씩 세로로 꺾이는 것 방지
+                    "[class*=\"bm-marker\"],[class*=\"bm-marker\"] *{white-space:nowrap!important;word-break:keep-all!important}\n"
             )
             api.webApp.registerStyle("assets/digriss.css")
         } catch (e: Exception) {

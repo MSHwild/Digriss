@@ -12,7 +12,7 @@ import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 
 // /디그리스 리로드  — 서버를 재시작하지 않고 설정 파일을 다시 읽음 (관리자)
-//   quest.yml, combat.yml, spawn.yml, event.yml, help.yml, icons.yml, links.yml, openevent.yml, discord.yml, sites.yml, season.yml, protection.yml
+//   quest.yml, combat.yml, spawn.yml, event.yml, help.yml, icons.yml, links.yml, openevent.yml, discord.yml, sites.yml, season.yml, protection.yml, vote.yml
 // 새 파일을 만든 것이 아니라 "수정한 내용"을 적용하는 용도. 퀘스트 목록이 바뀌어도 이미 뽑힌 오늘 퀘스트는 그대로 진행됨
 class ReloadCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter {
 
@@ -38,6 +38,7 @@ class ReloadCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter
         step("icons.yml (아이콘)") { plugin.iconManager.load() }
         step("links.yml (링크)") { plugin.linkCommand.load() }
         step("openevent.yml (오픈 이벤트)") { plugin.openEventManager.load() }
+        step("vote.yml (투표 보상)") { plugin.voteManager.load() }
         step("discord.yml (디스코드 알림)") { plugin.discordNotifier.load() }
         step("sites.yml (자원 거점)") { plugin.resourceSiteManager.load() }
         step("season.yml (시즌)") { plugin.seasonManager.load() }

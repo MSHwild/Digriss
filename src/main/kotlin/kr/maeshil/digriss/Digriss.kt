@@ -116,6 +116,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var openEventManager: kr.maeshil.digriss.manager.OpenEventManager
         private set
+    lateinit var voteManager: kr.maeshil.digriss.manager.VoteManager
+        private set
     lateinit var discordNotifier: kr.maeshil.digriss.manager.DiscordNotifier
         private set
     lateinit var nationTechManager: kr.maeshil.digriss.manager.NationTechManager
@@ -252,6 +254,9 @@ class Digriss : JavaPlugin() {
             getCommand(it)?.setExecutor(openEventManager)
             getCommand(it)?.tabCompleter = openEventManager
         }
+        voteManager = kr.maeshil.digriss.manager.VoteManager(this) // 서버 목록 사이트 투표 보상 (NuVotifier)
+        Bukkit.getPluginManager().registerEvents(voteManager, this)
+        getCommand("투표")?.setExecutor(voteManager)
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
