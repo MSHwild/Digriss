@@ -23,8 +23,8 @@ commands:
     description: 킬 이펙트 상점을 엽니다
     usage: /킬이펙트
   초기화:
-    description: 모든 플레이어 데이터를 초기화합니다 (관리자)
-    usage: /초기화
+    description: 플레이어 데이터를 초기화합니다. 시즌을 붙이면 DC는 남김 (관리자)
+    usage: /초기화 [시즌]
     permission: digriss.admin
   dc:
     description: DC 재화를 확인합니다 (관리자는 지급/차감 가능)

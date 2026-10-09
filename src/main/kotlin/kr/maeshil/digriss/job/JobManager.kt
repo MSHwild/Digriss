@@ -52,6 +52,12 @@ class JobManager(private val plugin: JavaPlugin) {
 
     fun hasJob(uuid: UUID): Boolean = playerJobs.containsKey(uuid)
 
+    /** 모든 플레이어의 장착 직업 초기화 (시즌 초기화용) */
+    fun resetAll() {
+        playerJobs.clear()
+        save()
+    }
+
     fun createJobItem(job: JobType): ItemStack {
         val item = ItemStack(job.icon)
         val meta: ItemMeta = item.itemMeta

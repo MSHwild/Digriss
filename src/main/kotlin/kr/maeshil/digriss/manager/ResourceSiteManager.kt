@@ -335,6 +335,12 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
         saveData(); sites.values.forEach { drawMarker(it) }
     }
 
+    /** 모든 거점을 주인 없음으로 (시즌 초기화용) */
+    fun resetAll() {
+        sites.values.forEach { it.owner = null; it.capturing = null; it.progress = 0.0 }
+        saveData(); sites.values.forEach { drawMarker(it) }
+    }
+
     private fun drawMarker(site: Site) {
         val world = worldOf(site) ?: return
         BlueMapBridge.setSiteMarker(site.id, "${site.name} (주인: ${site.owner ?: "없음"})", world, site.x.toDouble(), site.z.toDouble())

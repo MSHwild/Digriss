@@ -57,7 +57,7 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
                 set("name", "프리시즌"); set("end-date", "")
                 set("warn", listOf("30d", "14d", "7d", "3d", "1d", "12h", "1h", "10m", "1m"))
                 set("join-notice-days", 30)
-                set("reset-text", "월드, 인벤토리, 돈, 영혼, 직업, 국가가 초기화됩니다. (DC · 칭호 · 킬 이펙트는 유지)")
+                set("reset-text", "DC를 뺀 모든 것(월드, 아이템, 돈, 영혼, 직업, 국가, 랭크, 칭호, 킬 이펙트)이 초기화됩니다.")
                 save(configFile)
             }
         }

@@ -112,6 +112,7 @@ class NationTechManager(private val plugin: Digriss) : Listener {
 
     fun renameNation(old: String, new: String) { levels.remove(old)?.let { levels[new] = it; save() } }
     fun removeNation(name: String) { if (levels.remove(name) != null) save() }
+    fun resetAll() { levels.clear(); save() }
 
     // ───────────────────────── GUI ─────────────────────────
 
