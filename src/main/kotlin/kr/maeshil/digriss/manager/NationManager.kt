@@ -703,6 +703,11 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         val breakerNation = playerNations[breaker.uniqueId]
 
         when {
+            breakerNation != null && breakerNation != defenderName && plugin.newbieProtectionManager.isProtected(breaker) -> {
+                event.isCancelled = true
+                breaker.sendMessage("${ChatColor.RED}초보 보호 중에는 다른 국가의 신호기를 부술 수 없습니다. ${ChatColor.GRAY}(/보호해제 확인)")
+                Sounds.fail(breaker)
+            }
             breakerNation == null -> {
                 event.isCancelled = true
                 breaker.sendMessage("${ChatColor.RED}국가에 소속되어 있어야 다른 국가의 신호기를 점령할 수 있습니다.")

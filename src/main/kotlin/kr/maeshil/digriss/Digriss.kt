@@ -122,6 +122,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var seasonManager: kr.maeshil.digriss.manager.SeasonManager
         private set
+    lateinit var newbieProtectionManager: kr.maeshil.digriss.manager.NewbieProtectionManager
+        private set
     lateinit var resourceSiteManager: kr.maeshil.digriss.manager.ResourceSiteManager
         private set
 
@@ -136,6 +138,9 @@ class Digriss : JavaPlugin() {
         seasonManager = kr.maeshil.digriss.manager.SeasonManager(this) // 시즌 종료 예고
         Bukkit.getPluginManager().registerEvents(seasonManager, this)
         getCommand("시즌")?.setExecutor(seasonManager)
+        newbieProtectionManager = kr.maeshil.digriss.manager.NewbieProtectionManager(this) // 초보 보호
+        Bukkit.getPluginManager().registerEvents(newbieProtectionManager, this)
+        getCommand("보호해제")?.setExecutor(newbieProtectionManager)
         iconManager = IconManager(this)
         achievementManager = AchievementManager(this)
         soulManager = SoulManager(this)

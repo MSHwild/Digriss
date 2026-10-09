@@ -192,6 +192,7 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
         val world = worldOf(site) ?: return
         val inside = Bukkit.getOnlinePlayers().filter { p ->
             p.world == world && !p.isDead && p.gameMode != GameMode.SPECTATOR && p.gameMode != GameMode.CREATIVE &&
+                !plugin.newbieProtectionManager.isProtected(p) && // 무적 상태로 점령하는 것 방지
                 dist2(p.location.x, p.location.z, site) <= radius * radius
         }
         val nations = inside.mapNotNull { plugin.nationManager.getNationName(it.uniqueId) }.toSet()

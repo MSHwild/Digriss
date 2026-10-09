@@ -91,8 +91,9 @@ class ScoreboardManager(
             " §8접속 ${online}명 · puritymc.kr"
         ).let { base ->
             // 시즌 종료가 가까우면 맨 위에 D-day 표시
-            val season = (Bukkit.getPluginManager().getPlugin("Digriss") as? Digriss)?.seasonManager?.scoreboardLine()
-            if (season == null) base else listOf("", season) + base
+            val plugin = Bukkit.getPluginManager().getPlugin("Digriss") as? Digriss
+            val top = listOfNotNull(plugin?.seasonManager?.scoreboardLine(), plugin?.newbieProtectionManager?.scoreboardLine(player))
+            if (top.isEmpty()) base else listOf("") + top + base
         }
 
         lines.reversed().forEachIndexed { index, line ->

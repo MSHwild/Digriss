@@ -78,6 +78,9 @@ commands:
   디스코드:
     description: 디스코드 초대 주소를 알려줍니다
     usage: /디스코드
+  보호해제:
+    description: 초보 보호를 스스로 해제합니다
+    usage: /보호해제 확인
   시즌:
     description: 현재 시즌과 종료까지 남은 기간을 확인합니다
     usage: /시즌
