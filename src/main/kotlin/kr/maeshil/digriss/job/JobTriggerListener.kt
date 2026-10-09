@@ -11,7 +11,6 @@ import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import kr.maeshil.digriss.jobManager.AssassinStealthManager
-import kr.maeshil.digriss.jobManager.ReaperChargeManager
 
 class JobTriggerListener(
     private val plugin: Digriss,
@@ -41,16 +40,17 @@ class JobTriggerListener(
         if (skill.execute(player)) skillManager.startCooldown(player.uniqueId, skill.baseCooldownSeconds)
     }
 
-    // 킬 시 쿨타임 15초 감소 + 사신이면 영혼 구슬 생성
+    // 킬 시 쿨타임 15초 감소. 사신은 쿨타임이 완전히 초기화됨
     @EventHandler
     fun onKill(e: PlayerDeathEvent) {
         val killer = e.entity.killer as? Player ?: return
         if (killer == e.entity) return
-        skillManager.reduceOnKill(killer.uniqueId)
 
-        val job = jobManager.getJob(killer.uniqueId) ?: return
-        if (job == JobType.REAPER) {
-            ReaperChargeManager.spawnOrb(plugin, killer, e.entity.location)
+        if (jobManager.getJob(killer.uniqueId) == JobType.REAPER) {
+            skillManager.resetCooldown(killer.uniqueId)
+            killer.sendMessage("§b처치! 무체화 쿨타임이 초기화되었습니다.")
+        } else {
+            skillManager.reduceOnKill(killer.uniqueId)
         }
     }
 

@@ -29,6 +29,10 @@ class JobSkillManager(private val plugin: Digriss) {
         cooldowns[uuid] = seconds
     }
 
+    fun resetCooldown(uuid: UUID) {
+        cooldowns.remove(uuid)
+    }
+
     fun reduceOnKill(uuid: UUID) {
         val current = cooldowns[uuid] ?: return
         cooldowns[uuid] = (current - killReduction).coerceAtLeast(0)

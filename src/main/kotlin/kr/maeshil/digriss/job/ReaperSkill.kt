@@ -1,7 +1,6 @@
 package kr.maeshil.digriss.job
 
 import kr.maeshil.digriss.Sounds
-import kr.maeshil.digriss.jobManager.ReaperChargeManager
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -11,17 +10,10 @@ import org.bukkit.potion.PotionEffectType
 import java.util.UUID
 
 class ReaperSkill : JobSkill {
-    override val baseCooldownSeconds = 20
+    override val baseCooldownSeconds = 25
     private val invulnDurationSeconds = 2.0
 
     override fun execute(player: Player): Boolean {
-        if (!ReaperChargeManager.isCharged(player.uniqueId)) {
-            player.sendMessage("§c충전된 영혼이 없습니다. 처치 후 영혼 구슬을 흡수하세요.")
-            return false
-        }
-
-        ReaperChargeManager.consumeCharge(player.uniqueId)
-
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss")!!
         val durationTicks = (invulnDurationSeconds * 20).toLong()
         val uuid = player.uniqueId
