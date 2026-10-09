@@ -28,3 +28,4 @@ events:
   site-capture: true      # 자원 거점 점령
   season: true            # 시즌 종료 예고, 종료, 오픈
   diplomacy: true         # 불가침 조약 체결·파기, 무역 협정, 조공
+  big-event: true         # 대축제 시작, 보스 레이드 예고·시작·결과

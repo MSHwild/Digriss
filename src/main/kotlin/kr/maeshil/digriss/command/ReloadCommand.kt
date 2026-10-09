@@ -44,6 +44,7 @@ class ReloadCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter
         step("sites.yml (자원 거점)") { plugin.resourceSiteManager.load() }
         step("season.yml (시즌)") { plugin.seasonManager.load() }
         step("protection.yml (초보 보호)") { plugin.newbieProtectionManager.load() }
+        step("bigevent.yml (대축제)") { plugin.bigEventManager.load() }
 
         plugin.adminLogManager.log(sender, "설정 리로드")
         sender.sendMessage("§6[디그리스] §f설정을 다시 불러왔습니다.")

@@ -134,6 +134,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var marketManager: kr.maeshil.digriss.trade.MarketManager
         private set
+    lateinit var bigEventManager: kr.maeshil.digriss.manager.BigEventManager
+        private set
 
     override fun onEnable() {
 
@@ -277,6 +279,9 @@ class Digriss : JavaPlugin() {
         marketManager = kr.maeshil.digriss.trade.MarketManager(this) // /거래소
         Bukkit.getPluginManager().registerEvents(marketManager, this)
         getCommand("거래소")?.apply { setExecutor(marketManager); tabCompleter = marketManager }
+        bigEventManager = kr.maeshil.digriss.manager.BigEventManager(this) // 디그리스 대축제 (접속 보상 · 보스 레이드)
+        Bukkit.getPluginManager().registerEvents(bigEventManager, this)
+        getCommand("빅이벤트")?.apply { setExecutor(bigEventManager); tabCompleter = bigEventManager }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)
         Bukkit.getScheduler().runTaskTimer(this, Runnable { saveAll() }, 6000L, 6000L)
@@ -293,7 +298,7 @@ class Digriss : JavaPlugin() {
     // 서버마다 다른 값이 들어가는 discord.yml(웹훅), vote.yml(투표 주소)은 덮어쓰지 않고 /디그리스 설정 으로 바꿈.
     // help.yml은 HelpManager가 따로 처리. 바뀌기 전 파일은 config-old/ 에 보관
     private fun syncConfigFiles() {
-        val files = listOf("quest.yml", "combat.yml", "spawn.yml", "event.yml", "links.yml", "openevent.yml", "sites.yml", "season.yml")
+        val files = listOf("quest.yml", "combat.yml", "spawn.yml", "event.yml", "links.yml", "openevent.yml", "sites.yml", "season.yml", "bigevent.yml")
         dataFolder.mkdirs()
         files.forEach { name ->
             val resource = getResource(name)?.use { it.readBytes() } ?: return@forEach
@@ -315,6 +320,7 @@ class Digriss : JavaPlugin() {
         SphereUtil.restoreAll()  // 결계 흑요석이 남지 않게 원래대로
         if (::warEventManager.isInitialized) warEventManager.shutdown()
         if (::resourceSiteManager.isInitialized) resourceSiteManager.shutdown()
+        if (::bigEventManager.isInitialized) bigEventManager.shutdown()
         // 번들 편집 창이 열린 채로 꺼지면 넣은 아이템이 저장되지 않으므로 리스너 해제 전에 닫아서 저장
         Bukkit.getOnlinePlayers().filter { it.openInventory.topInventory.holder is BundleEditHolder }.forEach { it.closeInventory() }
         // 진행 중인 1:1 거래는 취소하고 넣어 둔 아이템을 돌려줌

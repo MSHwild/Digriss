@@ -26,6 +26,9 @@ enum class Achievement(
     CONQUEROR("정복자", "적국의 신호기를 부숴 국가를 점령", "§4§l[정복자]", Material.TNT),
     PEACEKEEPER("태평성대", "소속 국가의 내실 점수 1000 달성", "§a§l[태평성대]", Material.OAK_SAPLING),
 
+    // ── 이벤트 ──
+    RAID_HERO("축제의 영웅", "대축제 보스 레이드에서 피해량 1위", "§6§l[축제의 영웅]", Material.DRAGON_EGG),
+
     // ── 퀘스트 / 출석 ──
     QUESTS_10("성실", "일일 퀘스트 10개 완료", "§a[성실한 모험가]", Material.WRITABLE_BOOK),
     QUESTS_100("퀘스트 장인", "일일 퀘스트 100개 완료", "§d[퀘스트 장인]", Material.ENCHANTED_BOOK),
