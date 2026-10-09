@@ -160,7 +160,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     fun addPeace(nationName: String, amount: Double) {
         val nation = nations[nationName] ?: return
         val before = nation.peace
-        nation.peace = (nation.peace + amount).coerceAtLeast(0.0)
+        val gain = if (amount > 0) amount * plugin.nationTechManager.peaceMultiplier(nationName) else amount // 내정 3단계
+        nation.peace = (nation.peace + gain).coerceAtLeast(0.0)
         if (before < PEACE_GOAL && nation.peace >= PEACE_GOAL) {
             Bukkit.broadcastMessage("${ChatColor.GREEN}🌿 '$nationName' 국가가 내실 점수 ${PEACE_GOAL.toInt()}점을 달성해 태평성대를 맞았습니다!")
             plugin.achievementManager.unlockNation(nationName, kr.maeshil.digriss.achievement.Achievement.PEACEKEEPER)
@@ -206,6 +207,10 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     }
 
     // ───────────────────────── 비용 (기존의 2배) ─────────────────────────
+
+    // 기술 효과가 반영된 영토 한도 / 일일 유지비
+    fun maxClaims(nation: Nations) = nation.members.size * plugin.nationTechManager.claimsPerMember(nation.name)
+    fun taxOf(nation: Nations) = dailyTax(nation.level) * plugin.nationTechManager.taxMultiplier(nation.name)
 
     fun dailyTax(level: Int) = (50.0 + (level - 1) * 50.0) * 2
     fun upgradeCost(level: Int) = (100.0 + (level - 1) * 50.0) * 6
@@ -307,6 +312,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         Nation.chunkClaims.entries.forEach { if (it.value == oldName) it.setValue(newName) }
         war.rename(oldName, newName)
         plugin.nationStorageManager.rename(oldName, newName)
+        plugin.resourceSiteManager.renameNation(oldName, newName)
+        plugin.nationTechManager.renameNation(oldName, newName)
 
         // 지도 표시도 새 이름으로 다시 그림
         BlueMapBridge.removeNationMarker(oldName)
@@ -331,6 +338,10 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
         val loc = player.location.block.location
         val chunkKey = chunkKeyOf(loc)
+
+        plugin.resourceSiteManager.chunkTouchesSite(loc.world, loc.chunk.x, loc.chunk.z)?.let {
+            return deny(player, "${ChatColor.RED}${it.name} 근처에는 건국할 수 없습니다. (자원 거점 보호 구역)")
+        }
 
         val owner = Nation.chunkClaims[chunkKey]
         if (owner != null) {
@@ -369,7 +380,11 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             return deny(player, "${ChatColor.RED}이미 점령된 영토입니다. (점령국: ${Nation.chunkClaims[chunkKey]})")
         }
 
-        val maxClaims = nation.members.size * 10
+        plugin.resourceSiteManager.chunkTouchesSite(player.world, player.location.chunk.x, player.location.chunk.z)?.let {
+            return deny(player, "${ChatColor.RED}${it.name} 근처는 영토로 점령할 수 없습니다. (자원 거점 보호 구역)")
+        }
+
+        val maxClaims = maxClaims(nation)
         if (nation.claims.size >= maxClaims) {
             return deny(player, "${ChatColor.RED}국가 인원수 대비 점령 한도를 초과했습니다! (최대 $maxClaims 개)")
         }
@@ -406,7 +421,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         BlueMapBridge.updateTerritory(nation, player.world.name)
 
         Sounds.click(player)
-        player.sendMessage("${ChatColor.YELLOW}현재 청크의 점령을 해제했습니다. (현재 점령지: ${nation.claims.size}/${nation.members.size * 10} 개)")
+        player.sendMessage("${ChatColor.YELLOW}현재 청크의 점령을 해제했습니다. (현재 점령지: ${nation.claims.size}/${maxClaims(nation)} 개)")
         saveNations()
     }
 
@@ -559,7 +574,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         Bukkit.broadcastMessage("${ChatColor.GOLD}[국가 시스템] 자정이 되어 일일 국가 유지비 차감이 진행됩니다.")
 
         nations.values.forEach { nation ->
-            val tax = dailyTax(nation.level)
+            val tax = taxOf(nation)
             val leaderPlayer = Bukkit.getPlayer(nation.leader)
 
             if (nation.bank >= tax) {
@@ -640,6 +655,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nationBeacons.remove(nationName)
         nationSpawns.remove(nationName)
         war.removeNation(nationName, "국가 해체로 종료")
+        plugin.resourceSiteManager.releaseNation(nationName)
+        plugin.nationTechManager.removeNation(nationName)
 
         BlueMapBridge.removeNationMarker(nationName)
         BlueMapBridge.removeTerritory(nationName)
@@ -759,6 +776,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nationSpawns.remove(defenderNationName)
         nations.remove(defenderNationName)
         war.removeNation(defenderNationName, "국가 멸망으로 종료", attackerNationName)
+        plugin.resourceSiteManager.transferNation(defenderNationName, attackerNationName)
+        plugin.nationTechManager.removeNation(defenderNationName)
 
         Bukkit.broadcastMessage("${ChatColor.RED}⚔ '$defenderNationName' 국가가 '$attackerNationName' 국가에 의해 점령 및 멸망했습니다!")
         Sounds.all(org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.0f)

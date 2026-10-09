@@ -361,6 +361,10 @@ class QuestManager(private val plugin: Digriss) {
             return
         }
         economy.depositPlayer(player, amount)
+        // 경제 3단계 기술: 퀘스트 돈 보상의 10%를 국가 금고에도 추가
+        val nationName = plugin.nationManager.getNationName(player.uniqueId)
+        val rate = plugin.nationTechManager.questBankRate(nationName)
+        if (nationName != null && rate > 0) kr.maeshil.digriss.nation.Nation.nations[nationName]?.let { it.bank += amount * rate }
     }
 
     fun formatMoney(amount: Double): String = String.format("%,.0f", amount)

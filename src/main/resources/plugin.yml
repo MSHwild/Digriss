@@ -78,6 +78,9 @@ commands:
   디스코드:
     description: 디스코드 초대 주소를 알려줍니다
     usage: /디스코드
+  거점:
+    description: 자원 거점 목록과 주인을 확인합니다 (관리자는 주인 변경)
+    usage: /거점 [주인 <거점ID> <국가|없음>]
   이벤트:
     description: 진행 중인 오픈 이벤트를 확인합니다
     usage: /이벤트

@@ -106,10 +106,10 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         inv.setItem(4, item(icon("nation.info", Material.BEACON), "§6§l${nation.name} §7(Lv.${nation.level})",
             "§e지도자 §f$leaderName",
             "§e국가원 §f${nation.members.size}명",
-            "§e영토 §f${nation.claims.size} / ${nation.members.size * 10} 청크",
+            "§e영토 §f${nation.claims.size} / ${core.maxClaims(nation)} 청크",
             "§a금고 §f${nation.bank}원",
             "§2내실 점수 §f${nation.peace.toInt()}점 §7(/국가랭킹 내실)",
-            "§b일일 유지비 §f${core.dailyTax(nation.level)}원 §7(매일 자정)",
+            "§b일일 유지비 §f${core.taxOf(nation).toLong()}원 §7(매일 자정)",
             if (nation.level < 5) "§7다음 업그레이드 §f${core.upgradeCost(nation.level)}원" else "§7최고 레벨 도달",
             if (enemies.isEmpty()) "§7전쟁 중인 국가 §f없음"
             else "§c전쟁 중 §f" + enemies.joinToString(", ") { e ->
@@ -134,7 +134,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
         inv.setItem(16, item(icon("nation.storage", Material.CHEST), "§6§l국가 창고",
             "§7국가원 모두가 함께 쓰는 창고입니다.",
-            "§7크기 §f${9 * (nation.level + 2).coerceIn(3, 6)}칸 §7(국가 레벨이 오르면 커짐)",
+            "§7크기 §f${plugin.nationStorageManager.sizeFor(nation.name)}칸 §7(국가 레벨이 오르면 커짐)",
             "", "§a클릭하여 열기"))
 
         inv.setItem(20, item(icon("nation.spawn_tp", Material.ENDER_PEARL), "§d§l국가 스폰 이동",
@@ -147,6 +147,9 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
         inv.setItem(24, item(icon("nation.beacon_move", Material.LODESTONE), "§b§l신호기 이동",
             "§7현재 위치로 신호기를 옮깁니다.", "§7기존 신호기는 제거됩니다.", "", leaderOnly))
+
+        inv.setItem(18, item(icon("nation.tech", Material.ENCHANTING_TABLE), "§d§l국가 기술",
+            "§7군사 · 경제 · 내정 기술을 금고로 배웁니다.", "", "§a클릭하여 열기"))
 
         inv.setItem(26, item(icon("nation.rename", Material.NAME_TAG), "§e§l국가 이름 변경",
             "§7국가 이름을 새로 정합니다.", "§8(전쟁 중에는 변경 불가)", "", leaderOnly))
@@ -198,7 +201,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         fill(inv)
 
         inv.setItem(4, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l금고 잔액 §f${nation.bank}원",
-            "§7일일 유지비 §f${core.dailyTax(nation.level)}원 §7(매일 자정)",
+            "§7일일 유지비 §f${core.taxOf(nation).toLong()}원 §7(매일 자정)",
             "§7내 소지금 §f${core.balanceOf(player)}원"))
 
         BANK_AMOUNTS.forEachIndexed { i, amount ->
@@ -420,6 +423,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 20 -> { player.closeInventory(); core.centerTP(player) }
                 22 -> { player.closeInventory(); core.setNationSpawn(player) }
                 24 -> { player.closeInventory(); core.setNationBeacon(player) }
+                18 -> later { plugin.nationTechManager.open(player) }
                 26 -> { player.closeInventory(); core.startRename(player) }
                 28 -> later { openInviteMenu(player) }
                 30 -> later { openWarMenu(player) }

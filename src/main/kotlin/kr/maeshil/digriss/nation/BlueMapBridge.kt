@@ -14,6 +14,7 @@ object BlueMapBridge {
 
     private const val POI_SET_ID = "nation_markers"
     private const val TERRITORY_SET_ID = "nation_territory"
+    private const val SITE_SET_ID = "resource_sites"
 
     // BlueMap이 없는 서버에서 BlueMap 클래스를 건드리면 오류가 나므로 먼저 확인
     private val available: Boolean get() = Bukkit.getPluginManager().getPlugin("BlueMap") != null
@@ -94,6 +95,21 @@ object BlueMapBridge {
                         .build()
 
                     markerSet.markers[nationName] = marker
+                }
+            }
+        }
+    }
+
+    // 자원 거점 마커 (별도 마커 묶음 "자원 거점")
+    fun setSiteMarker(id: String, label: String, world: org.bukkit.World, x: Double, z: Double) {
+        if (!available) return
+        BlueMapAPI.getInstance().ifPresent { api ->
+            api.getWorld(world).ifPresent { blueWorld ->
+                blueWorld.maps.forEach { map ->
+                    val set = map.markerSets.computeIfAbsent(SITE_SET_ID) {
+                        MarkerSet.builder().label("자원 거점").toggleable(true).defaultHidden(false).build()
+                    }
+                    set.markers[id] = POIMarker.builder().label(label).position(x + 0.5, 64.0, z + 0.5).build()
                 }
             }
         }

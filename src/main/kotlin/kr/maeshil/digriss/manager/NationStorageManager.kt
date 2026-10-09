@@ -30,7 +30,8 @@ class NationStorageManager(private val plugin: Digriss) {
         }
     }
 
-    private fun sizeFor(level: Int) = 9 * (level + 2).coerceIn(3, 6)
+    // 내정 2단계 기술이 있으면 한 줄 더
+    fun sizeFor(name: String) = 9 * ((Nation.nations[name]?.level ?: 1) + 2 + plugin.nationTechManager.extraStorageRows(name)).coerceIn(3, 6)
 
     fun open(player: Player) {
         val name = plugin.nationManager.getNationName(player.uniqueId)
@@ -43,7 +44,7 @@ class NationStorageManager(private val plugin: Digriss) {
     }
 
     private fun inventoryOf(name: String): Inventory {
-        val size = sizeFor(Nation.nations[name]?.level ?: 1)
+        val size = sizeFor(name)
         val current = inventories[name]
         if (current != null && current.size >= size) return current
 
@@ -54,6 +55,13 @@ class NationStorageManager(private val plugin: Digriss) {
         current?.viewers?.toList()?.forEach { it.closeInventory() }
         inventories[name] = inv
         return inv
+    }
+
+    /** 거점 보상 등을 국가 창고에 넣음. 못 넣은 아이템 개수를 돌려줌 */
+    fun deposit(name: String, items: List<ItemStack>): Int {
+        val leftover = inventoryOf(name).addItem(*items.map { it.clone() }.toTypedArray())
+        save()
+        return leftover.values.sumOf { it.amount }
     }
 
     // 국가 해체: 창고 아이템을 지정 위치(지도자 위치)에 떨어뜨림

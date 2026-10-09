@@ -1,0 +1,76 @@
+# ───────────────────────── 자원 거점 ─────────────────────────
+# 실제 지구 지명 위치에 있는 거점. 반경 안에 한 국가의 국가원만 있으면 점령 게이지가 찹니다.
+# 다른 국가 사람이 같이 있으면 교전 중이라 멈추고, 주인 국가가 지키면 게이지가 빨리 줄어요.
+# 수정 후 /디그리스 리로드 로 바로 적용됩니다. (점령 주인은 sites-data.yml에 저장)
+#
+# 좌표: 지도는 1도 = 51.2블록.  x = 경도 × 51.2,  z = -위도 × 51.2
+# rewards: "아이템이름:개수" (매일 자정 국가 창고로)
+
+capture-seconds: 300   # 점령에 걸리는 시간(초)
+radius: 15             # 점령 범위(블록)
+protect-radius: 20     # 건축·파괴·영토 점령이 금지되는 범위(블록)
+daily-money: 1000      # 매일 자정 주인 국가 금고에 들어가는 돈
+daily-peace: 5         # 매일 주는 내실 점수
+
+sites:
+  persian_gulf:
+    name: "페르시아만 유전"
+    world: ""          # 비워 두면 기본 월드
+    x: 2540
+    z: -1300
+    rewards: ["COAL_BLOCK:16"]
+  south_africa:
+    name: "남아공 광산"
+    x: 1270
+    z: 1469
+    rewards: ["DIAMOND:3"]
+  siberia:
+    name: "시베리아 삼림"
+    x: 5120
+    z: -3072
+    rewards: ["SPRUCE_LOG:64"]
+  andes:
+    name: "안데스 광산"
+    x: -3686
+    z: 691
+    rewards: ["COPPER_INGOT:32"]
+  australia:
+    name: "호주 철광"
+    x: 6067
+    z: 1152
+    rewards: ["IRON_INGOT:24"]
+  colombia:
+    name: "콜롬비아 에메랄드"
+    x: -3794
+    z: -287
+    rewards: ["EMERALD:8"]
+  iceland:
+    name: "아이슬란드 화산"
+    x: -973
+    z: -3277
+    rewards: ["NETHERITE_SCRAP:1"]
+  amazon:
+    name: "아마존 우림"
+    x: -3072
+    z: 154
+    rewards: ["WHEAT:32", "COCOA_BEANS:16", "GLOWSTONE_DUST:8"]
+  texas:
+    name: "텍사스 유전"
+    x: -5228
+    z: -1633
+    rewards: ["COAL_BLOCK:16"]
+  ruhr:
+    name: "루르 탄광"
+    x: 369
+    z: -2637
+    rewards: ["IRON_INGOT:12", "COAL:32"]
+  gold_coast:
+    name: "황금 해안"
+    x: -86
+    z: -317
+    rewards: ["GOLD_INGOT:16"]
+  baotou:
+    name: "바오터우 희토류"
+    x: 5632
+    z: -2079
+    rewards: ["REDSTONE:32", "LAPIS_LAZULI:16"]

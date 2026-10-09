@@ -25,3 +25,4 @@ events:
   nation-rename: true     # 국가 이름 변경
   war-event-notice: true  # 전쟁 이벤트 시작 예고
   war-event: true         # 전쟁 이벤트 시작/종료
+  site-capture: true      # 자원 거점 점령

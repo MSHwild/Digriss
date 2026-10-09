@@ -118,6 +118,10 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var discordNotifier: kr.maeshil.digriss.manager.DiscordNotifier
         private set
+    lateinit var nationTechManager: kr.maeshil.digriss.manager.NationTechManager
+        private set
+    lateinit var resourceSiteManager: kr.maeshil.digriss.manager.ResourceSiteManager
+        private set
 
     override fun onEnable() {
 
@@ -141,8 +145,13 @@ class Digriss : JavaPlugin() {
         allianceManager = AllianceManager(this) // NationManager가 사용하므로 먼저 생성
         warScoreManager = WarScoreManager(this)
         nationStorageManager = NationStorageManager(this)
+        nationTechManager = kr.maeshil.digriss.manager.NationTechManager(this) // 국가 기술 트리 (국가 매니저가 사용)
         nationManager = NationManager(this)
         nationManager.enable() // 국가 명령어/리스너/스케줄러는 여기서 자동 등록됨
+        resourceSiteManager = kr.maeshil.digriss.manager.ResourceSiteManager(this) // 자원 거점 (국가 데이터 로드 후)
+        Bukkit.getPluginManager().registerEvents(resourceSiteManager, this)
+        Bukkit.getPluginManager().registerEvents(nationTechManager, this)
+        getCommand("거점")?.let { it.setExecutor(resourceSiteManager); it.tabCompleter = resourceSiteManager }
 
         questManager = QuestManager(this) // soul/dc/nation 매니저 이후에 생성
         bundleManager = BundleManager(this)
@@ -249,6 +258,7 @@ class Digriss : JavaPlugin() {
         ReaperSkill.restoreAll() // 무체화 중 리로드/종료 시 장비 복구
         SphereUtil.restoreAll()  // 결계 흑요석이 남지 않게 원래대로
         if (::warEventManager.isInitialized) warEventManager.shutdown()
+        if (::resourceSiteManager.isInitialized) resourceSiteManager.shutdown()
         // 번들 편집 창이 열린 채로 꺼지면 넣은 아이템이 저장되지 않으므로 리스너 해제 전에 닫아서 저장
         Bukkit.getOnlinePlayers().filter { it.openInventory.topInventory.holder is BundleEditHolder }.forEach { it.closeInventory() }
         HandlerList.unregisterAll(this)
