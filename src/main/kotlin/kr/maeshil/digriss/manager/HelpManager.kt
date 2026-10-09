@@ -25,7 +25,14 @@ class HelpManager(private val plugin: Digriss) {
         private set
 
     init {
-        if (!file.exists()) plugin.saveResource("help.yml", false)
+        // 도움말은 업데이트마다 내용이 바뀌므로 플러그인이 켜질 때마다 jar 안의 최신 help.yml로 덮어씀
+        // (서버에서 직접 고친 내용은 help-old.yml로 한 번 보관)
+        val resource = plugin.getResource("help.yml")?.use { it.readBytes() }
+        if (resource != null) {
+            plugin.dataFolder.mkdirs()
+            if (file.exists() && !file.readBytes().contentEquals(resource)) file.copyTo(File(plugin.dataFolder, "help-old.yml"), overwrite = true)
+            file.writeBytes(resource)
+        }
         load()
     }
 
