@@ -99,10 +99,13 @@ class MainMenu(private val plugin: Digriss) : Listener {
         for (i in 0 until inv.size) inv.setItem(i, if (i % 9 == 4 && i in 9..44) divider else filler)
 
         inv.setItem(4, profile(player))
-        buttons.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.iconKey}", b.icon), b.name, b.lore + listOf("", "§8클릭해서 열기"))) }
+        buttons.filter { isShown(it) }.forEach { b -> inv.setItem(b.slot, item(icon("menu.${b.iconKey}", b.icon), b.name, b.lore + listOf("", "§8클릭해서 열기"))) }
         inv.setItem(CLOSE_SLOT, item(icon("common.close", Material.BARRIER), "§7닫기", emptyList()))
         player.openInventory(inv)
     }
+
+    // 대축제 버튼은 축제 기간이 끝나면 숨김
+    private fun isShown(b: Button): Boolean = b.command != "빅이벤트" || !plugin.bigEventManager.isOver()
 
     // 맨 위 내 정보: 랭크 · 영혼 · DC · 국가 · 직업
     private fun profile(player: Player): ItemStack {
@@ -146,7 +149,7 @@ class MainMenu(private val plugin: Digriss) : Listener {
             player.closeInventory()
             return
         }
-        val button = bySlot[e.rawSlot] ?: return
+        val button = bySlot[e.rawSlot]?.takeIf { isShown(it) } ?: return
         Sounds.click(player)
         player.closeInventory()
         // 클릭 이벤트 안에서 바로 다른 창을 열지 않고 다음 틱에 명령어 실행 (권한 확인도 명령어 쪽에서 그대로 적용)

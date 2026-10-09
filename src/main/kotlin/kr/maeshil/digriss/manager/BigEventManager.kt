@@ -57,7 +57,8 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
 
     // ── 설정 ──
     private var enabled = true
-    private var date: LocalDate? = null
+    private var startDate: LocalDate? = null
+    private var endDate: LocalDate? = null
     private var start = LocalTime.MIN
     private var end = LocalTime.of(23, 59)
     private var playEvery = 30
@@ -113,7 +114,9 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
     fun load() {
         val c = YamlConfiguration.loadConfiguration(file)
         enabled = c.getBoolean("enabled", true)
-        date = runCatching { LocalDate.parse(c.getString("date", "")) }.getOrNull()
+        // 예전 형식(date: 하루)도 읽음
+        startDate = runCatching { LocalDate.parse(c.getString("start-date") ?: c.getString("date", "")) }.getOrNull()
+        endDate = runCatching { LocalDate.parse(c.getString("end-date", "")) }.getOrNull() ?: startDate
         start = runCatching { LocalTime.parse(c.getString("start", "00:00")) }.getOrDefault(LocalTime.MIN)
         end = runCatching { LocalTime.parse(c.getString("end", "23:59")) }.getOrDefault(LocalTime.of(23, 59))
         playEvery = c.getInt("playtime.every-minutes", 30).coerceAtLeast(1)
@@ -145,10 +148,18 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
     private fun now() = ZonedDateTime.now(zone)
 
     fun isFestival(at: ZonedDateTime = now()): Boolean {
-        val d = date ?: return false
-        if (!enabled || at.toLocalDate() != d) return false
+        val from = startDate ?: return false
+        val to = endDate ?: return false
+        val day = at.toLocalDate()
+        if (!enabled || day.isBefore(from) || day.isAfter(to)) return false
         val t = at.toLocalTime()
         return !t.isBefore(start) && !t.isAfter(end)
+    }
+
+    /** 축제 기간이 완전히 끝났거나 꺼져 있음 → 아무 작업도 하지 않음 */
+    fun isOver(at: ZonedDateTime = now()): Boolean {
+        val to = endDate ?: return true
+        return !enabled || at.toLocalDate().isAfter(to)
     }
 
     fun isRaidActive() = boss?.isValid == true
@@ -157,6 +168,11 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         bossTimes.sorted().firstOrNull { it.isAfter(at.toLocalTime()) && !it.isAfter(end) && !it.isBefore(start) }
 
     private fun tick() {
+        // 축제가 끝난 뒤에는 쉼 (관리자가 /빅이벤트 보스 로 연 레이드만 처리)
+        if (boss == null && isOver()) {
+            if (festivalBar != null) removeFestivalBar()
+            return
+        }
         tickCount++
         if (isRaidActive() || boss != null) raidTick()
         if (tickCount % 10 == 0) scheduleTick()
@@ -171,11 +187,11 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
 
         if (festival && doneKeys.add("start")) {
             saveData()
-            Bukkit.broadcastMessage("§6§l[디그리스 대축제] §e오늘 하루 대축제가 열립니다! §7(/빅이벤트)")
+            Bukkit.broadcastMessage("§6§l[디그리스 대축제] §e대축제가 진행 중입니다! §7(${endDate?.let { "${it.monthValue}/${it.dayOfMonth}" }}까지, /빅이벤트)")
             Bukkit.getOnlinePlayers().forEach { it.sendTitle("§6§l디그리스 대축제", "§e접속 보상 · 보스 레이드 · 환영 선물!", 10, 70, 20) }
             Sounds.all(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f)
             plugin.discordNotifier.notify("big-event", "🎉 디그리스 대축제 시작!",
-                "오늘 하루 대축제가 열려요!\n• 접속해 있으면 ${playEvery}분마다 영혼·돈 보상\n• 처음 온 친구는 환영 선물\n• 보스 레이드: ${bossTimes.joinToString(", ")}\n친구를 데려와서 함께 보스를 잡아요!", DiscordNotifier.GOLD)
+                "대축제가 진행 중이에요! (${endDate?.let { "${it.monthValue}/${it.dayOfMonth}" }}까지)\n• 접속해 있으면 ${playEvery}분마다 영혼·돈 보상\n• 처음 온 친구는 환영 선물\n• 보스 레이드: ${bossTimes.joinToString(", ")}\n친구를 데려와서 함께 보스를 잡아요!", DiscordNotifier.GOLD)
         }
 
         if (festival || isRaidActive()) updateFestivalBar(now) else removeFestivalBar()
@@ -536,11 +552,13 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
     private fun status(sender: CommandSender, admin: Boolean) {
         val now = now()
         sender.sendMessage("§6§l[ 디그리스 대축제 ]")
-        val d = date
+        val from = startDate
+        val to = endDate
+        val period = if (from != null && to != null) "${from.monthValue}/${from.dayOfMonth} ~ ${to.monthValue}/${to.dayOfMonth}, 매일 $start ~ $end" else ""
         sender.sendMessage(when {
-            !enabled || d == null -> "§7예정된 축제가 없습니다."
-            isFestival(now) -> "§a진행 중! §7(오늘 $start ~ $end)"
-            now.toLocalDate().isBefore(d) -> "§e${d.monthValue}월 ${d.dayOfMonth}일 $start ~ $end §7에 열려요!"
+            !enabled || from == null || to == null -> "§7예정된 축제가 없습니다."
+            isFestival(now) -> "§a진행 중! §7($period)"
+            !isOver(now) -> "§e$period §7에 열려요!"
             else -> "§7축제가 끝났습니다. 함께해 주셔서 고마워요!"
         })
         sender.sendMessage("§7- 접속 보상: §f${playEvery}분마다 §b영혼 $playSouls §6돈 ${fmt(playMoney)}원 §7(하루 ${playMax}번)")
