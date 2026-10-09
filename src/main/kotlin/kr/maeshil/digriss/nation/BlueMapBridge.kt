@@ -38,8 +38,9 @@ object BlueMapBridge {
             java.nio.file.Files.writeString(
                 file,
                 ".side-menu .marker-item .marker-button>.info .stats{display:none}\n" +
-                    // 마커를 클릭했을 때 뜨는 이름 상자가 좁아서 한글이 한 글자씩 세로로 꺾이는 것 방지
-                    "[class*=\"bm-marker\"],[class*=\"bm-marker\"] *{white-space:nowrap!important;word-break:keep-all!important}\n"
+                    // 마커 이름 상자는 폭 0인 부모 안의 absolute라 글자 폭만큼 좁아져서 한글이 한 글자씩 세로로 꺾임 → 내용 길이만큼 넓힘
+                    "#map-container .bm-marker-html .bm-marker-poi-label,#map-container .bm-marker-labelpopup,#map-container .bm-marker-popup" +
+                    "{width:max-content!important;max-width:30em!important;word-break:keep-all!important}\n"
             )
             api.webApp.registerStyle("assets/digriss.css")
         } catch (e: Exception) {
