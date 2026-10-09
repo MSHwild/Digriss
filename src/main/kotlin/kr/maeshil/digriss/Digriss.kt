@@ -114,6 +114,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var linkCommand: kr.maeshil.digriss.command.LinkCommand
         private set
+    lateinit var openEventManager: kr.maeshil.digriss.manager.OpenEventManager
+        private set
 
     override fun onEnable() {
 
@@ -221,6 +223,12 @@ class Digriss : JavaPlugin() {
         kr.maeshil.digriss.command.ReloadCommand(this).let { getCommand("디그리스")?.apply { setExecutor(it); tabCompleter = it } }
         linkCommand = kr.maeshil.digriss.command.LinkCommand(this)
         listOf("지도", "디스코드").forEach { getCommand(it)?.setExecutor(linkCommand) }
+        openEventManager = kr.maeshil.digriss.manager.OpenEventManager(this) // 오픈 이벤트 (접속 보상, 친구 추천)
+        Bukkit.getPluginManager().registerEvents(openEventManager, this)
+        listOf("이벤트", "추천").forEach {
+            getCommand(it)?.setExecutor(openEventManager)
+            getCommand(it)?.tabCompleter = openEventManager
+        }
         NationRankCommand().let { getCommand("국가랭킹")?.apply { setExecutor(it); tabCompleter = it } }
 
         // 5분마다 자동 저장 (서버가 비정상 종료돼도 최대 5분치만 손실)

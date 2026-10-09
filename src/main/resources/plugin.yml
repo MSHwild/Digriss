@@ -78,6 +78,12 @@ commands:
   디스코드:
     description: 디스코드 초대 주소를 알려줍니다
     usage: /디스코드
+  이벤트:
+    description: 진행 중인 오픈 이벤트를 확인합니다
+    usage: /이벤트
+  추천:
+    description: 나를 초대해 준 친구를 입력하고 보상을 받습니다 (처음 온 사람)
+    usage: /추천 <초대한 사람 닉네임>
   번들:
     description: 판매 중인 번들(상점 패키지) 목록을 엽니다
     usage: /번들
