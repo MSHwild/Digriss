@@ -89,7 +89,11 @@ class ScoreboardManager(
             " §7연합  $allyText",
             "",
             " §8접속 ${online}명 · puritymc.kr"
-        )
+        ).let { base ->
+            // 시즌 종료가 가까우면 맨 위에 D-day 표시
+            val season = (Bukkit.getPluginManager().getPlugin("Digriss") as? Digriss)?.seasonManager?.scoreboardLine()
+            if (season == null) base else listOf("", season) + base
+        }
 
         lines.reversed().forEachIndexed { index, line ->
             // 빈 줄/중복 라인은 스코어보드에서 하나로 합쳐지므로 뒤에 §r을 붙여 유니크하게 만듦

@@ -120,6 +120,8 @@ class Digriss : JavaPlugin() {
         private set
     lateinit var nationTechManager: kr.maeshil.digriss.manager.NationTechManager
         private set
+    lateinit var seasonManager: kr.maeshil.digriss.manager.SeasonManager
+        private set
     lateinit var resourceSiteManager: kr.maeshil.digriss.manager.ResourceSiteManager
         private set
 
@@ -131,6 +133,9 @@ class Digriss : JavaPlugin() {
         // 매니저 초기화 (nationManager는 scoreboardManager보다 먼저!)
         adminLogManager = AdminLogManager(this)
         discordNotifier = kr.maeshil.digriss.manager.DiscordNotifier(this) // 전쟁·국가 소식을 디스코드로
+        seasonManager = kr.maeshil.digriss.manager.SeasonManager(this) // 시즌 종료 예고
+        Bukkit.getPluginManager().registerEvents(seasonManager, this)
+        getCommand("시즌")?.setExecutor(seasonManager)
         iconManager = IconManager(this)
         achievementManager = AchievementManager(this)
         soulManager = SoulManager(this)

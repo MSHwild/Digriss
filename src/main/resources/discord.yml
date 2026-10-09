@@ -26,3 +26,4 @@ events:
   war-event-notice: true  # 전쟁 이벤트 시작 예고
   war-event: true         # 전쟁 이벤트 시작/종료
   site-capture: true      # 자원 거점 점령
+  season: true            # 시즌 종료 예고
