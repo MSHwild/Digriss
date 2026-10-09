@@ -144,13 +144,14 @@ object BlueMapBridge {
                             val shape = Shape.createRect(minX, minZ, maxX, maxZ)
 
                             val marker = ShapeMarker.builder()
-                                .label("${nation.name} 영토 (${cx}, ${cz})")
+                                .label("${nation.name} 영토")
                                 .shape(shape, 64.0f)
                                 .fillColor(fillColor)
                                 .lineColor(lineColor)
                                 .lineWidth(3)
                                 .depthTestEnabled(false)
                                 .build()
+                            marker.isListed = false // 청크마다 목록에 뜨면 너무 길어서 지도 위에만 표시
 
                             territorySet.markers["${nation.name}_chunk_${cx}_${cz}"] = marker
                         }
