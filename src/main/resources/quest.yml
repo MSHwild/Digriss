@@ -24,13 +24,13 @@
 rewards:
   easy:
     souls: 10
-    money: 500
+    money: 750
   normal:
     souls: 20
-    money: 1200
+    money: 1800
   hard:
     souls: 40
-    money: 2500
+    money: 3750
 
 quests:
   # 쉬움
@@ -152,7 +152,7 @@ quests:
 # 하루를 놓치면 0이 아니라 절반으로 줄어듭니다
 streak-bonus:
   souls-per-day: 2
-  money-per-day: 100
+  money-per-day: 150
   max-days: 10
 
 # 한 주(월요일 시작)에 required-days일 이상 퀘스트를 1개 이상 완료하면 1회 지급
@@ -160,5 +160,5 @@ streak-bonus:
 weekly-bonus:
   required-days: 5
   souls: 100
-  money: 8000
+  money: 12000
   dc: 10
