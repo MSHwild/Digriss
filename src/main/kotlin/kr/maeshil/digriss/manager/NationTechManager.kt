@@ -25,7 +25,8 @@ class NationTechHolder : InventoryHolder {
 }
 
 /**
- * 국가 기술 트리: 군사 / 경제 / 내정 세 갈래, 각 3단계. 지도자가 국가 금고로 구매 (앞 단계 필요)
+ * 국가 기술 트리: 군사 / 경제 / 내정 세 갈래, 각 3단계.
+ * 지도자가 국가 금고 돈 + 국가 창고 재료로 배움 (앞 단계 필요). 재료는 자원 거점 특산품 위주
  * 데이터: nation-tech.yml (국가 이름 → 갈래별 단계)
  */
 class NationTechManager(private val plugin: Digriss) : Listener {
@@ -36,28 +37,38 @@ class NationTechManager(private val plugin: Digriss) : Listener {
         INTERNAL("internal", "내정", "§a", Material.BOOKSHELF, 3)
     }
 
-    private class Tier(val name: String, val effect: String)
+    private class Tier(val name: String, val effect: String, val materials: Map<Material, Int>)
 
     private val tiers = mapOf(
+        // 재료 (괄호 = 그 재료가 나오는 자원 거점). 거점이 없어도 직접 캐서 낼 수 있는 양으로 맞춤
         Branch.MILITARY to listOf(
-            Tier("훈련", "전쟁 상대에게 주는 피해 +5%"),
-            Tier("요새화", "우리 영토에서 받는 피해 -5%"),
-            Tier("강습", "자원 거점 점령 속도 +25%")
+            Tier("훈련", "전쟁 상대에게 주는 피해 +5%",
+                mapOf(Material.IRON_INGOT to 64)),                                   // 호주, 루르
+            Tier("요새화", "우리 영토에서 받는 피해 -5%",
+                mapOf(Material.IRON_INGOT to 96, Material.DIAMOND to 6)),            // + 남아공
+            Tier("강습", "자원 거점 점령 속도 +25%",
+                mapOf(Material.DIAMOND to 16, Material.NETHERITE_SCRAP to 2))       // + 아이슬란드
         ),
         Branch.ECONOMY to listOf(
-            Tier("세제 개편", "일일 유지비 -20%"),
-            Tier("교역로", "자원 거점 보상 +25%"),
-            Tier("국고", "국가원 퀘스트 돈 보상의 10%가 금고에 추가")
+            Tier("세제 개편", "일일 유지비 -20%",
+                mapOf(Material.GOLD_INGOT to 32)),                                   // 골드코스트
+            Tier("교역로", "자원 거점 보상 +25%",
+                mapOf(Material.GOLD_INGOT to 64, Material.EMERALD to 16)),           // + 콜롬비아
+            Tier("국고", "국가원 퀘스트 돈 보상의 10%가 금고에 추가",
+                mapOf(Material.EMERALD to 32, Material.DIAMOND to 8))
         ),
         Branch.INTERNAL to listOf(
-            Tier("개척", "영토 한도 국가원당 10 → 12청크"),
-            Tier("창고 확장", "국가 창고 +1줄"),
-            Tier("번영", "내실 점수 +20%")
+            Tier("개척", "영토 한도 국가원당 10 → 12청크",
+                mapOf(Material.SPRUCE_LOG to 128, Material.COAL_BLOCK to 8)),        // 시베리아, 페르시아만·텍사스
+            Tier("창고 확장", "국가 창고 +1줄",
+                mapOf(Material.COPPER_INGOT to 64, Material.IRON_INGOT to 32)),      // 안데스
+            Tier("번영", "내실 점수 +20%",
+                mapOf(Material.REDSTONE to 96, Material.LAPIS_LAZULI to 48))         // 바오터우
         )
     )
 
     companion object {
-        val COSTS = listOf(2000.0, 4000.0, 7000.0)
+        val COSTS = listOf(1500.0, 3000.0, 5000.0) // 재료가 추가되면서 돈은 줄임 (예전 2000/4000/7000)
         val REQUIRED_LEVEL = listOf(1, 3, 5)
         private val TIER_SLOTS = listOf(3, 5, 7) // 줄 안에서의 칸 (헤더는 1번 칸)
         private const val BACK_SLOT = 36
@@ -114,6 +125,14 @@ class NationTechManager(private val plugin: Digriss) : Listener {
     fun removeNation(name: String) { if (levels.remove(name) != null) save() }
     fun resetAll() { levels.clear(); save() }
 
+    private fun koName(type: Material): String = when (type) {
+        Material.IRON_INGOT -> "철 주괴"; Material.DIAMOND -> "다이아몬드"; Material.NETHERITE_SCRAP -> "네더라이트 조각"
+        Material.GOLD_INGOT -> "금 주괴"; Material.EMERALD -> "에메랄드"; Material.SPRUCE_LOG -> "가문비나무 원목"
+        Material.COAL_BLOCK -> "석탄 블록"; Material.COPPER_INGOT -> "구리 주괴"; Material.REDSTONE -> "레드스톤"
+        Material.LAPIS_LAZULI -> "청금석"
+        else -> type.name.lowercase()
+    }
+
     // ───────────────────────── GUI ─────────────────────────
 
     fun open(player: Player) {
@@ -128,7 +147,8 @@ class NationTechManager(private val plugin: Digriss) : Listener {
 
         inv.setItem(4, item(ItemStack(Material.BEACON), "§f$nationName §7(Lv.${nation.level})",
             "§7금고 §f${nation.bank.toLong()}원",
-            "§7지도자가 금고 돈으로 기술을 배웁니다.",
+            "§7지도자가 금고 돈과 국가 창고 재료로 기술을 배웁니다.",
+            "§7재료는 자원 거점에서 매일 들어오거나 직접 넣을 수 있어요.",
             "§7앞 단계를 배워야 다음 단계를 배울 수 있어요."))
 
         Branch.entries.forEach { b ->
@@ -150,7 +170,12 @@ class NationTechManager(private val plugin: Digriss) : Listener {
                 when (state) {
                     "done" -> lore += "§a배움"
                     else -> {
-                        lore += "§7비용 §f${COSTS[i].toLong()}원"
+                        val bankOk = nation.bank >= COSTS[i]
+                        lore += "§7비용 ${if (bankOk) "§a" else "§c"}${COSTS[i].toLong()}원"
+                        tier.materials.forEach { (type, need) ->
+                            val have = plugin.nationStorageManager.count(nationName, type)
+                            lore += "§7 - ${koName(type)} ${if (have >= need) "§a" else "§c"}${have.coerceAtMost(need)}/$need"
+                        }
                         lore += "§7필요 국가 레벨 §f${REQUIRED_LEVEL[i]}"
                         if (state == "next") lore += if (isLeader) "§e클릭해서 배우기" else "§8지도자만 배울 수 있어요"
                         else lore += "§8앞 단계를 먼저 배워야 해요"
@@ -208,6 +233,14 @@ class NationTechManager(private val plugin: Digriss) : Listener {
             nation.level < REQUIRED_LEVEL[tierIndex] -> return nm.deny(player, "§c국가 레벨 ${REQUIRED_LEVEL[tierIndex]} 이상이어야 합니다.")
             nation.bank < COSTS[tierIndex] -> return nm.deny(player, "§c금고가 부족합니다. (필요 ${COSTS[tierIndex].toLong()}원, 현재 ${nation.bank.toLong()}원)")
         }
+        val materials = tiers.getValue(branch)[tierIndex].materials
+        val missing = materials.filter { (type, need) -> plugin.nationStorageManager.count(nationName, type) < need }
+        if (missing.isNotEmpty()) {
+            return nm.deny(player, "§c국가 창고에 재료가 부족합니다: " + missing.entries.joinToString(", ") { (type, need) ->
+                "${koName(type)} ${plugin.nationStorageManager.count(nationName, type)}/$need"
+            })
+        }
+        if (!plugin.nationStorageManager.take(nationName, materials)) return nm.deny(player, "§c국가 창고에 재료가 부족합니다.")
         nation.bank -= COSTS[tierIndex]
         levels.getOrPut(nationName) { Branch.entries.associateWith { 0 }.toMutableMap() }[branch] = tierIndex + 1
         save()
