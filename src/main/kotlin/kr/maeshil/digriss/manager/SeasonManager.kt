@@ -166,9 +166,7 @@ class SeasonManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     private fun canJoinLocked(p: org.bukkit.entity.Player) = p.isOp || p.hasPermission("digriss.season.bypass")
 
-    private fun kickText() = "§c§l시즌 종료
-
-§f$lockMessage"
+    private fun kickText() = "§c§l시즌 종료\n\n§f$lockMessage"
 
     // 시즌이 끝나면 OP가 아닌 사람은 접속 불가 (새 시즌 종료일을 정하거나 lock-after-end: false 후 /디그리스 리로드 하면 풀림)
     @EventHandler
