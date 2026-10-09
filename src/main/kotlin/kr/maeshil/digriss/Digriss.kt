@@ -30,7 +30,7 @@ import kr.maeshil.digriss.bundle.BundleListener
 import kr.maeshil.digriss.help.HelpCommand
 import kr.maeshil.digriss.menu.MainMenu
 import kr.maeshil.digriss.achievement.TitleMenu
-import kr.maeshil.digriss.command.IconCommand
+import kr.maeshil.digriss.event.IconCommand
 import kr.maeshil.digriss.event.WarEventCommand
 import kr.maeshil.digriss.manager.AchievementManager
 import kr.maeshil.digriss.manager.IconManager
