@@ -207,7 +207,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     // ───────────────────────── 비용 (기존의 2배) ─────────────────────────
 
     fun dailyTax(level: Int) = (50.0 + (level - 1) * 50.0) * 2
-    fun upgradeCost(level: Int) = (100.0 + (level - 1) * 50.0) * 4
+    fun upgradeCost(level: Int) = (100.0 + (level - 1) * 50.0) * 6
 
     fun teleportDelaySeconds(level: Int) = if (level >= 2) 3 else 6
 
