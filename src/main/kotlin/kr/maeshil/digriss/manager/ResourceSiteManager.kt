@@ -413,17 +413,7 @@ class ResourceSiteManager(private val plugin: Digriss) : Listener, CommandExecut
 
     private fun bypass(p: Player) = p.hasPermission("digriss.admin") && p.gameMode == GameMode.CREATIVE
 
-    @EventHandler(ignoreCancelled = true)
-    fun onBreak(e: BlockBreakEvent) {
-        if (bypass(e.player)) return
-        siteAt(e.block.location)?.let { e.isCancelled = true; e.player.sendMessage("§c${it.name} 주변에서는 블록을 부술 수 없습니다.") }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    fun onPlace(e: BlockPlaceEvent) {
-        if (bypass(e.player)) return
-        siteAt(e.block.location)?.let { e.isCancelled = true; e.player.sendMessage("§c${it.name} 주변에서는 블록을 설치할 수 없습니다.") }
-    }
+    // 블록 설치·파괴는 허용 (방벽을 쌓고 부수는 공방전). 물·용암 붓기와 폭발만 막음
 
     @EventHandler(ignoreCancelled = true)
     fun onBucket(e: PlayerBucketEmptyEvent) {

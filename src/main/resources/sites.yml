@@ -8,7 +8,7 @@
 
 capture-seconds: 300   # 점령에 걸리는 시간(초)
 radius: 15             # 점령 범위(블록)
-protect-radius: 20     # 건축·파괴·영토 점령이 금지되는 범위(블록)
+protect-radius: 20     # 영토 점령·물/용암 붓기·폭발이 막히는 범위(블록). 블록 설치·파괴는 가능
 daily-money: 1000      # 매일 자정 주인 국가 금고에 들어가는 돈
 daily-peace: 5         # 매일 주는 내실 점수
 
