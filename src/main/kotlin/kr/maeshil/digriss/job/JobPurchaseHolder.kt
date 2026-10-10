@@ -1,5 +1,8 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.addon.GuiBg
+import kr.maeshil.digriss.addon.GuiSlots
+
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -37,37 +40,37 @@ object JobGUI {
     private fun fillBorder(inv: Inventory) {
         for (i in 0 until inv.size) {
             if (i < 9 || i >= inv.size - 9 || i % 9 == 0 || i % 9 == 8) {
-                inv.setItem(i, filler())
+                GuiSlots.set(inv, i, filler())
             }
         }
     }
 
     fun openPurchase(player: Player, jobManager: JobManager) {
-        val inv = Bukkit.createInventory(JobPurchaseHolder(), 27, JOB_PURCHASE_TITLE)
+        val inv = GuiBg.createInventory(JobPurchaseHolder(), 27, JOB_PURCHASE_TITLE)
         fillBorder(inv)
         JobType.entries.forEachIndexed { i, job ->
             if (i < JOB_SLOTS.size) {
-                inv.setItem(JOB_SLOTS[i], jobManager.createJobItem(job))
+                GuiSlots.set(inv, JOB_SLOTS[i], jobManager.createJobItem(job))
             }
         }
-        inv.setItem(JOB_BACK_SLOT, backItem())
+        GuiSlots.set(inv, JOB_BACK_SLOT, backItem())
         player.openInventory(inv)
     }
 
     fun openConfirm(player: Player, jobManager: JobManager) {
-        val inv = Bukkit.createInventory(JobConfirmHolder(), 27, JOB_CONFIRM_TITLE)
+        val inv = GuiBg.createInventory(JobConfirmHolder(), 27, JOB_CONFIRM_TITLE)
 
         for (i in 0 until inv.size) {
             if (i != JOB_CONFIRM_SLOT) {
-                inv.setItem(i, filler())
+                GuiSlots.set(inv, i, filler())
             }
         }
 
         val current = jobManager.getJob(player.uniqueId)
         if (current != null) {
-            inv.setItem(JOB_CONFIRM_SLOT, jobManager.createJobItem(current))
+            GuiSlots.set(inv, JOB_CONFIRM_SLOT, jobManager.createJobItem(current))
         }
-        inv.setItem(JOB_BACK_SLOT, backItem())
+        GuiSlots.set(inv, JOB_BACK_SLOT, backItem())
         player.openInventory(inv)
     }
 

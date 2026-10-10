@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.alliance
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.nation.Nation
 import org.bukkit.Bukkit
@@ -32,7 +34,7 @@ object AllianceGUI {
             .take(45)
 
         val slotNations = others.withIndex().associate { it.index to it.value }
-        val inv = Bukkit.createInventory(AllianceHolder(slotNations), 54, "§8연합 관리 §7- $myNation")
+        val inv = GuiBg.createInventory(AllianceHolder(slotNations), 54, "§8연합 관리 §7- $myNation")
 
         slotNations.forEach { (slot, name) ->
             val n = Nation.nations[name] ?: return@forEach

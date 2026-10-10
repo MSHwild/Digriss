@@ -63,6 +63,7 @@ class WeaponSkillListener(private val plugin: Digriss) : Listener {
 
         if (!skill.execute(player)) return
         cooldowns[key] = now
+        kr.maeshil.digriss.addon.Addons.onWeaponSkill(player, weaponData.id) // 무기 스킬 모션 (BetterModel)
         player.sendMessage("${ChatColor.GOLD}[${weaponData.displayName}] ${ChatColor.YELLOW}스킬 발동!")
     }
 }

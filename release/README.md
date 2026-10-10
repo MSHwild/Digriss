@@ -1,18 +1,26 @@
 # release/Digriss.jar
 
-공동작업자가 빌드한 서버용 jar (2026-10-10 21:12). **애니메이션 포함본**.
+공동작업자가 만든 통합본 jar (2026-10-10 21:12). 참고용 보관본입니다.
 
-## 이 jar에만 있고 소스(src/)에는 아직 없는 것
-- `kr.maeshil.digriss.addon` — `Addons`, `GuiBg`, `GuiSlots`, `IaFont` (ItemsAdder 폰트로 GUI 배경·칸 꾸미기)
-- `kr.maeshil.digriss.weapon` — `WeaponSkillMotion`, `HwandoMotion`, `KatanaMotion` (무기 스킬 애니메이션)
-- 위 코드를 쓰도록 바뀐 기존 파일 약 19개 (Digriss, 메인 메뉴, 국가 메뉴, 거래·거래소, 워프, 퀘스트, 칭호, 번들, 도움말, 무기 스킬 리스너 등)
-- `plugin.yml` softdepend에 `BetterModel` (애니메이션 플러그인)
+**이 jar의 변경 내용은 이제 전부 `src/`에 소스로 들어 있습니다** (디컴파일 후 Kotlin으로 복원, 공동작업자 `CHANGES.md` 기준).
+앞으로는 `src/`로 빌드한 jar를 쓰면 되고, 이 파일은 비교·되돌리기용입니다.
 
-⚠️ 소스가 없어서 **지금 src/로 다시 빌드하면 위 애니메이션·GUI 꾸미기가 빠집니다.**
-공동작업자가 소스(.kt)를 GitHub에 올리면 합친 뒤 이 폴더는 지워도 됩니다.
+| CHANGES.md 항목 | 소스 위치 |
+|---|---|
+| 일본도 · 환도 모션 | `weapon/KatanaMotion.kt`, `weapon/HwandoMotion.kt` |
+| 무기 스킬 모션 4종 | `weapon/WeaponSkillMotion.kt` + `WeaponSkillListener` 한 줄 |
+| GUI 배경 29곳 | `addon/GuiBg.kt` (`GuiBg.createInventory`) |
+| 슬롯 이동 (국가 · 외교 상대국 · 퀘스트) | `addon/GuiSlots.kt` (`GuiSlots.set` / `slot` / `rawSlot`) |
+| 메인 메뉴 B안 | `menu/MainMenu.kt` |
+| 킬 이펙트 상점 (10번 칸부터, holder) | `effect/EffectGUI.kt`, `effect/EffectListener.kt` |
+| 유리판 3곳 (직업 · 도움말 · 사전예약) | `GuiSlots.set`이 `common.filler`로 바꿈 |
+| 모션 켜기 | `addon/Addons.kt` (`Digriss.onEnable` 끝에서 호출) |
+| plugin.yml | softdepend `BetterModel` |
 
-## 이 jar에 없는 것 (jar를 만든 뒤에 GitHub에 올라간 변경)
-- 1.21.1 ~ 1.21.4 호환 (`Attrs.kt`, 커밋 "1.21.1 ~ 1.21.4 서버 모두 지원")
-  → 이 jar는 1.21.1 속성 이름을 그대로 쓰므로, 1.21.4 서버에서 대축제 보스·탈것·흡혈 계열 스킬이 Paper 자동 변환에 의존함
+빌드: Paper API 1.21.4 + BetterModel API 2.2.0 (`build.gradle.kts`). plugin.yml `api-version`은 1.21.1 그대로.
+
+서버에 함께 필요한 것 (공동작업자 패키지, 저장소에는 없음):
+- `gui/digriss_gui.zip` → `plugins/ItemsAdder/`에 풀고 `/iazip`, `gui/적용방법.md` 2번의 icons.yml 수정
+- 무기 모션 리소스: 일본도 · 환도 · 스킬 모션 폴더의 `*_server.zip`, `*_bettermodel.zip`
 
 SHA-256: `1C18191ABBB8A7363C395F4B52888204D81AB6BFD66176754CD972A34F775FCA`

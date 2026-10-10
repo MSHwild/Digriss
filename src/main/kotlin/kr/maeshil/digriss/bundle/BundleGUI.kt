@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.bundle
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Digriss
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
@@ -44,7 +46,7 @@ object BundleGUI {
     fun openList(player: Player, plugin: Digriss) {
         val bundles = plugin.bundleManager.onSale().take(45)
         val slots = bundles.mapIndexed { i, b -> i to b.name }.toMap()
-        val inv = Bukkit.createInventory(BundleListHolder(slots), 54, "§8번들 상점")
+        val inv = GuiBg.createInventory(BundleListHolder(slots), 54, "§8번들 상점")
 
         bundles.forEachIndexed { i, b ->
             val lore = mutableListOf<Component>(
@@ -70,7 +72,7 @@ object BundleGUI {
     // ───────────────────────── 미리보기 ─────────────────────────
 
     fun openPreview(player: Player, plugin: Digriss, bundle: Bundle) {
-        val inv = Bukkit.createInventory(BundlePreviewHolder(bundle.name), 54, "§8번들 - ${bundle.name}")
+        val inv = GuiBg.createInventory(BundlePreviewHolder(bundle.name), 54, "§8번들 - ${bundle.name}")
         bundle.items.take(EDIT_SIZE).forEachIndexed { i, stack -> inv.setItem(i, stack.clone()) }
 
         inv.setItem(PREVIEW_BACK_SLOT, item(icon(plugin, "common.back", Material.ARROW), "§7← 목록으로", emptyList()))
@@ -90,7 +92,7 @@ object BundleGUI {
 
     fun openEdit(player: Player, holder: BundleEditHolder, items: List<ItemStack>) {
         val title = if (holder.isNew) "§8번들 생성 - ${holder.name}" else "§8번들 수정 - ${holder.name}"
-        val inv = Bukkit.createInventory(holder, EDIT_SIZE, title)
+        val inv = GuiBg.createInventory(holder, EDIT_SIZE, title)
         items.take(EDIT_SIZE).forEachIndexed { i, stack -> inv.setItem(i, stack.clone()) }
         player.openInventory(inv)
         player.sendMessage("§e[번들] 아이템을 넣고 창을 닫으면 저장됩니다.")

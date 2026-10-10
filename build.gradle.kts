@@ -10,8 +10,13 @@ repositories {
 }
 
 dependencies {
-    // 1.21.1 기준으로 빌드하면 1.21.1 ~ 1.21.4 서버 모두에서 동작 (바뀐 속성 이름은 Attrs.kt에서 서버에 맞게 찾음)
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    // 1.21.4 API로 빌드 (무기 모션이 1.21.4의 아이템 데이터 컴포넌트를 씀).
+    // plugin.yml api-version은 1.21.1 그대로라 1.21.1 서버에서도 켜지고, 그때는 무기 모션만 꺼짐 (addon/Addons.kt)
+    // 바뀐 속성 이름은 Attrs.kt에서 서버에 맞게 찾음
+    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+
+    // BetterModel (3인칭 무기 모션). 2.x = Java 21 (3.x는 Java 25가 필요해서 1.21.4 서버에는 2.x)
+    compileOnly("io.github.toxicity188:bettermodel-bukkit-api:2.2.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     // 외부 플러그인 jar (Vault, ItemsAdder, BlueMap) — 프로젝트 libs 폴더에 같이 보관

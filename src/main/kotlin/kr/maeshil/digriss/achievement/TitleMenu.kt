@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.achievement
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import org.bukkit.Bukkit
@@ -59,7 +61,7 @@ class TitleMenu(private val plugin: Digriss) : CommandExecutor, Listener {
 
     fun open(player: Player) {
         val uuid = player.uniqueId
-        val inv = Bukkit.createInventory(TitleMenuHolder(), 54,
+        val inv = GuiBg.createInventory(TitleMenuHolder(), 54,
             "§8업적 · 칭호 §7(${achievements.unlockedCount(uuid)}/${shown(uuid).size})")
         val equipped = achievements.equippedOf(uuid)
 

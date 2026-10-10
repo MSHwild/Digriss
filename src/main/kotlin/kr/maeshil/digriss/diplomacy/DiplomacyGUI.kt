@@ -1,5 +1,8 @@
 package kr.maeshil.digriss.diplomacy
 
+import kr.maeshil.digriss.addon.GuiBg
+import kr.maeshil.digriss.addon.GuiSlots
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.alliance.AllianceGUI
@@ -75,7 +78,7 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
             .sortedWith(compareBy({ !hasIncoming(me, it) }, { relationLines(me, it).isEmpty() }, { it }))
             .take(45)
         val slotNations = others.withIndex().associate { it.index to it.value }
-        val inv = Bukkit.createInventory(DiplomacyListHolder(slotNations), 54, "§8외교 §7- $me")
+        val inv = GuiBg.createInventory(DiplomacyListHolder(slotNations), 54, "§8외교 §7- $me")
 
         slotNations.forEach { (slot, name) ->
             val n = Nation.nations[name] ?: return@forEach
@@ -91,15 +94,15 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
             if (relations.isEmpty()) lore += "§8맺은 관계 없음" else lore += relations
             if (incoming) lore += listOf("", "§e§l받은 외교 제안이 있습니다!")
             lore += listOf("", "§e클릭: 외교 창 열기")
-            inv.setItem(slot, item(icon(key, default), "${if (incoming) "§e" else "§f"}§l$name", lore))
+            GuiSlots.set(inv, slot, item(icon(key, default), "${if (incoming) "§e" else "§f"}§l$name", lore))
         }
 
         val filler = item(icon("common.filler_dark", Material.BLACK_STAINED_GLASS_PANE), " ", emptyList())
-        for (i in 45 until 54) inv.setItem(i, filler)
-        inv.setItem(SLOT_LIST_BACK, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
-        inv.setItem(SLOT_LIST_ALLIANCE, item(icon("diplomacy.alliance", Material.LIGHT_BLUE_BANNER), "§b§l연합 관리",
+        for (i in 45 until 54) GuiSlots.set(inv, i, filler)
+        GuiSlots.set(inv, SLOT_LIST_BACK, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
+        GuiSlots.set(inv, SLOT_LIST_ALLIANCE, item(icon("diplomacy.alliance", Material.LIGHT_BLUE_BANNER), "§b§l연합 관리",
             listOf("§7연합은 /연합 에서 따로 관리해요", "", "§e클릭: 연합 창 열기")))
-        inv.setItem(49, item(icon("diplomacy.info", Material.BOOK), "§6§l외교 안내", infoLore(me)))
+        GuiSlots.set(inv, 49, item(icon("diplomacy.info", Material.BOOK), "§6§l외교 안내", infoLore(me)))
         player.openInventory(inv)
     }
 
@@ -145,13 +148,13 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
         if (me == target || Nation.nations[target] == null) return openList(player)
         val isLeader = Nation.nations[me]?.leader == player.uniqueId
         val atWar = plugin.nationManager.isAtWarBetween(me, target)
-        val inv = Bukkit.createInventory(DiplomacyDetailHolder(target), 27, "§8외교 §7- $target")
+        val inv = GuiBg.createInventory(DiplomacyDetailHolder(target), 27, "§8외교 §7- $target")
 
         val filler = item(icon("common.filler_dark", Material.BLACK_STAINED_GLASS_PANE), " ", emptyList())
-        for (i in 0 until 27) inv.setItem(i, filler)
+        for (i in 0 until 27) GuiSlots.set(inv, i, filler)
 
         val n = Nation.nations[target]!!
-        inv.setItem(4, item(icon("diplomacy.nation", Material.BEACON), "§f§l$target",
+        GuiSlots.set(inv, 4, item(icon("diplomacy.nation", Material.BEACON), "§f§l$target",
             listOf("§7국가원 §f${n.members.size}명 §8| §7영토 §f${n.claims.size}개 §8| §7Lv.${n.level}", "") +
                 relationLines(me, target).ifEmpty { listOf("§8맺은 관계 없음") }))
 
@@ -160,7 +163,7 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
 
         // 불가침 조약
         val pactRemain = dip.pactBreakRemainingMs(me, target)
-        inv.setItem(SLOT_PACT, when {
+        GuiSlots.set(inv, SLOT_PACT, when {
             dip.hasPact(me, target) && pactRemain != null -> item(icon("diplomacy.pact_breaking", Material.ORANGE_BANNER), "§6§l불가침 조약 §7(파기 예정)",
                 listOf("§c${hours(pactRemain)} 뒤 효력이 끝납니다.", "§7그때까지는 서로 전쟁을 선포할 수 없어요."))
             dip.hasPact(me, target) -> item(icon("diplomacy.pact", Material.YELLOW_BANNER), "§e§l불가침 조약 §7(맺는 중)",
@@ -175,7 +178,7 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
         })
 
         // 무역 협정
-        inv.setItem(SLOT_TRADE, when {
+        GuiSlots.set(inv, SLOT_TRADE, when {
             dip.hasTrade(me, target) -> item(icon("diplomacy.trade", Material.EMERALD_BLOCK), "§6§l무역 협정 §7(맺는 중)",
                 listOf(tradeBenefit(), "") + act("§c쉬프트+클릭: 협정 종료"))
             dip.hasTradeRequest(me, target) -> item(icon("diplomacy.request", Material.BELL), "§6§l무역 협정 §7(제안 받음)",
@@ -192,7 +195,7 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
         val receiving = dip.tributeAmount(target, me)
         val offerIn = dip.tributeOffer(target, me)
         val offerOut = dip.tributeOffer(me, target)
-        inv.setItem(SLOT_TRIBUTE, when {
+        GuiSlots.set(inv, SLOT_TRIBUTE, when {
             paying != null -> item(icon("diplomacy.tribute", Material.GOLD_BLOCK), "§6§l조공 §7(바치는 중)",
                 listOf("§7매일 자정 우리 금고에서 §6${dip.fmt(paying)}원§7을 바칩니다.", "") + act("§c쉬프트+클릭: 조공 중단 §8(전체 공지)"))
             receiving != null -> item(icon("diplomacy.tribute", Material.GOLD_BLOCK), "§6§l조공 §7(받는 중)",
@@ -206,12 +209,12 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
         })
 
         // 원조
-        inv.setItem(SLOT_AID, item(icon("diplomacy.aid", Material.CHEST_MINECART), "§a§l원조 보내기",
+        GuiSlots.set(inv, SLOT_AID, item(icon("diplomacy.aid", Material.CHEST_MINECART), "§a§l원조 보내기",
             listOf("§7우리 국가 금고 돈을 '$target' 국가 금고로", "§7한 번 보냅니다. §8(우리 금고: ${dip.fmt(Nation.nations[me]?.bank ?: 0.0)}원)", "") +
                 (if (atWar) listOf("§c전쟁 중인 국가에는 보낼 수 없습니다.") else act("§a클릭: 금액 입력 §8(채팅)"))))
 
-        inv.setItem(SLOT_DETAIL_BACK, item(icon("common.back", Material.ARROW), "§7← 외교 목록으로", emptyList()))
-        inv.setItem(SLOT_DETAIL_ALLIANCE, item(icon("diplomacy.alliance", Material.LIGHT_BLUE_BANNER),
+        GuiSlots.set(inv, SLOT_DETAIL_BACK, item(icon("common.back", Material.ARROW), "§7← 외교 목록으로", emptyList()))
+        GuiSlots.set(inv, SLOT_DETAIL_ALLIANCE, item(icon("diplomacy.alliance", Material.LIGHT_BLUE_BANNER),
             if (plugin.allianceManager.areAllied(me, target)) "§b§l연합 §7(연합 중)" else "§f§l연합",
             listOf("§7연합은 연합 창에서 관리해요", "", "§e클릭: 연합 창 열기")))
         player.openInventory(inv)
@@ -231,11 +234,11 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
         if (e.clickedInventory != e.view.topInventory) return
 
         if (holder is DiplomacyListHolder) {
-            when (e.rawSlot) {
+            when (GuiSlots.rawSlot(e)) {
                 SLOT_LIST_BACK -> return kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
                 SLOT_LIST_ALLIANCE -> { Sounds.click(player); later(player) { AllianceGUI.open(player, plugin) }; return }
             }
-            val target = holder.slotNations[e.rawSlot] ?: return
+            val target = holder.slotNations[GuiSlots.rawSlot(e)] ?: return
             Sounds.click(player)
             later(player) { openDetail(player, target) }
             return
@@ -245,7 +248,7 @@ class DiplomacyGUI(private val plugin: Digriss) : Listener, CommandExecutor, Tab
         val me = plugin.nationManager.getNationName(player.uniqueId) ?: return
         val shift = e.isShiftClick
         val right = e.isRightClick
-        when (e.rawSlot) {
+        when (GuiSlots.rawSlot(e)) {
             SLOT_DETAIL_BACK -> { Sounds.click(player); later(player) { openList(player) }; return }
             SLOT_DETAIL_ALLIANCE -> { Sounds.click(player); later(player) { AllianceGUI.open(player, plugin) }; return }
             SLOT_PACT -> when {

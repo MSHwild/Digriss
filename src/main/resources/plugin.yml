@@ -4,7 +4,7 @@ main: kr.maeshil.digriss.Digriss
 api-version: '1.21.1'
 load: POSTWORLD
 # 이 플러그인들보다 나중에 켜져야 연동이 정상 동작함 (없어도 서버는 켜짐)
-softdepend: [Vault, ItemsAdder, BlueMap, Votifier]
+softdepend: [Vault, ItemsAdder, BlueMap, Votifier, BetterModel]
 commands:
   영혼:
     description: 플레이어의 영혼을 지급/차감/설정합니다 (관리자)

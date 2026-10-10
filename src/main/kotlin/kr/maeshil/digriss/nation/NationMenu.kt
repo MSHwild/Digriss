@@ -1,5 +1,8 @@
 package kr.maeshil.digriss.nation
 
+import kr.maeshil.digriss.addon.GuiBg
+import kr.maeshil.digriss.addon.GuiSlots
+
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.alliance.AllianceGUI
@@ -58,18 +61,18 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
     private fun fill(inv: Inventory) {
         val pane = item(icon("common.filler", Material.GRAY_STAINED_GLASS_PANE), " ")
-        for (i in 0 until inv.size) inv.setItem(i, pane)
+        for (i in 0 until inv.size) inv.setItem(i, pane) // 빈칸 채우기는 배경 배치와 상관없이 전부
     }
 
     // ───────────────────────── 메뉴: 무소속 ─────────────────────────
 
     private fun openNoNationMenu(player: Player) {
         val holder = NationMenuHolder(MenuType.NO_NATION)
-        val inv = Bukkit.createInventory(holder, 27, "§8국가")
+        val inv = GuiBg.createInventory(holder, 27, "§8국가")
         holder.setInventory(inv)
         fill(inv)
 
-        inv.setItem(11, item(icon("nation.create", Material.WHITE_BANNER), "§a§l국가 건국",
+        GuiSlots.set(inv, 11, item(icon("nation.create", Material.WHITE_BANNER), "§a§l국가 건국",
             "§7클릭 후 채팅으로 국가 이름을 입력하세요.",
             "§7현재 서 있는 곳에 신호기가 설치됩니다.",
             "",
@@ -77,19 +80,19 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
         val invite = core.inviteOf(player.uniqueId)
         if (invite != null) {
-            inv.setItem(15, item(icon("nation.invite_accept", Material.LIME_DYE), "§e§l초대 수락",
+            GuiSlots.set(inv, 15, item(icon("nation.invite_accept", Material.LIME_DYE), "§e§l초대 수락",
                 "§f'$invite' §7국가에서 초대가 도착했습니다.",
                 "",
                 "§a클릭하여 가입"))
         } else {
-            inv.setItem(15, item(icon("nation.invite_none", Material.GRAY_DYE), "§7받은 초대 없음"))
+            GuiSlots.set(inv, 15, item(icon("nation.invite_none", Material.GRAY_DYE), "§7받은 초대 없음"))
         }
-        inv.setItem(13, item(icon("nation.recruit_list", Material.BOOKSHELF), "§b§l국가 목록 §7(가입하기)",
+        GuiSlots.set(inv, 13, item(icon("nation.recruit_list", Material.BOOKSHELF), "§b§l국가 목록 §7(가입하기)",
             "§7지금 있는 국가들을 보고 골라서 가입합니다.",
             "§7국가에 들어가면 국가 스폰에서 살아나고",
             "§7동료와 함께 전쟁·건축을 할 수 있어요.",
             "", "§a클릭하여 열기"))
-        inv.setItem(18, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
+        GuiSlots.set(inv, 18, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
 
         player.openInventory(inv)
     }
@@ -103,13 +106,13 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         val leaderOnly = if (isLeader) "§a클릭하여 실행" else "§c지도자 전용"
 
         val holder = NationMenuHolder(MenuType.MAIN)
-        val inv = Bukkit.createInventory(holder, 36, "§8국가 관리 - $nationName")
+        val inv = GuiBg.createInventory(holder, 36, "§8국가 관리 - $nationName")
         holder.setInventory(inv)
         fill(inv)
 
         val leaderName = Bukkit.getOfflinePlayer(nation.leader).name ?: "알 수 없음"
         val enemies = war.warsOf(nationName)
-        inv.setItem(4, item(icon("nation.info", Material.BEACON), "§6§l${nation.name} §7(Lv.${nation.level})",
+        GuiSlots.set(inv, 4, item(icon("nation.info", Material.BEACON), "§6§l${nation.name} §7(Lv.${nation.level})",
             "§e지도자 §f$leaderName",
             "§e국가원 §f${nation.members.size}명",
             "§e영토 §f${nation.claims.size} / ${core.maxClaims(nation)} 청크",
@@ -123,55 +126,55 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 "$e §7(${left / 60}시간 ${left % 60}분 남음)§f"
             }))
 
-        inv.setItem(10, item(icon("nation.claim", Material.GRASS_BLOCK), "§a§l영토 점령 / 해제",
+        GuiSlots.set(inv, 10, item(icon("nation.claim", Material.GRASS_BLOCK), "§a§l영토 점령 / 해제",
             "§7좌클릭 §f현재 서 있는 청크를 점령",
             "§7우클릭 §f현재 서 있는 청크의 점령 해제",
             "§8(신호기가 있는 청크는 해제 불가)", "", leaderOnly))
 
-        inv.setItem(12, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l국가 금고",
+        GuiSlots.set(inv, 12, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l국가 금고",
             "§7금고 잔액 §f${nation.bank}원",
             "§7입금은 누구나, 인출은 지도자만 할 수 있습니다.",
             "", "§a클릭하여 열기"))
 
-        inv.setItem(14, item(icon("nation.upgrade", Material.EXPERIENCE_BOTTLE), "§b§l국가 업그레이드",
+        GuiSlots.set(inv, 14, item(icon("nation.upgrade", Material.EXPERIENCE_BOTTLE), "§b§l국가 업그레이드",
             if (nation.level < 5) "§7필요 금액 §f${core.upgradeCost(nation.level)}원" else "§7이미 최고 레벨입니다.",
             if (nation.level < 5) "§7다음 효과: ${core.levelEffectMessage(nation.level + 1)}" else "",
             "", leaderOnly))
 
-        inv.setItem(16, item(icon("nation.storage", Material.CHEST), "§6§l국가 창고",
+        GuiSlots.set(inv, 16, item(icon("nation.storage", Material.CHEST), "§6§l국가 창고",
             "§7국가원 모두가 함께 쓰는 창고입니다.",
             "§7크기 §f${plugin.nationStorageManager.sizeFor(nation.name)}칸 §7(국가 레벨이 오르면 커짐)",
             "", "§a클릭하여 열기"))
 
-        inv.setItem(20, item(icon("nation.spawn_tp", Material.ENDER_PEARL), "§d§l국가 스폰 이동",
+        GuiSlots.set(inv, 20, item(icon("nation.spawn_tp", Material.ENDER_PEARL), "§d§l국가 스폰 이동",
             "§7국가 스폰 지점으로 이동합니다.",
             "§7대기시간 §f${core.teleportDelaySeconds(nation.level)}초 §7(움직이면 취소)",
             "", "§a클릭하여 이동"))
 
-        inv.setItem(22, item(icon("nation.spawn_set", Material.RED_BED), "§a§l스폰 설정",
+        GuiSlots.set(inv, 22, item(icon("nation.spawn_set", Material.RED_BED), "§a§l스폰 설정",
             "§7현재 위치를 국가 스폰으로 설정합니다.", "", leaderOnly))
 
-        inv.setItem(24, item(icon("nation.beacon_move", Material.LODESTONE), "§b§l신호기 이동",
+        GuiSlots.set(inv, 24, item(icon("nation.beacon_move", Material.LODESTONE), "§b§l신호기 이동",
             "§7현재 위치로 신호기를 옮깁니다.", "§7기존 신호기는 제거됩니다.", "", leaderOnly))
 
-        inv.setItem(18, item(icon("nation.tech", Material.ENCHANTING_TABLE), "§d§l국가 기술",
+        GuiSlots.set(inv, 18, item(icon("nation.tech", Material.ENCHANTING_TABLE), "§d§l국가 기술",
             "§7군사 · 경제 · 내정 기술을 금고로 배웁니다.", "", "§a클릭하여 열기"))
 
-        inv.setItem(26, item(icon("nation.rename", Material.NAME_TAG), "§e§l국가 이름 변경",
+        GuiSlots.set(inv, 26, item(icon("nation.rename", Material.NAME_TAG), "§e§l국가 이름 변경",
             "§7국가 이름을 새로 정합니다.", "§8(전쟁 중에는 변경 불가)", "", leaderOnly))
 
-        inv.setItem(28, item(icon("nation.invite", Material.PLAYER_HEAD), "§a§l국가원 초대",
+        GuiSlots.set(inv, 28, item(icon("nation.invite", Material.PLAYER_HEAD), "§a§l국가원 초대",
             "§7접속 중인 무소속 유저를 초대합니다.", "", "§a클릭하여 선택"))
 
         val requests = core.requestsOf(nationName).size
-        inv.setItem(8, item(icon("nation.recruit", Material.WRITABLE_BOOK), "§a§l국가원 모집",
+        GuiSlots.set(inv, 8, item(icon("nation.recruit", Material.WRITABLE_BOOK), "§a§l국가원 모집",
             "§7모집 방식 ${if (nation.recruitOpen) "§a공개 모집 §7(누구나 바로 가입)" else "§e신청 받기 §7(지도자 수락)"}",
             "§7소개 §f${nation.intro.ifEmpty { "§8없음" }}",
             if (requests > 0) "§e받은 가입 신청 §a${requests}건!" else "§7받은 가입 신청 없음",
             "", leaderOnly))
 
         val incoming = war.warRequests[nationName]?.size ?: 0
-        inv.setItem(30, item(icon("nation.war", Material.NETHERITE_SWORD), "§c§l전쟁 관리",
+        GuiSlots.set(inv, 30, item(icon("nation.war", Material.NETHERITE_SWORD), "§c§l전쟁 관리",
             "§7전쟁 선포 / 수락 / 휴전을 관리합니다.",
             "§7진행 중인 전쟁 §f${enemies.size}개",
             if (incoming > 0) "§e받은 전쟁 선포 §c${incoming}건!" else "§7받은 전쟁 선포 없음",
@@ -179,20 +182,20 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
         val allies = plugin.allianceManager.alliesOf(nationName)
         val allyRequests = Nation.nations.keys.count { plugin.allianceManager.hasRequest(nationName, it) }
-        inv.setItem(32, item(icon("nation.alliance", Material.LIGHT_BLUE_BANNER), "§b§l연합 관리",
+        GuiSlots.set(inv, 32, item(icon("nation.alliance", Material.LIGHT_BLUE_BANNER), "§b§l연합 관리",
             "§7다른 국가와 연합을 맺거나 해제합니다.",
             "§7연합국 §f${if (allies.isEmpty()) "없음" else allies.joinToString(", ")}",
             if (allyRequests > 0) "§e받은 연합 요청 §b${allyRequests}건!" else "§7받은 연합 요청 없음",
             "", "§a클릭하여 열기"))
 
         if (isLeader) {
-            inv.setItem(34, item(icon("nation.dissolve", Material.TNT), "§c§l국가 해체",
+            GuiSlots.set(inv, 34, item(icon("nation.dissolve", Material.TNT), "§c§l국가 해체",
                 "§7국가와 모든 영토가 사라집니다.", "", "§c클릭하여 진행"))
         } else {
-            inv.setItem(34, item(icon("nation.leave", Material.OAK_DOOR), "§c§l국가 탈퇴",
+            GuiSlots.set(inv, 34, item(icon("nation.leave", Material.OAK_DOOR), "§c§l국가 탈퇴",
                 "§7현재 국가에서 탈퇴합니다.", "", "§c클릭하여 탈퇴"))
         }
-        inv.setItem(27, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
+        GuiSlots.set(inv, 27, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
 
         player.openInventory(inv)
     }
@@ -209,23 +212,23 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         val isLeader = nation.leader == player.uniqueId
 
         val holder = NationMenuHolder(MenuType.BANK)
-        val inv = Bukkit.createInventory(holder, 36, "§8국가 금고 - $nationName")
+        val inv = GuiBg.createInventory(holder, 36, "§8국가 금고 - $nationName")
         holder.setInventory(inv)
         fill(inv)
 
-        inv.setItem(4, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l금고 잔액 §f${nation.bank}원",
+        GuiSlots.set(inv, 4, item(icon("nation.bank", Material.GOLD_INGOT), "§e§l금고 잔액 §f${nation.bank}원",
             "§7일일 유지비 §f${core.taxOf(nation).toLong()}원 §7(매일 자정)",
             "§7내 소지금 §f${core.balanceOf(player)}원"))
 
         BANK_AMOUNTS.forEachIndexed { i, amount ->
             val text = String.format("%,.0f", amount)
-            inv.setItem(DEPOSIT_SLOTS[i], item(icon("bank.deposit", Material.LIME_CONCRETE), "§a§l입금 §f${text}원",
+            GuiSlots.set(inv, DEPOSIT_SLOTS[i], item(icon("bank.deposit", Material.LIME_CONCRETE), "§a§l입금 §f${text}원",
                 "§7내 돈을 국가 금고에 넣습니다.", "", "§a클릭하여 입금"))
-            inv.setItem(WITHDRAW_SLOTS[i], item(icon("bank.withdraw", Material.ORANGE_CONCRETE), "§6§l인출 §f${text}원",
+            GuiSlots.set(inv, WITHDRAW_SLOTS[i], item(icon("bank.withdraw", Material.ORANGE_CONCRETE), "§6§l인출 §f${text}원",
                 "§7국가 금고에서 내 돈으로 꺼냅니다.", "", if (isLeader) "§a클릭하여 인출" else "§c지도자 전용"))
         }
 
-        inv.setItem(31, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        GuiSlots.set(inv, 31, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
         player.openInventory(inv)
     }
 
@@ -272,7 +275,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         val myName = core.getNationName(player.uniqueId) ?: return openNoNationMenu(player)
 
         val holder = NationMenuHolder(MenuType.WAR)
-        val inv = Bukkit.createInventory(holder, 54, "§8전쟁 관리")
+        val inv = GuiBg.createInventory(holder, 54, "§8전쟁 관리")
         holder.setInventory(inv)
         fill(inv)
 
@@ -282,17 +285,17 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             .take(45)
 
         others.forEachIndexed { index, name ->
-            inv.setItem(index, warItem(myName, name))
+            GuiSlots.set(inv, index, warItem(myName, name))
             holder.slotNations[index] = name
         }
 
         if (others.isEmpty()) {
-            inv.setItem(22, item(icon("common.empty", Material.BARRIER), "§c다른 국가가 없습니다."))
+            GuiSlots.set(inv, 22, item(icon("common.empty", Material.BARRIER), "§c다른 국가가 없습니다."))
         }
 
-        inv.setItem(45, item(icon("war.log", Material.BOOK), "§e§l전쟁 기록",
+        GuiSlots.set(inv, 45, item(icon("war.log", Material.BOOK), "§e§l전쟁 기록",
             "§7최근 전쟁 시작 / 휴전 / 점령 기록을 봅니다.", "", "§a클릭하여 열기"))
-        inv.setItem(49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        GuiSlots.set(inv, 49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
         player.openInventory(inv)
     }
 
@@ -303,7 +306,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         val warLog = war.warLog
 
         val holder = NationMenuHolder(MenuType.WAR_LOG)
-        val inv = Bukkit.createInventory(holder, 54, "§8전쟁 기록")
+        val inv = GuiBg.createInventory(holder, 54, "§8전쟁 기록")
         holder.setInventory(inv)
         fill(inv)
 
@@ -328,18 +331,18 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 lore.add("")
                 lore.add("§e우리 국가 관련 기록")
             }
-            inv.setItem(index, item(material, title, *lore.toTypedArray()))
+            GuiSlots.set(inv, index, item(material, title, *lore.toTypedArray()))
         }
 
         if (records.isEmpty()) {
-            inv.setItem(22, item(icon("common.empty", Material.BARRIER), "§7아직 전쟁 기록이 없습니다."))
+            GuiSlots.set(inv, 22, item(icon("common.empty", Material.BARRIER), "§7아직 전쟁 기록이 없습니다."))
         }
 
         if (myName != null) {
             val wars = warLog.count { it.type == "START" && (it.a == myName || it.b == myName) }
             val wins = warLog.count { it.type == "CONQUER" && it.a == myName }
             val truces = warLog.count { it.type == "TRUCE" && (it.a == myName || it.b == myName) }
-            inv.setItem(45, item(icon("war.record", Material.WRITTEN_BOOK), "§6§l$myName §e전적",
+            GuiSlots.set(inv, 45, item(icon("war.record", Material.WRITTEN_BOOK), "§6§l$myName §e전적",
                 "§7전쟁 참여 §f${wars}회",
                 "§7국가 점령 승리 §f${wins}회",
                 "§7휴전 §f${truces}회",
@@ -347,7 +350,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 "§8최근 200개 기록 기준"))
         }
 
-        inv.setItem(49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        GuiSlots.set(inv, 49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
         player.openInventory(inv)
     }
 
@@ -355,7 +358,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
     private fun openInviteMenu(player: Player) {
         val holder = NationMenuHolder(MenuType.INVITE)
-        val inv = Bukkit.createInventory(holder, 54, "§8초대할 유저 선택")
+        val inv = GuiBg.createInventory(holder, 54, "§8초대할 유저 선택")
         holder.setInventory(inv)
 
         val candidates = Bukkit.getOnlinePlayers()
@@ -369,14 +372,14 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             meta.setDisplayName("§f${target.name}")
             meta.lore = listOf("§a클릭하여 초대")
             head.itemMeta = meta
-            inv.setItem(index, head)
+            GuiSlots.set(inv, index, head)
         }
 
         if (candidates.isEmpty()) {
-            inv.setItem(22, item(icon("common.empty", Material.BARRIER), "§c초대 가능한 유저가 없습니다."))
+            GuiSlots.set(inv, 22, item(icon("common.empty", Material.BARRIER), "§c초대 가능한 유저가 없습니다."))
         }
 
-        inv.setItem(49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        GuiSlots.set(inv, 49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
         player.openInventory(inv)
     }
 
@@ -384,7 +387,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
     private fun openRecruitList(player: Player) {
         val holder = NationMenuHolder(MenuType.RECRUIT_LIST)
-        val inv = Bukkit.createInventory(holder, 54, "§8국가 목록")
+        val inv = GuiBg.createInventory(holder, 54, "§8국가 목록")
         holder.setInventory(inv)
         fill(inv)
 
@@ -401,7 +404,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 requested -> "§7가입 신청함 (지도자 수락 대기) §8· 클릭: 신청 취소"
                 else -> "§e클릭: 가입 신청 §7(지도자가 수락하면 가입)"
             }
-            inv.setItem(index, item(
+            GuiSlots.set(inv, index, item(
                 icon(if (n.recruitOpen) "nation.recruit_open" else "nation.recruit_closed",
                     if (n.recruitOpen) Material.LIME_BANNER else Material.WHITE_BANNER),
                 "§6§l${n.name} §7(Lv.${n.level})" + if (n.recruitOpen) " §a[공개 모집]" else "",
@@ -413,10 +416,10 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             holder.slotNations[index] = n.name
         }
         if (list.isEmpty()) {
-            inv.setItem(22, item(icon("common.empty", Material.BARRIER), "§7아직 국가가 없습니다.", "§7직접 건국해 보세요!"))
+            GuiSlots.set(inv, 22, item(icon("common.empty", Material.BARRIER), "§7아직 국가가 없습니다.", "§7직접 건국해 보세요!"))
         }
 
-        inv.setItem(49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        GuiSlots.set(inv, 49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
         player.openInventory(inv)
     }
 
@@ -427,7 +430,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         val nation = nations[nationName] ?: return
 
         val holder = NationMenuHolder(MenuType.RECRUIT_MANAGE)
-        val inv = Bukkit.createInventory(holder, 54, "§8국가원 모집")
+        val inv = GuiBg.createInventory(holder, 54, "§8국가원 모집")
         holder.setInventory(inv)
         fill(inv)
 
@@ -439,23 +442,23 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             meta.setDisplayName("§f${target.name ?: "알 수 없음"} §7${if (target.isOnline) "§a(접속 중)" else "§8(오프라인)"}")
             meta.lore = listOf("§7가입 신청", "", "§a좌클릭: 수락", "§c우클릭: 거절")
             head.itemMeta = meta
-            inv.setItem(index, head)
+            GuiSlots.set(inv, index, head)
             holder.slotPlayers[index] = uuid
         }
         if (core.requestsOf(nationName).isEmpty()) {
-            inv.setItem(13, item(icon("common.empty", Material.GRAY_DYE), "§7받은 가입 신청이 없습니다.",
+            GuiSlots.set(inv, 13, item(icon("common.empty", Material.GRAY_DYE), "§7받은 가입 신청이 없습니다.",
                 "§7공개 모집을 켜면 신청 없이 바로 가입돼요."))
         }
 
-        inv.setItem(46, item(icon(if (nation.recruitOpen) "recruit.open" else "recruit.closed",
+        GuiSlots.set(inv, 46, item(icon(if (nation.recruitOpen) "recruit.open" else "recruit.closed",
             if (nation.recruitOpen) Material.LIME_DYE else Material.ORANGE_DYE),
             if (nation.recruitOpen) "§a§l공개 모집 중" else "§e§l신청 받기",
             if (nation.recruitOpen) "§7무소속 유저가 국가 목록에서 바로 가입합니다." else "§7가입 신청을 받아 지도자가 수락합니다.",
             "", "§e클릭: 바꾸기"))
-        inv.setItem(48, item(icon("recruit.intro", Material.OAK_SIGN), "§f§l국가 소개",
+        GuiSlots.set(inv, 48, item(icon("recruit.intro", Material.OAK_SIGN), "§f§l국가 소개",
             "§f${nation.intro.ifEmpty { "§8없음" }}",
             "§7국가 목록에 한 줄로 보입니다.", "", "§e클릭: 채팅으로 입력"))
-        inv.setItem(49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        GuiSlots.set(inv, 49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
         player.openInventory(inv)
     }
 
@@ -463,12 +466,12 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
     private fun openConfirmDissolveMenu(player: Player) {
         val holder = NationMenuHolder(MenuType.CONFIRM_DISSOLVE)
-        val inv = Bukkit.createInventory(holder, 27, "§8정말 해체하시겠습니까?")
+        val inv = GuiBg.createInventory(holder, 27, "§8정말 해체하시겠습니까?")
         holder.setInventory(inv)
         fill(inv)
 
-        inv.setItem(11, item(icon("common.confirm", Material.LIME_CONCRETE), "§a§l해체 확인", "§7되돌릴 수 없습니다."))
-        inv.setItem(15, item(icon("common.cancel", Material.RED_CONCRETE), "§c§l취소"))
+        GuiSlots.set(inv, 11, item(icon("common.confirm", Material.LIME_CONCRETE), "§a§l해체 확인", "§7되돌릴 수 없습니다."))
+        GuiSlots.set(inv, 15, item(icon("common.cancel", Material.RED_CONCRETE), "§c§l취소"))
 
         player.openInventory(inv)
     }
@@ -487,7 +490,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         if (clicked != null && clicked.type != Material.GRAY_STAINED_GLASS_PANE && !clicked.type.isAir) Sounds.click(player)
 
         when (holder.type) {
-            MenuType.NO_NATION -> when (event.slot) {
+            MenuType.NO_NATION -> when (GuiSlots.slot(event)) {
                 18 -> kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
                 11 -> {
                     player.closeInventory()
@@ -505,26 +508,26 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             }
 
             MenuType.RECRUIT_LIST -> {
-                if (event.slot == 49) { later { openMenu(player) }; return }
-                val target = holder.slotNations[event.slot] ?: return
+                if (GuiSlots.slot(event) == 49) { later { openMenu(player) }; return }
+                val target = holder.slotNations[GuiSlots.slot(event)] ?: return
                 core.joinFromList(player, target)
                 later { if (core.getNationName(player.uniqueId) != null) openMainMenu(player) else openRecruitList(player) }
             }
 
             MenuType.RECRUIT_MANAGE -> {
-                when (event.slot) {
+                when (GuiSlots.slot(event)) {
                     49 -> { later { openMainMenu(player) }; return }
                     46 -> core.toggleRecruit(player)
                     48 -> { player.closeInventory(); core.startIntro(player); return }
                     else -> {
-                        val uuid = holder.slotPlayers[event.slot] ?: return
+                        val uuid = holder.slotPlayers[GuiSlots.slot(event)] ?: return
                         core.answerRequest(player, uuid, !event.click.isRightClick)
                     }
                 }
                 later { openRecruitManage(player) }
             }
 
-            MenuType.MAIN -> when (event.slot) {
+            MenuType.MAIN -> when (GuiSlots.slot(event)) {
                 10 -> {
                     player.closeInventory()
                     if (event.click.isRightClick) core.unclaimChunk(player) else core.claimChunk(player)
@@ -558,15 +561,15 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             }
 
             MenuType.WAR -> {
-                if (event.slot == 49) { later { openMainMenu(player) }; return }
-                if (event.slot == 45) { later { openWarLogMenu(player) }; return }
-                val target = holder.slotNations[event.slot] ?: return
+                if (GuiSlots.slot(event) == 49) { later { openMainMenu(player) }; return }
+                if (GuiSlots.slot(event) == 45) { later { openWarLogMenu(player) }; return }
+                val target = holder.slotNations[GuiSlots.slot(event)] ?: return
                 war.handleClick(player, target, event.click.isRightClick)
                 later { openWarMenu(player) }
             }
 
             MenuType.BANK -> {
-                val slot = event.slot
+                val slot = GuiSlots.slot(event)
                 when {
                     slot == 31 -> { later { openMainMenu(player) }; return }
                     slot in DEPOSIT_SLOTS -> core.depositBank(player, BANK_AMOUNTS[DEPOSIT_SLOTS.indexOf(slot)])
@@ -577,11 +580,11 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
             }
 
             MenuType.WAR_LOG -> {
-                if (event.slot == 49) later { openWarMenu(player) }
+                if (GuiSlots.slot(event) == 49) later { openWarMenu(player) }
             }
 
             MenuType.INVITE -> {
-                if (event.slot == 49) { later { openMainMenu(player) }; return }
+                if (GuiSlots.slot(event) == 49) { later { openMainMenu(player) }; return }
                 val uuid = (event.currentItem?.itemMeta as? SkullMeta)?.owningPlayer?.uniqueId ?: return
                 val target = Bukkit.getPlayer(uuid)
                 if (target == null) {
@@ -592,7 +595,7 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 later { openInviteMenu(player) }
             }
 
-            MenuType.CONFIRM_DISSOLVE -> when (event.slot) {
+            MenuType.CONFIRM_DISSOLVE -> when (GuiSlots.slot(event)) {
                 11 -> { player.closeInventory(); core.dissolveNation(player) }
                 15 -> later { openMainMenu(player) }
             }

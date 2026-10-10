@@ -1,5 +1,8 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.addon.GuiBg
+import kr.maeshil.digriss.addon.GuiSlots
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.job.JobType
@@ -70,12 +73,12 @@ class PreorderManager(private val plugin: Digriss) : Listener, CommandExecutor {
 
     fun open(p: Player) {
         val holder = Holder()
-        val inv = Bukkit.createInventory(holder, 27, "§8사전예약 보상 - 직업 선택")
+        val inv = GuiBg.createInventory(holder, 27, "§8사전예약 보상 - 직업 선택")
         holder.inv = inv
         val pane = ItemStack(Material.GRAY_STAINED_GLASS_PANE).apply { itemMeta = itemMeta?.apply { setDisplayName(" ") } }
-        for (i in 0 until 27) inv.setItem(i, pane)
+        for (i in 0 until 27) GuiSlots.set(inv, i, pane)
 
-        inv.setItem(4, ItemStack(Material.CHEST).apply {
+        GuiSlots.set(inv, 4, ItemStack(Material.CHEST).apply {
             itemMeta = itemMeta?.apply {
                 setDisplayName("§6§l사전예약 감사 보상")
                 lore = listOf("§7원하는 직업을 하나 고르면", "§f직업 아이템 + 초보자의 세트§7를 받습니다.",
@@ -84,7 +87,7 @@ class PreorderManager(private val plugin: Digriss) : Listener, CommandExecutor {
         })
         jobs.forEachIndexed { i, job ->
             val slot = 10 + i
-            inv.setItem(slot, plugin.jobManager.createJobItem(job).apply {
+            GuiSlots.set(inv, slot, plugin.jobManager.createJobItem(job).apply {
                 itemMeta = itemMeta?.apply { lore = (lore ?: emptyList()) + listOf("", "§a클릭: 이 직업으로 받기") }
             })
             holder.slotJobs[slot] = job

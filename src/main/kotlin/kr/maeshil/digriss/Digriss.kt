@@ -305,6 +305,7 @@ class Digriss : JavaPlugin() {
         }, 0L, 20L)
 
         logger.info("Digriss 플러그인이 활성화되었습니다.")
+        kr.maeshil.digriss.addon.Addons.enable(this) // 일본도·환도·무기 스킬 모션 (1.21.4 + ItemsAdder, BetterModel 있으면 3인칭 동작)
     }
 
     // 서버(리눅스)에서 파일을 직접 고치기 어려우므로, 켜질 때마다 jar 안의 최신 설정으로 덮어씀.

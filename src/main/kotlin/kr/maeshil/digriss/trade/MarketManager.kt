@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.trade
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import net.milkbowl.vault.economy.Economy
@@ -205,7 +207,7 @@ class MarketManager(private val plugin: Digriss) : Listener, CommandExecutor, Ta
         val p = page.coerceIn(0, pages - 1)
         val shown = all.drop(p * PAGE_SIZE).take(PAGE_SIZE)
         val slotIds = shown.withIndex().associate { it.index to it.value.id }
-        val inv = Bukkit.createInventory(MarketHolder(p, mineOnly, slotIds), 54, "§8거래소${if (mineOnly) " §7- 내 물품" else ""} §7(${p + 1}/$pages)")
+        val inv = GuiBg.createInventory(MarketHolder(p, mineOnly, slotIds), 54, "§8거래소${if (mineOnly) " §7- 내 물품" else ""} §7(${p + 1}/$pages)")
 
         shown.forEachIndexed { i, l ->
             val stack = l.item.clone()
@@ -247,7 +249,7 @@ class MarketManager(private val plugin: Digriss) : Listener, CommandExecutor, Ta
 
     private fun openStorage(player: Player) {
         val items = storage[player.uniqueId].orEmpty()
-        val inv = Bukkit.createInventory(MarketStorageHolder(), 54, "§8거래소 보관함")
+        val inv = GuiBg.createInventory(MarketStorageHolder(), 54, "§8거래소 보관함")
         items.take(45).forEachIndexed { i, it -> inv.setItem(i, it.clone()) }
         if (items.isEmpty()) inv.setItem(22, item(icon("common.empty", Material.BARRIER), "§7보관함이 비어 있습니다.", emptyList()))
         val filler = item(icon("common.filler", Material.BLACK_STAINED_GLASS_PANE), " ", emptyList())

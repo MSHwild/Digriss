@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.travel
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import net.milkbowl.vault.economy.Economy
@@ -228,7 +230,7 @@ class WarpManager(private val plugin: Digriss) : Listener, CommandExecutor, TabC
     fun open(player: Player) {
         val list = warps().take(45)
         val slotWarps = list.withIndex().associate { it.index to it.value.name }
-        val inv = Bukkit.createInventory(WarpHolder(slotWarps), 54, "§8워프 역참")
+        val inv = GuiBg.createInventory(WarpHolder(slotWarps), 54, "§8워프 역참")
         val cd = ((cooldowns[player.uniqueId] ?: 0L) - System.currentTimeMillis()).coerceAtLeast(0) / 1000
         list.forEachIndexed { i, w ->
             val (key, mat) = when (w.kind) {

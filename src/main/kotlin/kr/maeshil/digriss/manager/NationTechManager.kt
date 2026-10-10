@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.nation.Nation
@@ -188,7 +190,7 @@ class NationTechManager(private val plugin: Digriss) : Listener {
         val nation = Nation.nations[nationName] ?: return
         val isLeader = nation.leader == player.uniqueId
 
-        val inv = Bukkit.createInventory(NationTechHolder(), 45, "§8국가 기술 - $nationName")
+        val inv = GuiBg.createInventory(NationTechHolder(), 45, "§8국가 기술 - $nationName")
         val filler = item(plugin.iconManager.get("common.filler", Material.BLACK_STAINED_GLASS_PANE), " ")
         for (i in 0 until inv.size) inv.setItem(i, filler)
 

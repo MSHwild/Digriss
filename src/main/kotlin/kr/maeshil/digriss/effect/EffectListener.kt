@@ -13,14 +13,14 @@ class EffectListener(private val plugin: Digriss, private val gui: EffectGUI) : 
 
     @EventHandler
     fun onClick(event: InventoryClickEvent) {
-        if (event.view.title != gui.title) return
+        if (event.view.topInventory.holder !is EffectGUI.Holder) return
         event.isCancelled = true
         if (event.clickedInventory != event.view.topInventory) return
 
         val player = event.whoClicked as? Player ?: return
         val slot = event.slot
         if (slot == gui.BACK_SLOT) return kr.maeshil.digriss.menu.MainMenu.back(plugin, player)
-        val effect = EffectRegistry.effects.getOrNull(slot) ?: return
+        val effect = gui.effectAt(slot) ?: return
 
         val manager = plugin.killEffectManager
         val owned = manager.hasEffect(player, effect.id)
@@ -57,6 +57,6 @@ class EffectListener(private val plugin: Digriss, private val gui: EffectGUI) : 
 
     @EventHandler
     fun onDrag(event: InventoryDragEvent) {
-        if (event.view.title == gui.title) event.isCancelled = true
+        if (event.view.topInventory.holder is EffectGUI.Holder) event.isCancelled = true
     }
 }

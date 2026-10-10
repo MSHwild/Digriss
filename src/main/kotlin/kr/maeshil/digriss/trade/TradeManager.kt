@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.trade
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import net.kyori.adventure.text.Component
@@ -184,8 +186,8 @@ class TradeManager(private val plugin: Digriss) : Listener, CommandExecutor, Tab
         requests[a.uniqueId]?.remove(b.uniqueId)
         requests[b.uniqueId]?.remove(a.uniqueId)
         val s = TradeSession(a, b)
-        s.invA = Bukkit.createInventory(TradeHolder(s), 54, "§8거래: 나 §7↔ §8${b.name}")
-        s.invB = Bukkit.createInventory(TradeHolder(s), 54, "§8거래: 나 §7↔ §8${a.name}")
+        s.invA = GuiBg.createInventory(TradeHolder(s), 54, "§8거래: 나 §7↔ §8${b.name}")
+        s.invB = GuiBg.createInventory(TradeHolder(s), 54, "§8거래: 나 §7↔ §8${a.name}")
         listOf(s.invA, s.invB).forEach { inv ->
             val divider = item(icon("trade.divider", Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
             DIVIDER.forEach { inv.setItem(it, divider) }
@@ -454,7 +456,7 @@ class TradeManager(private val plugin: Digriss) : Listener, CommandExecutor, Tab
     private fun openPicker(player: Player) {
         val others = Bukkit.getOnlinePlayers().filter { it != player }.sortedBy { it.name }.take(45)
         val slotPlayers = others.withIndex().associate { it.index to it.value.uniqueId }
-        val inv = Bukkit.createInventory(TradePickHolder(slotPlayers), 54, "§8거래할 사람 고르기")
+        val inv = GuiBg.createInventory(TradePickHolder(slotPlayers), 54, "§8거래할 사람 고르기")
         others.forEachIndexed { i, p ->
             val head = ItemStack(Material.PLAYER_HEAD)
             (head.itemMeta as? SkullMeta)?.let { meta -> meta.owningPlayer = p; head.itemMeta = meta }

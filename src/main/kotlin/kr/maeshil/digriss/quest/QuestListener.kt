@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.quest
 
+import kr.maeshil.digriss.addon.GuiSlots
+
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.manager.QuestManager
 import org.bukkit.Bukkit
@@ -59,17 +61,17 @@ class QuestListener(private val plugin: JavaPlugin, private val questManager: Qu
         e.isCancelled = true
         val player = e.whoClicked as? Player ?: return
         if (e.clickedInventory != e.view.topInventory) return
-        if (e.rawSlot == QuestGUI.BACK_SLOT) return kr.maeshil.digriss.menu.MainMenu.back(plugin as kr.maeshil.digriss.Digriss, player)
+        if (GuiSlots.rawSlot(e) == QuestGUI.BACK_SLOT) return kr.maeshil.digriss.menu.MainMenu.back(plugin as kr.maeshil.digriss.Digriss, player)
 
-        if (e.rawSlot == QuestGUI.REROLL_SLOT || (holder.rerollMode && e.rawSlot in QuestGUI.QUEST_SLOTS)) Sounds.click(player)
-        when (e.rawSlot) {
+        if (GuiSlots.rawSlot(e) == QuestGUI.REROLL_SLOT || (holder.rerollMode && GuiSlots.rawSlot(e) in QuestGUI.QUEST_SLOTS)) Sounds.click(player)
+        when (GuiSlots.rawSlot(e)) {
             QuestGUI.REROLL_SLOT -> {
                 if (questManager.getData(player).rerolled) return
                 reopen(player, !holder.rerollMode)
             }
             in QuestGUI.QUEST_SLOTS -> {
                 if (!holder.rerollMode) return
-                questManager.reroll(player, QuestGUI.QUEST_SLOTS.indexOf(e.rawSlot))
+                questManager.reroll(player, QuestGUI.QUEST_SLOTS.indexOf(GuiSlots.rawSlot(e)))
                 reopen(player, false)
             }
         }

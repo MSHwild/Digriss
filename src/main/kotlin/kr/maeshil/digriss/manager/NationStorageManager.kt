@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.manager
 
+import kr.maeshil.digriss.addon.GuiBg
+
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.nation.Nation
@@ -50,7 +52,7 @@ class NationStorageManager(private val plugin: Digriss) {
 
         // 처음 열거나 레벨업으로 칸이 늘어났으면 새로 만들고 내용 옮김
         val contents = current?.contents?.toList() ?: saved.remove(name) ?: emptyList()
-        val inv = Bukkit.createInventory(NationStorageHolder(name), size, "§8국가 창고 - $name")
+        val inv = GuiBg.createInventory(NationStorageHolder(name), size, "§8국가 창고 - $name")
         contents.take(size).forEachIndexed { i, item -> if (item != null) inv.setItem(i, item) }
         current?.viewers?.toList()?.forEach { it.closeInventory() }
         inventories[name] = inv

@@ -1,5 +1,8 @@
 package kr.maeshil.digriss.help
 
+import kr.maeshil.digriss.addon.GuiBg
+import kr.maeshil.digriss.addon.GuiSlots
+
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.manager.HelpCategory
@@ -72,14 +75,14 @@ class HelpCommand(private val plugin: Digriss) : CommandExecutor, TabCompleter, 
             if (slot < 27) slots[slot] = c.name
         }
 
-        val inv = Bukkit.createInventory(HelpHolder(slots), 27, "§8도움말")
+        val inv = GuiBg.createInventory(HelpHolder(slots), 27, "§8도움말")
         val filler = item(ItemStack(org.bukkit.Material.GRAY_STAINED_GLASS_PANE), " ", emptyList())
-        for (i in 0 until inv.size) inv.setItem(i, filler)
+        for (i in 0 until inv.size) GuiSlots.set(inv, i, filler)
         slots.forEach { (slot, name) ->
             val c = help.find(name) ?: return@forEach
-            inv.setItem(slot, item(ItemStack(c.icon), "§6§l${c.name}", listOf(c.summary, "", "§e클릭하여 보기")))
+            GuiSlots.set(inv, slot, item(ItemStack(c.icon), "§6§l${c.name}", listOf(c.summary, "", "§e클릭하여 보기")))
         }
-        if (18 !in slots) inv.setItem(18, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
+        if (18 !in slots) GuiSlots.set(inv, 18, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
         player.openInventory(inv)
     }
 
