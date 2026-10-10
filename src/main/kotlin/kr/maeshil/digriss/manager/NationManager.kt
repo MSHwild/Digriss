@@ -865,7 +865,21 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         attackerNation.claims.addAll(defenderNation.claims)
         attackerNation.bank += defenderNation.bank
 
-        defenderNation.members.forEach { playerNations.remove(it) }
+        // 진 국가의 국가원(지도자 포함)은 점령한 국가로 편입
+        val absorbed = defenderNation.members.filter { it !in attackerNation.members }
+        absorbed.forEach { uuid ->
+            attackerNation.members.add(uuid)
+            playerNations[uuid] = attackerNationName
+            nationInvites.remove(uuid)
+            Bukkit.getPlayer(uuid)?.let {
+                it.sendMessage("${ChatColor.RED}'$defenderNationName' 국가가 멸망해 '$attackerNationName' 국가로 편입되었습니다.")
+                it.sendMessage("${ChatColor.GRAY}원하지 않으면 /국가 → 국가 탈퇴 로 나갈 수 있습니다.")
+                Sounds.alert(it)
+            }
+        }
+        joinRequests.remove(defenderNationName)
+        if (absorbed.isNotEmpty()) notifyNation(attackerNationName,
+            "${ChatColor.GOLD}'$defenderNationName' 국가원 ${absorbed.size}명이 우리 국가로 편입되었습니다!")
 
         BlueMapBridge.removeNationMarker(defenderNationName)
         BlueMapBridge.removeTerritory(defenderNationName)
