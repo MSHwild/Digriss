@@ -20,11 +20,12 @@ import org.bukkit.inventory.meta.SkullMeta
 import java.text.SimpleDateFormat
 import java.util.Date
 
-enum class MenuType { MAIN, NO_NATION, INVITE, CONFIRM_DISSOLVE, WAR, WAR_LOG, BANK }
+enum class MenuType { MAIN, NO_NATION, INVITE, CONFIRM_DISSOLVE, WAR, WAR_LOG, BANK, RECRUIT_LIST, RECRUIT_MANAGE }
 
 class NationMenuHolder(val type: MenuType) : InventoryHolder {
     private lateinit var inv: Inventory
     val slotNations = mutableMapOf<Int, String>()
+    val slotPlayers = mutableMapOf<Int, java.util.UUID>()
     fun setInventory(inventory: Inventory) { inv = inventory }
     override fun getInventory(): Inventory = inv
 }
@@ -83,6 +84,11 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         } else {
             inv.setItem(15, item(icon("nation.invite_none", Material.GRAY_DYE), "§7받은 초대 없음"))
         }
+        inv.setItem(13, item(icon("nation.recruit_list", Material.BOOKSHELF), "§b§l국가 목록 §7(가입하기)",
+            "§7지금 있는 국가들을 보고 골라서 가입합니다.",
+            "§7국가에 들어가면 국가 스폰에서 살아나고",
+            "§7동료와 함께 전쟁·건축을 할 수 있어요.",
+            "", "§a클릭하여 열기"))
         inv.setItem(18, kr.maeshil.digriss.menu.MainMenu.backItem(plugin))
 
         player.openInventory(inv)
@@ -156,6 +162,13 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
 
         inv.setItem(28, item(icon("nation.invite", Material.PLAYER_HEAD), "§a§l국가원 초대",
             "§7접속 중인 무소속 유저를 초대합니다.", "", "§a클릭하여 선택"))
+
+        val requests = core.requestsOf(nationName).size
+        inv.setItem(8, item(icon("nation.recruit", Material.WRITABLE_BOOK), "§a§l국가원 모집",
+            "§7모집 방식 ${if (nation.recruitOpen) "§a공개 모집 §7(누구나 바로 가입)" else "§e신청 받기 §7(지도자 수락)"}",
+            "§7소개 §f${nation.intro.ifEmpty { "§8없음" }}",
+            if (requests > 0) "§e받은 가입 신청 §a${requests}건!" else "§7받은 가입 신청 없음",
+            "", leaderOnly))
 
         val incoming = war.warRequests[nationName]?.size ?: 0
         inv.setItem(30, item(icon("nation.war", Material.NETHERITE_SWORD), "§c§l전쟁 관리",
@@ -367,6 +380,85 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
         player.openInventory(inv)
     }
 
+    // ───────────────────────── 메뉴: 국가 목록 (무소속 → 가입) ─────────────────────────
+
+    private fun openRecruitList(player: Player) {
+        val holder = NationMenuHolder(MenuType.RECRUIT_LIST)
+        val inv = Bukkit.createInventory(holder, 54, "§8국가 목록")
+        holder.setInventory(inv)
+        fill(inv)
+
+        // 공개 모집 → 접속 중인 국가원 많은 순 → 국가원 많은 순
+        val list = nations.values
+            .sortedWith(compareBy<Nations>({ !it.recruitOpen }, { -core.onlineMembers(it) }, { -it.members.size }, { it.name }))
+            .take(45)
+
+        list.forEachIndexed { index, n ->
+            val leaderName = Bukkit.getOfflinePlayer(n.leader).name ?: "알 수 없음"
+            val requested = core.hasRequested(player.uniqueId, n.name)
+            val action = when {
+                n.recruitOpen -> "§a클릭: 바로 가입"
+                requested -> "§7가입 신청함 (지도자 수락 대기) §8· 클릭: 신청 취소"
+                else -> "§e클릭: 가입 신청 §7(지도자가 수락하면 가입)"
+            }
+            inv.setItem(index, item(
+                icon(if (n.recruitOpen) "nation.recruit_open" else "nation.recruit_closed",
+                    if (n.recruitOpen) Material.LIME_BANNER else Material.WHITE_BANNER),
+                "§6§l${n.name} §7(Lv.${n.level})" + if (n.recruitOpen) " §a[공개 모집]" else "",
+                "§7지도자 §f$leaderName",
+                "§7국가원 §f${n.members.size}명 §7(접속 중 §a${core.onlineMembers(n)}명§7)",
+                "§7영토 §f${n.claims.size}청크",
+                "§7소개 §f${n.intro.ifEmpty { "§8없음" }}",
+                "", action))
+            holder.slotNations[index] = n.name
+        }
+        if (list.isEmpty()) {
+            inv.setItem(22, item(icon("common.empty", Material.BARRIER), "§7아직 국가가 없습니다.", "§7직접 건국해 보세요!"))
+        }
+
+        inv.setItem(49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        player.openInventory(inv)
+    }
+
+    // ───────────────────────── 메뉴: 국가원 모집 관리 (지도자) ─────────────────────────
+
+    private fun openRecruitManage(player: Player) {
+        val nationName = core.getNationName(player.uniqueId) ?: return openNoNationMenu(player)
+        val nation = nations[nationName] ?: return
+
+        val holder = NationMenuHolder(MenuType.RECRUIT_MANAGE)
+        val inv = Bukkit.createInventory(holder, 54, "§8국가원 모집")
+        holder.setInventory(inv)
+        fill(inv)
+
+        core.requestsOf(nationName).take(36).forEachIndexed { index, uuid ->
+            val target = Bukkit.getOfflinePlayer(uuid)
+            val head = ItemStack(Material.PLAYER_HEAD)
+            val meta = head.itemMeta as SkullMeta
+            meta.owningPlayer = target
+            meta.setDisplayName("§f${target.name ?: "알 수 없음"} §7${if (target.isOnline) "§a(접속 중)" else "§8(오프라인)"}")
+            meta.lore = listOf("§7가입 신청", "", "§a좌클릭: 수락", "§c우클릭: 거절")
+            head.itemMeta = meta
+            inv.setItem(index, head)
+            holder.slotPlayers[index] = uuid
+        }
+        if (core.requestsOf(nationName).isEmpty()) {
+            inv.setItem(13, item(icon("common.empty", Material.GRAY_DYE), "§7받은 가입 신청이 없습니다.",
+                "§7공개 모집을 켜면 신청 없이 바로 가입돼요."))
+        }
+
+        inv.setItem(46, item(icon(if (nation.recruitOpen) "recruit.open" else "recruit.closed",
+            if (nation.recruitOpen) Material.LIME_DYE else Material.ORANGE_DYE),
+            if (nation.recruitOpen) "§a§l공개 모집 중" else "§e§l신청 받기",
+            if (nation.recruitOpen) "§7무소속 유저가 국가 목록에서 바로 가입합니다." else "§7가입 신청을 받아 지도자가 수락합니다.",
+            "", "§e클릭: 바꾸기"))
+        inv.setItem(48, item(icon("recruit.intro", Material.OAK_SIGN), "§f§l국가 소개",
+            "§f${nation.intro.ifEmpty { "§8없음" }}",
+            "§7국가 목록에 한 줄로 보입니다.", "", "§e클릭: 채팅으로 입력"))
+        inv.setItem(49, item(icon("common.back", Material.ARROW), "§7뒤로가기"))
+        player.openInventory(inv)
+    }
+
     // ───────────────────────── 메뉴: 해체 확인 ─────────────────────────
 
     private fun openConfirmDissolveMenu(player: Player) {
@@ -409,6 +501,27 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                         later { openMenu(player) }
                     }
                 }
+                13 -> later { openRecruitList(player) }
+            }
+
+            MenuType.RECRUIT_LIST -> {
+                if (event.slot == 49) { later { openMenu(player) }; return }
+                val target = holder.slotNations[event.slot] ?: return
+                core.joinFromList(player, target)
+                later { if (core.getNationName(player.uniqueId) != null) openMainMenu(player) else openRecruitList(player) }
+            }
+
+            MenuType.RECRUIT_MANAGE -> {
+                when (event.slot) {
+                    49 -> { later { openMainMenu(player) }; return }
+                    46 -> core.toggleRecruit(player)
+                    48 -> { player.closeInventory(); core.startIntro(player); return }
+                    else -> {
+                        val uuid = holder.slotPlayers[event.slot] ?: return
+                        core.answerRequest(player, uuid, !event.click.isRightClick)
+                    }
+                }
+                later { openRecruitManage(player) }
             }
 
             MenuType.MAIN -> when (event.slot) {
@@ -426,6 +539,11 @@ class NationMenu(private val plugin: Digriss, private val core: NationManager) :
                 18 -> later { plugin.nationTechManager.open(player) }
                 26 -> { player.closeInventory(); core.startRename(player) }
                 28 -> later { openInviteMenu(player) }
+                8 -> {
+                    val nation = core.getNationName(player.uniqueId)?.let { nations[it] } ?: return
+                    if (nation.leader != player.uniqueId) return core.deny(player, "${ChatColor.RED}국가 지도자만 모집을 관리할 수 있습니다.")
+                    later { openRecruitManage(player) }
+                }
                 30 -> later { openWarMenu(player) }
                 32 -> later { AllianceGUI.open(player, plugin) }
                 34 -> {

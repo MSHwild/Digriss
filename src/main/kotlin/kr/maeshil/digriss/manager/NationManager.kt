@@ -41,6 +41,9 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     private val nationSpawns = mutableMapOf<String, Location>()
     private val pendingCreate = mutableSetOf<UUID>()
     private val pendingRename = mutableSetOf<UUID>()
+    private val pendingIntro = mutableSetOf<UUID>()
+    // 비공개 국가에 보낸 가입 신청: 국가 이름 → 신청자 (서버 재시작 시 초기화)
+    private val joinRequests = mutableMapOf<String, MutableSet<UUID>>()
     private val teleporting = mutableSetOf<UUID>()
     // 인출한 돈을 다시 입금해서 금고 입금 퀘스트를 채우는 것을 막기 위한 기록 (인출한 만큼은 입금해도 퀘스트에 안 셈)
     private val withdrawnCredit = mutableMapOf<UUID, Double>()
@@ -249,6 +252,12 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     @EventHandler(priority = EventPriority.LOWEST)
     fun onChat(event: AsyncPlayerChatEvent) {
         val player = event.player
+        if (pendingIntro.remove(player.uniqueId)) {
+            event.isCancelled = true
+            val input = event.message.trim()
+            later { if (input == "취소") player.sendMessage("${ChatColor.GRAY}소개 입력을 취소했습니다.") else setIntro(player, input) }
+            return
+        }
         val renaming = pendingRename.contains(player.uniqueId)
         if (!pendingCreate.contains(player.uniqueId) && !renaming) return
 
@@ -271,6 +280,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
     @EventHandler
     fun onQuit(event: PlayerQuitEvent) {
         pendingCreate.remove(event.player.uniqueId)
+        pendingIntro.remove(event.player.uniqueId)
         teleporting.remove(event.player.uniqueId)
         territory.forget(event.player.uniqueId)
     }
@@ -306,6 +316,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nations[newName] = nation
         playerNations.entries.forEach { if (it.value == oldName) it.setValue(newName) }
         nationInvites.entries.forEach { if (it.value == oldName) it.setValue(newName) }
+        joinRequests.remove(oldName)?.let { joinRequests[newName] = it }
         nationBeacons.remove(oldName)?.let { nationBeacons[newName] = it }
         nationSpawns.remove(oldName)?.let { nationSpawns[newName] = it }
         unclaimedChunks.remove(oldName)?.let { unclaimedChunks[newName] = it }
@@ -474,13 +485,96 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         }
 
         val nationName = nationInvites.remove(player.uniqueId) ?: return deny(player, "${ChatColor.RED}받은 국가 초대가 없습니다.")
-        val nation = nations[nationName] ?: return deny(player, "${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
-        nation.members.add(player.uniqueId)
-        playerNations[player.uniqueId] = nationName
-        player.sendMessage("${ChatColor.GREEN}'$nationName' 국가에 가입을 완료했습니다!")
-        Sounds.reward(player)
-        notifyNation(nationName, "${ChatColor.GREEN}${player.name} 님이 국가에 가입했습니다!")
+        if (nations[nationName] == null) return deny(player, "${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
+        addMember(player.uniqueId, nationName)
+    }
+
+    // 국가원으로 추가 (초대 수락 · 공개 모집 가입 · 가입 신청 수락 공통). 접속 중이 아니어도 됨
+    private fun addMember(uuid: UUID, nationName: String) {
+        val nation = nations[nationName] ?: return
+        nation.members.add(uuid)
+        playerNations[uuid] = nationName
+        nationInvites.remove(uuid)
+        joinRequests.values.forEach { it.remove(uuid) }
+        val name = Bukkit.getOfflinePlayer(uuid).name ?: "알 수 없음"
+        val player = Bukkit.getPlayer(uuid)
+        if (player != null) {
+            player.sendMessage("${ChatColor.GREEN}'$nationName' 국가에 가입을 완료했습니다!")
+            if (nationSpawns[nationName] != null || nationBeacons[nationName] != null)
+                player.sendMessage("${ChatColor.YELLOW}/국가 → 국가 스폰 이동 으로 국가에 합류하세요. 이제 죽으면 국가 스폰에서 살아납니다.")
+            Sounds.reward(player)
+        }
+        notifyNation(nationName, "${ChatColor.GREEN}$name 님이 국가에 가입했습니다!")
         Sounds.nation(nationName) { if (it != player) Sounds.notify(it) }
+        saveNations()
+    }
+
+    // ───────────────────────── 국가원 모집 ─────────────────────────
+
+    fun hasRequested(uuid: UUID, nationName: String) = joinRequests[nationName]?.contains(uuid) == true
+    fun requestsOf(nationName: String): List<UUID> = joinRequests[nationName]?.toList() ?: emptyList()
+    fun onlineMembers(nation: Nations) = nation.members.count { Bukkit.getPlayer(it) != null }
+
+    // 국가 목록에서 클릭: 공개 모집이면 바로 가입, 아니면 가입 신청 (한 번 더 누르면 신청 취소)
+    fun joinFromList(player: Player, nationName: String) {
+        if (playerNations.containsKey(player.uniqueId)) return deny(player, "${ChatColor.RED}이미 소속된 국가가 있습니다.")
+        val nation = nations[nationName] ?: return deny(player, "${ChatColor.RED}해당 국가는 더 이상 존재하지 않습니다.")
+        if (nation.recruitOpen) return addMember(player.uniqueId, nationName)
+
+        val requests = joinRequests.getOrPut(nationName) { mutableSetOf() }
+        if (!requests.add(player.uniqueId)) {
+            requests.remove(player.uniqueId)
+            player.sendMessage("${ChatColor.GRAY}'$nationName' 국가에 보낸 가입 신청을 취소했습니다.")
+            return Sounds.click(player)
+        }
+        player.sendMessage("${ChatColor.GREEN}'$nationName' 국가에 가입 신청을 보냈습니다. 지도자가 수락하면 가입됩니다.")
+        Sounds.success(player)
+        Bukkit.getPlayer(nation.leader)?.let {
+            it.sendMessage("${ChatColor.GOLD}${player.name} 님이 국가 가입을 신청했습니다. ${ChatColor.YELLOW}/국가 → 국가원 모집 에서 수락하세요.")
+            Sounds.notify(it)
+        }
+    }
+
+    // 지도자가 신청 수락/거절
+    fun answerRequest(leader: Player, applicant: UUID, accept: Boolean) {
+        val nationName = playerNations[leader.uniqueId] ?: return
+        val nation = nations[nationName] ?: return
+        if (nation.leader != leader.uniqueId) return deny(leader, "${ChatColor.RED}국가 지도자만 할 수 있습니다.")
+        if (joinRequests[nationName]?.remove(applicant) != true) return
+        val name = Bukkit.getOfflinePlayer(applicant).name ?: "알 수 없음"
+        if (!accept) {
+            leader.sendMessage("${ChatColor.GRAY}$name 님의 가입 신청을 거절했습니다.")
+            Bukkit.getPlayer(applicant)?.sendMessage("${ChatColor.RED}'$nationName' 국가가 가입 신청을 거절했습니다.")
+            return Sounds.click(leader)
+        }
+        if (playerNations.containsKey(applicant)) return deny(leader, "${ChatColor.RED}$name 님은 이미 다른 국가에 가입했습니다.")
+        addMember(applicant, nationName)
+    }
+
+    fun toggleRecruit(player: Player) {
+        val nation = playerNations[player.uniqueId]?.let { nations[it] } ?: return
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 할 수 있습니다.")
+        nation.recruitOpen = !nation.recruitOpen
+        player.sendMessage(if (nation.recruitOpen) "${ChatColor.GREEN}공개 모집을 켰습니다. 무소속 유저가 국가 목록에서 바로 가입할 수 있습니다."
+            else "${ChatColor.YELLOW}공개 모집을 껐습니다. 이제 가입 신청을 받아 수락해야 합니다.")
+        Sounds.click(player)
+        saveNations()
+    }
+
+    fun startIntro(player: Player) {
+        val nation = playerNations[player.uniqueId]?.let { nations[it] } ?: return
+        if (nation.leader != player.uniqueId) return deny(player, "${ChatColor.RED}국가 지도자만 할 수 있습니다.")
+        pendingIntro.add(player.uniqueId)
+        Sounds.notify(player)
+        player.sendMessage("${ChatColor.GOLD}국가 목록에 보일 한 줄 소개를 채팅으로 입력하세요. (최대 40자, 취소: '취소' 입력)")
+    }
+
+    private fun setIntro(player: Player, text: String) {
+        val nation = playerNations[player.uniqueId]?.let { nations[it] } ?: return
+        if (nation.leader != player.uniqueId) return
+        nation.intro = (ChatColor.stripColor(text) ?: text).replace('&', ' ').replace('§', ' ').take(40)
+        player.sendMessage("${ChatColor.GREEN}국가 소개를 바꿨습니다: ${ChatColor.WHITE}${nation.intro}")
+        Sounds.success(player)
         saveNations()
     }
 
@@ -654,6 +748,7 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
         nationBeacons[nationName]?.block?.type = Material.AIR
         nationBeacons.remove(nationName)
         nationSpawns.remove(nationName)
+        joinRequests.remove(nationName)
         war.removeNation(nationName, "국가 해체로 종료")
         plugin.resourceSiteManager.releaseNation(nationName)
         plugin.nationTechManager.removeNation(nationName)
@@ -817,6 +912,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             config.set("$name.bank", nation.bank)
             config.set("$name.level", nation.level)
             config.set("$name.peace", nation.peace)
+            config.set("$name.recruit-open", nation.recruitOpen)
+            config.set("$name.intro", nation.intro)
             nationBeacons[name]?.let { config.set("$name.beacon", "${it.world?.name},${it.x},${it.y},${it.z}") }
             nationSpawns[name]?.let { config.set("$name.spawn", "${it.world?.name},${it.x},${it.y},${it.z},${it.yaw},${it.pitch}") }
         }
@@ -837,7 +934,8 @@ class NationManager(private val plugin: Digriss) : Listener, CommandExecutor {
             val bank = config.getDouble("$name.bank", 0.0)
             val level = config.getInt("$name.level", 1)
 
-            val nationObj = Nations(name, leader, members, claims, bank, level, config.getDouble("$name.peace", 0.0))
+            val nationObj = Nations(name, leader, members, claims, bank, level, config.getDouble("$name.peace", 0.0),
+                config.getBoolean("$name.recruit-open", false), config.getString("$name.intro", "") ?: "")
             nations[name] = nationObj
             members.forEach { playerNations[it] = name }
             playerNations[leader] = name
