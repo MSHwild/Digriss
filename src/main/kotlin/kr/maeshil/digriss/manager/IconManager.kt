@@ -58,6 +58,8 @@ class IconManager(private val plugin: Digriss) {
 
     // key의 아이콘. 설정이 없으면 default로 등록하고 그걸 씀. IA ID가 잘못됐거나 IA가 없으면 default로 대신 표시
     fun get(key: String, default: Material): ItemStack {
+        // 지금은 꺼 둠: icons.yml·아이콘 팩 그림 없이 바닐라 아이템만 씀. 더 나은 팩이 생기면 ENABLED = true
+        if (!ENABLED) return ItemStack(default)
         // 서버가 켜진 채로 파일을 고쳤으면 먼저 다시 읽음 (안 그러면 아래 save()가 고친 내용을 예전 값으로 덮어씀)
         if (file.exists() && file.lastModified() != loadedStamp) load()
         val value = config.getString(key)
@@ -101,6 +103,10 @@ class IconManager(private val plugin: Digriss) {
             return CustomStack.getInstance(id)?.itemStack
         }
         return Material.matchMaterial(id)?.let { ItemStack(it) }
+    }
+
+    companion object {
+        const val ENABLED = false
     }
 
     private fun save() {
