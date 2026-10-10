@@ -100,7 +100,15 @@ class WarpManager(private val plugin: Digriss) : Listener, CommandExecutor, TabC
 
     private fun worldOf(w: Warp): World? = (if (w.worldName.isBlank()) null else Bukkit.getWorld(w.worldName)) ?: Bukkit.getWorlds().firstOrNull()
 
+    // 우리 국가가 점령한 자원 거점인지
+    private fun ownSite(player: Player, w: Warp): Boolean {
+        val id = w.siteId ?: return false
+        val nation = plugin.nationManager.getNationName(player.uniqueId) ?: return false
+        return plugin.resourceSiteManager.allSites().firstOrNull { it.id == id }?.owner == nation
+    }
+
     private fun costTo(player: Player, w: Warp): Double {
+        if (ownSite(player, w)) return 0.0 // 우리 국가 거점은 무료
         val world = worldOf(w)
         if (world != player.world) return costMax
         val dx = player.location.x - w.x; val dz = player.location.z - w.z
@@ -234,7 +242,7 @@ class WarpManager(private val plugin: Digriss) : Listener, CommandExecutor, TabC
             }
             lore += "§7좌표: §f${w.x}, ${w.z}"
             lore += distance(player, w)?.let { "§7거리: §f${"%,d".format(it)}블록" } ?: "§7다른 월드"
-            lore += "§7비용: §6${fmt(costTo(player, w))}원"
+            lore += if (ownSite(player, w)) "§7비용: §a무료 §7(우리 국가 거점)" else "§7비용: §6${fmt(costTo(player, w))}원"
             lore += ""
             lore += if (cd > 0) "§c쿨타임 ${cd}초" else "§e클릭: 워프 §8(${warmupSeconds}초 대기)"
             inv.setItem(i, item(icon(key, mat), "§f§l${w.name}", lore))
