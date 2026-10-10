@@ -6,6 +6,7 @@ import net.md_5.bungee.api.ChatColor
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.player.PlayerExpChangeEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
@@ -22,6 +23,15 @@ class Event(private val plugin: Digriss) : Listener {
         val player = event.player
         //plugin.scoreboardManager.setJoinTime(player)
         event.joinMessage = "${ChatColor.YELLOW}[+] ${ChatColor.GOLD}${player.name}${ChatColor.YELLOW}님이 입장했습니다."
+    }
+
+    // 경험치 3배 (몹·광물·화로·낚시 등). 플레이어가 죽어서 떨군 경험치는 제외 (서로 죽여주며 불리는 것 방지)
+    @EventHandler
+    fun onExpChange(event: PlayerExpChangeEvent) {
+        if (event.amount <= 0) return
+        val orb = event.source as? org.bukkit.entity.ExperienceOrb
+        if (orb?.spawnReason == org.bukkit.entity.ExperienceOrb.SpawnReason.PLAYER_DEATH) return
+        event.amount *= 3
     }
 
     @EventHandler
