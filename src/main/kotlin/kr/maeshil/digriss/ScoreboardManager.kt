@@ -93,7 +93,9 @@ class ScoreboardManager(
             // 시즌 종료가 가까우면 맨 위에 D-day 표시
             val plugin = Bukkit.getPluginManager().getPlugin("Digriss") as? Digriss
             val top = listOfNotNull(plugin?.seasonManager?.scoreboardLine(), plugin?.newbieProtectionManager?.scoreboardLine(player))
-            if (top.isEmpty()) base else listOf("") + top + base
+            // 사이드바는 최대 15줄이라 넘치면 한 줄이 잘림 → 맨 위 빈 줄 없이 붙이고, 그래도 넘치면 맨 아래 구분선을 뺌
+            val all = top + base
+            if (all.size > 15) all.toMutableList().apply { removeAt(size - 2) } else all
         }
 
         lines.reversed().forEachIndexed { index, line ->
