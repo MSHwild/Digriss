@@ -52,17 +52,21 @@ class PreorderManager(private val plugin: Digriss) : Listener, CommandExecutor {
         runCatching { data.save(file) }.onFailure { plugin.logger.warning("[사전예약] 저장 실패: ${it.message}") }
     }
 
-    // 초보자의 세트
-    private fun starterKit(): List<ItemStack> = listOf(
-        ItemStack(Material.IRON_HELMET), ItemStack(Material.IRON_CHESTPLATE),
-        ItemStack(Material.IRON_LEGGINGS), ItemStack(Material.IRON_BOOTS),
-        ItemStack(Material.IRON_SWORD), ItemStack(Material.IRON_PICKAXE), ItemStack(Material.IRON_AXE),
-        ItemStack(Material.IRON_SHOVEL), ItemStack(Material.SHIELD),
-        ItemStack(Material.BREAD, 32), ItemStack(Material.TORCH, 32), ItemStack(Material.WHITE_BED),
-        ItemStack(Material.GOLDEN_APPLE, 2)
-    ).onEach { item ->
-        item.itemMeta = item.itemMeta?.apply { lore = listOf("§6사전예약 보상 · 초보자의 세트") }
+    // 초보자의 세트: 심연의 창 + 역술 주문서(ItemsAdder) + 황금 당근 16, 황금사과 8, 다이아 2
+    private fun starterKit(): List<ItemStack> {
+        // IA 아이템은 손대지 않고 그대로 줌 (설명을 바꾸면 무기 인식이 깨질 수 있음)
+        val custom = listOf("weapon:ocean_spear", "weapon:skill_8").mapNotNull { id ->
+            runCatching { dev.lone.itemsadder.api.CustomStack.getInstance(id)?.itemStack }.getOrNull()
+                ?: null.also { plugin.logger.warning("[사전예약] ItemsAdder 아이템 '$id'을(를) 찾지 못해 지급하지 못했습니다.") }
+        }
+        val vanilla = listOf(
+            ItemStack(Material.GOLDEN_CARROT, 16), ItemStack(Material.GOLDEN_APPLE, 8), ItemStack(Material.DIAMOND, 2)
+        ).onEach { item -> item.itemMeta = item.itemMeta?.apply { lore = listOf("§6사전예약 보상 · 초보자의 세트") } }
+        return custom + vanilla
     }
+
+    // 고를 수 있는 직업 (무기 기술자 제외)
+    private val jobs = JobType.entries.filter { it != JobType.WEAPON_SMITH }
 
     fun open(p: Player) {
         val holder = Holder()
@@ -75,10 +79,10 @@ class PreorderManager(private val plugin: Digriss) : Listener, CommandExecutor {
             itemMeta = itemMeta?.apply {
                 setDisplayName("§6§l사전예약 감사 보상")
                 lore = listOf("§7원하는 직업을 하나 고르면", "§f직업 아이템 + 초보자의 세트§7를 받습니다.",
-                    "§7(철 갑옷·도구 세트, 방패, 빵, 횃불, 침대, 황금사과)", "", "§c계정당 딱 한 번만 받을 수 있어요.")
+                    "§7(심연의 창, 역술 주문서, 황금 당근 16, 황금사과 8, 다이아몬드 2)", "", "§c계정당 딱 한 번만 받을 수 있어요.")
             }
         })
-        JobType.entries.forEachIndexed { i, job ->
+        jobs.forEachIndexed { i, job ->
             val slot = 10 + i
             inv.setItem(slot, plugin.jobManager.createJobItem(job).apply {
                 itemMeta = itemMeta?.apply { lore = (lore ?: emptyList()) + listOf("", "§a클릭: 이 직업으로 받기") }
