@@ -1,8 +1,7 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Friendly
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -19,7 +18,7 @@ class ChamSkill(private val plugin: JavaPlugin) : Skill {
         var traveled = 0.0
         val hit = HashSet<LivingEntity>()
 
-        player.world.playSound(current, Sound.ITEM_TRIDENT_RIPTIDE_1, 1f, 1.3f)
+        SkillEffects.chamLaunch(current)
 
         object : BukkitRunnable() {
             override fun run() {
@@ -30,8 +29,7 @@ class ChamSkill(private val plugin: JavaPlugin) : Skill {
                 current.add(dir.clone().multiply(0.6))
                 traveled += 0.6
 
-                current.world!!.spawnParticle(Particle.SWEEP_ATTACK, current, 1)
-                current.world!!.spawnParticle(Particle.CRIT, current, 4, 0.2, 0.2, 0.2, 0.0)
+                SkillEffects.chamStep(current, dir, traveled, range)
 
                 current.world!!.getNearbyEntities(current, 1.0, 1.0, 1.0)
                     .filterIsInstance<LivingEntity>()
@@ -39,6 +37,7 @@ class ChamSkill(private val plugin: JavaPlugin) : Skill {
                     .forEach {
                         hit.add(it)
                         it.damage(9.0, player)
+                        SkillEffects.chamHit(it.location)
                     }
             }
         }.runTaskTimer(plugin, 0L, 1L)

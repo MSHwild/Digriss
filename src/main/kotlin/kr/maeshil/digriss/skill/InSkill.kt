@@ -1,9 +1,7 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Friendly
-import org.bukkit.Color
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -22,20 +20,18 @@ class InSkill(private val plugin: JavaPlugin) : Skill {
         val radius = 6.0
         val durationTicks = 60L
 
-        player.world.playSound(center, Sound.ENTITY_ENDER_DRAGON_FLAP, 0.8f, 1.6f)
+        SkillEffects.pullOpen(center, radius)
 
         object : BukkitRunnable() {
             var ticks = 0L
             override fun run() {
                 if (ticks >= durationTicks) {
-                    center.world!!.spawnParticle(Particle.EXPLOSION, center, 1)
+                    SkillEffects.pullCollapse(center)
                     cancel()
                     return
                 }
 
-                center.world!!.spawnParticle(Particle.DUST, center, 15, 0.3, 0.3, 0.3, 0.0,
-                    Particle.DustOptions(Color.fromRGB(30, 80, 255), 1.5f))
-                center.world!!.spawnParticle(Particle.END_ROD, center, 3, 0.1, 0.1, 0.1, 0.0)
+                SkillEffects.pullTick(center, radius, ticks)
 
                 center.world!!.getNearbyEntities(center, radius, radius, radius)
                     .filterIsInstance<LivingEntity>()

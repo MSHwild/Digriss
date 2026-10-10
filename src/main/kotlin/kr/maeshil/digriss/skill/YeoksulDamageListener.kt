@@ -1,5 +1,6 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.effect.SkillEffects
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -18,5 +19,6 @@ class YeoksulDamageListener(private val plugin: JavaPlugin) : Listener {
 
         victim.setMetadata(YeoksulSkill.META_STORED, FixedMetadataValue(plugin, stored + event.finalDamage))
         event.isCancelled = true
+        SkillEffects.mirrorAbsorb(victim.location)
     }
 }

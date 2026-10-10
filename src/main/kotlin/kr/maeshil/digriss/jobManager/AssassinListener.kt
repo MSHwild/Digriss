@@ -1,6 +1,6 @@
 package kr.maeshil.digriss.jobManager
 
-import kr.maeshil.digriss.Sounds
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.job.JobManager
 import kr.maeshil.digriss.job.JobType
 import org.bukkit.entity.Player
@@ -22,7 +22,7 @@ class AssassinListener(private val jobManager: JobManager) : Listener {
         AssassinStealthManager.consume(attacker.uniqueId)
         e.damage *= ambushMultiplier
         attacker.removePotionEffect(PotionEffectType.INVISIBILITY)
-        Sounds.play(attacker, org.bukkit.Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.7f)
+        SkillEffects.shadowAmbush(e.entity.location, attacker.location.direction)
         attacker.sendMessage("§5기습 공격 성공! (피해 ${ambushMultiplier}배)")
     }
 }

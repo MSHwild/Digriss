@@ -1,11 +1,10 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.ActionBarManager
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.Mob
 import org.bukkit.entity.Player
 import org.bukkit.entity.Projectile
@@ -30,8 +29,7 @@ class GuardianSkill : JobSkill {
         val ticks = (durationSeconds * 20).toInt()
         val until = System.currentTimeMillis() + (durationSeconds * 1000).toLong()
 
-        player.world.playSound(player.location, Sound.ITEM_SHIELD_BLOCK, 1f, 0.6f)
-        player.world.playSound(player.location, Sound.ENTITY_RAVAGER_ROAR, 0.6f, 1.2f)
+        SkillEffects.guardianBulwark(player.location, barrierRadius, tauntRadius)
 
         // 배리어: 본인 저항 II, 주변 아군 저항 I
         player.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, ticks, 1, false, true))
@@ -42,7 +40,6 @@ class GuardianSkill : JobSkill {
             ally.sendMessage("§9${player.name}님의 배리어가 피해를 줄여줍니다.")
             shielded++
         }
-        drawBarrier(player)
 
         // 도발: 몹은 수호자를 노리고, 적 플레이어는 수호자 외 대상에게 주는 피해 50% 감소
         var taunted = 0
@@ -59,24 +56,12 @@ class GuardianSkill : JobSkill {
                 is Mob -> target.target = player
                 else -> continue
             }
-            target.world.spawnParticle(Particle.ANGRY_VILLAGER, target.eyeLocation.add(0.0, 0.5, 0.0), 3, 0.3, 0.2, 0.3, 0.0)
+            SkillEffects.guardianTaunt(player.location, target.eyeLocation)
             taunted++
         }
 
         player.sendMessage("§9수호 태세! §7도발 ${taunted}명, 배리어 아군 ${shielded}명")
         return true
-    }
-
-    private fun drawBarrier(player: Player) {
-        val world = player.world
-        val center = player.location
-        for (i in 0 until 40) {
-            val angle = 2 * Math.PI * i / 40
-            for (y in listOf(0.2, 1.0, 1.8)) {
-                world.spawnParticle(Particle.END_ROD,
-                    center.clone().add(Math.cos(angle) * barrierRadius, y, Math.sin(angle) * barrierRadius), 1, 0.0, 0.0, 0.0, 0.0)
-            }
-        }
     }
 
     private class Taunt(val guardian: UUID, val until: Long)

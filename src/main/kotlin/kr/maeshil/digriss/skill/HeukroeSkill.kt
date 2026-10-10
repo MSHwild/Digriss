@@ -1,8 +1,7 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Friendly
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect
@@ -19,15 +18,13 @@ class HeukroeSkill : Skill {
         }
 
         val critDamage = 16.0
-        target.world.strikeLightningEffect(target.location)
+        SkillEffects.blackLightning(target.location, { target.takeIf { it.isValid && !it.isDead }?.location }, 40)
         target.damage(critDamage, player)
 
         target.addPotionEffect(PotionEffect(PotionEffectType.SLOWNESS, 40, 250, false, false))
         target.addPotionEffect(PotionEffect(PotionEffectType.JUMP_BOOST, 40, 128, false, false))
         target.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 40, 10, false, false))
 
-        target.world.spawnParticle(Particle.ELECTRIC_SPARK, target.location.add(0.0, 1.0, 0.0), 40, 0.4, 0.6, 0.4, 0.1)
-        target.world.playSound(target.location, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.2f, 1.4f)
         player.sendMessage("§b흑뢰 §f- 치명타 ${critDamage.toInt()} 피해 + 기절")
         return true
     }

@@ -1,8 +1,7 @@
 package kr.maeshil.digriss.weapon
 
 import kr.maeshil.digriss.Friendly
-import org.bukkit.Particle
-import org.bukkit.Sound
+import kr.maeshil.digriss.effect.SkillEffects
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
@@ -18,13 +17,11 @@ class OceanSpearSkill : WeaponSkill {
     override fun execute(player: Player): Boolean {
         val direction = player.location.direction.setY(0).normalize()
 
-        player.world.playSound(player.location, Sound.ENTITY_DOLPHIN_JUMP, 1.2f, 1.0f)
-
         // 돌진 이동
         val velocity = direction.clone().multiply(1.8).setY(0.25)
         player.velocity = velocity
 
-        drawDashTrail(player, direction)
+        SkillEffects.abyssDash(player.location, direction) { player.takeIf { it.isOnline && !it.isDead }?.location }
 
         // 돌진 경로상의 적 탐색 후 데미지
         val nearby = player.world.getNearbyLivingEntities(player.location, dashDistance)
@@ -32,6 +29,7 @@ class OceanSpearSkill : WeaponSkill {
             if (entity == player || Friendly.isAlly(player, entity)) continue
             if (isInDashPath(player, direction, entity)) {
                 entity.damage(damage, player)
+                SkillEffects.abyssHit(entity.location)
                 val knockback = direction.clone().multiply(0.8).setY(0.3)
                 entity.velocity = knockback
             }
@@ -49,15 +47,5 @@ class OceanSpearSkill : WeaponSkill {
         val distanceFromLine = toTarget.subtract(closestPoint).length()
 
         return distanceFromLine <= hitRadius
-    }
-
-    private fun drawDashTrail(player: Player, direction: Vector) {
-        val world = player.world
-        val start = player.location
-        val steps = (dashDistance * 3).toInt()
-        for (i in 0..steps) {
-            val point = start.clone().add(direction.clone().multiply(dashDistance * i / steps))
-            world.spawnParticle(Particle.BUBBLE_COLUMN_UP, point, 3, 0.1, 0.1, 0.1, 0.02)
-        }
     }
 }

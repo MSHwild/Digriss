@@ -1,9 +1,7 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Friendly
-import org.bukkit.Color
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 
@@ -22,7 +20,7 @@ class CheokSkill : Skill {
         val distance = dir.length()
         dir.normalize()
 
-        player.world.playSound(start, Sound.ENTITY_ENDER_DRAGON_SHOOT, 1f, 0.7f)
+        SkillEffects.repelBeam(start, endLoc)
 
         var traveled = 0.0
         val step = 0.4
@@ -33,21 +31,16 @@ class CheokSkill : Skill {
             current.add(dir.clone().multiply(step))
             traveled += step
 
-            current.world!!.spawnParticle(Particle.DUST, current, 4, 0.05, 0.05, 0.05, 0.0,
-                Particle.DustOptions(Color.fromRGB(255, 20, 20), 1.3f))
-
             current.world!!.getNearbyEntities(current, 0.6, 0.6, 0.6)
                 .filterIsInstance<LivingEntity>()
                 .filter { it != player && it !in hit && !Friendly.isAlly(player, it) }
                 .forEach { target ->
                     hit.add(target)
                     target.damage(8.0, player)
+                    SkillEffects.repelHit(target.location)
                     target.velocity = dir.clone().multiply(1.5).setY(0.35)
                 }
         }
-
-        endLoc.world!!.spawnParticle(Particle.DUST, endLoc, 30, 0.3, 0.3, 0.3, 0.0,
-            Particle.DustOptions(Color.fromRGB(255, 0, 0), 1.6f))
         return true
     }
 }

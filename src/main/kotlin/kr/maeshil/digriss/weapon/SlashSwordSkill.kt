@@ -1,9 +1,8 @@
 package kr.maeshil.digriss.weapon
 
 import kr.maeshil.digriss.Friendly
+import kr.maeshil.digriss.effect.SkillEffects
 import org.bukkit.Location
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -25,8 +24,7 @@ class SlashSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
         val eyeLoc = player.eyeLocation
         val direction = eyeLoc.direction.setY(0).normalize()
 
-        player.world.playSound(player.location, Sound.ITEM_TRIDENT_RIPTIDE_3, 1.2f, 1.5f)
-        drawSlashLine(eyeLoc, direction)
+        SkillEffects.ironSlash(eyeLoc, direction, range)
 
         val hitEntities = mutableSetOf<LivingEntity>()
         val nearby = player.world.getNearbyLivingEntities(player.location, range)
@@ -40,6 +38,7 @@ class SlashSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
 
         for (entity in hitEntities) {
             entity.damage(damage, player)
+            SkillEffects.ironSlashHit(entity.location)
             applyBleed(entity, player)
         }
         return true
@@ -66,20 +65,9 @@ class SlashSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
                     return
                 }
                 entity.damage(bleedDamage, source)
-                entity.world.spawnParticle(Particle.DUST, entity.location.add(0.0, 1.0, 0.0), 10,
-                    0.3, 0.5, 0.3, org.bukkit.Particle.DustOptions(org.bukkit.Color.RED, 1.2f))
+                SkillEffects.bleedTick(entity.location)
                 ticksLeft--
             }
         }.runTaskTimer(plugin, bleedInterval, bleedInterval)
-    }
-
-    private fun drawSlashLine(eyeLoc: Location, direction: Vector) {
-        val world = eyeLoc.world ?: return
-        val steps = (range * 4).toInt()
-        for (i in 0..steps) {
-            val point = eyeLoc.clone().add(direction.clone().multiply(range * i / steps))
-            world.spawnParticle(Particle.CRIT, point, 2, 0.1, 0.1, 0.1, 0.0)
-            world.spawnParticle(Particle.SWEEP_ATTACK, point, 1, 0.0, 0.0, 0.0, 0.0)
-        }
     }
 }

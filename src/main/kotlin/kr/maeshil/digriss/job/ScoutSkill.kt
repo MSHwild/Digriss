@@ -1,10 +1,10 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Sounds
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
-import org.bukkit.Sound
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -27,7 +27,7 @@ class ScoutSkill : JobSkill {
                 !plugin.allianceManager.areAllied(myNation, plugin.nationManager.getNationName(it.uniqueId))
         }
 
-        player.playSound(player.location, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.8f)
+        SkillEffects.scoutPing(player)
 
         if (enemies.isEmpty()) {
             player.sendMessage("§7주변 ${radius.toInt()}블록 내에 적이 없습니다.")
@@ -36,6 +36,7 @@ class ScoutSkill : JobSkill {
 
         enemies.forEach { enemy ->
             enemy.addPotionEffect(PotionEffect(PotionEffectType.GLOWING, durationTicks, 0, false, false))
+            SkillEffects.scoutMark(player, enemy.location)
             enemy.sendMessage("§c정찰병에게 위치가 노출되었습니다!")
             Sounds.alert(enemy)
         }

@@ -1,9 +1,8 @@
 package kr.maeshil.digriss.skill
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Friendly
 import org.bukkit.Location
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -21,8 +20,7 @@ class MuhanjeongcheSkill(private val plugin: JavaPlugin) : Skill {
         val world = center.world!!
         val barrier = SphereUtil.placeSphereShell(center, radius, world)
 
-        world.playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.5f, 0.8f)
-        world.spawnParticle(Particle.SOUL_FIRE_FLAME, center, 100, radius, radius, radius, 0.02)
+        SkillEffects.stasisOpen(center, radius)
         player.sendMessage("§f무한정체 §7- 결계 안의 모든 움직임이 봉인됩니다.")
 
         val frozen = HashMap<LivingEntity, Location>()
@@ -40,20 +38,19 @@ class MuhanjeongcheSkill(private val plugin: JavaPlugin) : Skill {
                 }
                 if (elapsed >= durationTicks) {
                     SphereUtil.destroyBarrier(barrier)
-                    world.playSound(center, Sound.BLOCK_GLASS_BREAK, 1.2f, 0.7f)
-                    world.spawnParticle(Particle.SMOKE, center, 70, radius, radius, radius, 0.02)
+                    SkillEffects.barrierShatter(center, radius, SkillEffects.Palette.STASIS_GOLD, SkillEffects.Palette.STASIS_DEEP)
                     cancel()
                     return
                 }
 
+                SkillEffects.stasisTick(center, radius, elapsed.toInt())
                 frozen.forEach { (entity, loc) ->
                     if (!entity.isDead) {
                         entity.teleport(Location(loc.world, loc.x, loc.y, loc.z, entity.location.yaw, entity.location.pitch))
                         entity.velocity = entity.velocity.zero()
                         entity.fallDistance = 0f
 
-                        entity.world.spawnParticle(Particle.DUST, entity.location.add(0.0, 1.0, 0.0), 3,
-                            0.2, 0.3, 0.2, 0.0, Particle.DustOptions(org.bukkit.Color.fromRGB(80, 0, 120), 1.0f))
+                        SkillEffects.stasisFrozen(entity.location, elapsed.toInt())
                     }
                 }
 

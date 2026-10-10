@@ -1,9 +1,8 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
-import org.bukkit.Particle
-import org.bukkit.Sound
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -22,8 +21,6 @@ class HealerSkill : JobSkill {
 
     override fun execute(player: Player): Boolean {
         val plugin = Bukkit.getPluginManager().getPlugin("Digriss") as Digriss
-        player.world.playSound(player.location, Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1.6f)
-        player.world.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f)
 
         var healed = 0
         for (ally in player.world.getNearbyPlayers(player.location, radius)) {
@@ -31,25 +28,13 @@ class HealerSkill : JobSkill {
             ally.heal(healAmount)
             ally.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, regenTicks, 1, false, true))
             cleansed.forEach { ally.removePotionEffect(it) }
-            ally.world.spawnParticle(Particle.HEART, ally.location.add(0.0, 2.0, 0.0), 6, 0.4, 0.3, 0.4, 0.0)
+            SkillEffects.lifeBloomAlly { ally.takeIf { it.isOnline && !it.isDead }?.location }
             if (ally != player) ally.sendMessage("§d${player.name}님의 생명의 축복으로 회복되었습니다!")
             healed++
         }
-        drawBloom(player)
+        SkillEffects.lifeBloom(player.location, radius)
         player.sendMessage("§d생명의 축복! §7아군 ${healed}명을 회복했습니다.")
         return true
-    }
-
-    private fun drawBloom(player: Player) {
-        val world = player.world
-        val center = player.location.add(0.0, 0.3, 0.0)
-        for (r in listOf(2.0, 5.0, radius)) {
-            val points = (r * 8).toInt()
-            for (i in 0 until points) {
-                val angle = 2 * Math.PI * i / points
-                world.spawnParticle(Particle.HAPPY_VILLAGER, center.clone().add(Math.cos(angle) * r, 0.0, Math.sin(angle) * r), 1, 0.0, 0.0, 0.0, 0.0)
-            }
-        }
     }
 }
 
@@ -67,7 +52,7 @@ object HealerAura {
                     if (ally.isDead || !plugin.allianceManager.isFriendly(healer, ally)) continue
                     if (ally.health >= (ally.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH)?.value ?: 20.0)) continue
                     ally.heal(HEAL)
-                    ally.world.spawnParticle(Particle.HEART, ally.location.add(0.0, 2.1, 0.0), 1, 0.2, 0.1, 0.2, 0.0)
+                    SkillEffects.healAuraTick(ally.location)
                 }
             }
         }, INTERVAL_TICKS, INTERVAL_TICKS)

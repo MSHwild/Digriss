@@ -1,8 +1,7 @@
 package kr.maeshil.digriss.weapon
 
 import kr.maeshil.digriss.Friendly
-import org.bukkit.Particle
-import org.bukkit.Sound
+import kr.maeshil.digriss.effect.SkillEffects
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.util.RayTraceResult
@@ -29,16 +28,14 @@ class VoidSwordSkill : WeaponSkill {
         val originLoc = player.location.clone()
         player.teleport(teleportLoc)
 
-        player.world.spawnParticle(Particle.PORTAL, originLoc, 60, 0.5, 1.0, 0.5, 0.5)
-        player.world.spawnParticle(Particle.PORTAL, teleportLoc, 60, 0.5, 1.0, 0.5, 0.5)
-        player.world.playSound(teleportLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f)
-
         val radius = 3.5
+        SkillEffects.voidRift(originLoc, teleportLoc, radius)
         teleportLoc.world!!.getNearbyEntities(teleportLoc, radius, radius, radius)
             .filterIsInstance<LivingEntity>()
             .filter { it != player && !Friendly.isAlly(player, it) }
             .forEach {
                 it.damage(8.0, player)
+                SkillEffects.voidHit(it.location)
                 it.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 60, 0))
                 it.addPotionEffect(PotionEffect(PotionEffectType.DARKNESS, 60, 0))
             }
