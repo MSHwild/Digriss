@@ -157,6 +157,9 @@ class Digriss : JavaPlugin() {
         newbieProtectionManager = kr.maeshil.digriss.manager.NewbieProtectionManager(this) // 초보 보호
         Bukkit.getPluginManager().registerEvents(newbieProtectionManager, this)
         getCommand("보호해제")?.setExecutor(newbieProtectionManager)
+        val preorderManager = kr.maeshil.digriss.manager.PreorderManager(this) // 사전예약 보상 (명단 13명, 한 번만)
+        Bukkit.getPluginManager().registerEvents(preorderManager, this)
+        getCommand("사전예약")?.setExecutor(preorderManager)
         iconManager = IconManager(this)
         achievementManager = AchievementManager(this)
         soulManager = SoulManager(this)
