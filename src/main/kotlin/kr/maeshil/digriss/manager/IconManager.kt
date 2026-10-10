@@ -61,6 +61,9 @@ class IconManager(private val plugin: Digriss) {
         // 서버가 켜진 채로 파일을 고쳤으면 먼저 다시 읽음 (안 그러면 아래 save()가 고친 내용을 예전 값으로 덮어씀)
         if (file.exists() && file.lastModified() != loadedStamp) load()
         val value = config.getString(key)
+        // icons.yml에 IA ID를 직접 적은 게 아니면, 아이콘 팩(digriss:키_이름)에 그림이 있을 때 그걸 먼저 씀
+        // → 서버에서 icons.yml을 고치지 않아도 팩만 넣으면 아이콘이 바뀜
+        if (value == null || !value.contains(':')) packIcon(key)?.let { return it }
         if (value == null) {
             if (!broken) {
                 config.set(key, default.name)
@@ -69,6 +72,26 @@ class IconManager(private val plugin: Digriss) {
             return ItemStack(default)
         }
         return create(value) ?: ItemStack(default)
+    }
+
+    // 메인 메뉴 키는 명령어 이름(한글)이라 아이콘 팩 이름으로 바꿔 줌
+    private val menuPackNames = mapOf(
+        "국가" to "nation", "연합" to "alliance", "국가창고" to "storage", "번들" to "bundle",
+        "퀘스트" to "quest", "직업" to "job", "직업설정" to "job_set", "랭크" to "rank", "랭킹" to "ranking",
+        "국가랭킹" to "nation_ranking", "칭호" to "title", "킬이펙트" to "kill_effect", "전쟁이벤트" to "war_event",
+        "도움말" to "help", "상점" to "shop", "레시피" to "recipe", "이벤트" to "event", "지도" to "map",
+        "거래소" to "market", "거래" to "trade", "외교" to "diplomacy", "빅이벤트" to "big_event",
+        "워프" to "warp", "탈것" to "mount"
+    )
+
+    /** 아이콘 팩(ItemsAdder digriss 네임스페이스)에서 이 키의 아이콘. 없으면 null */
+    private fun packIcon(key: String): ItemStack? {
+        if (Bukkit.getPluginManager().getPlugin("ItemsAdder") == null) return null
+        val group = key.substringBefore('.')
+        val rest = key.substringAfter('.', "")
+        val name = if (group == "menu") menuPackNames[rest]?.let { "menu_$it" } else key.replace('.', '_')
+        if (name == null || !name.matches(Regex("[a-z0-9_]+"))) return null
+        return runCatching { CustomStack.getInstance("digriss:$name")?.itemStack }.getOrNull()
     }
 
     private fun create(value: String): ItemStack? {
