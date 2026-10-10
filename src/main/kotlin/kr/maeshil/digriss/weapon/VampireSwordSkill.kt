@@ -1,8 +1,10 @@
 package kr.maeshil.digriss.weapon
 
+import kr.maeshil.digriss.Attrs
+import kr.maeshil.digriss.attr
+
 import kr.maeshil.digriss.Friendly
 import kr.maeshil.digriss.effect.SkillEffects
-import org.bukkit.attribute.Attribute
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -29,7 +31,7 @@ class VampireSwordSkill(private val plugin: JavaPlugin) : WeaponSkill {
         target.damage(damage, player)
 
         val healAmount = damage * lifestealRatio
-        val maxHealth = player.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value ?: 20.0
+        val maxHealth = player.attr(Attrs.MAX_HEALTH)?.value ?: 20.0
         player.health = (player.health + healAmount).coerceAtMost(maxHealth)
 
         player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, speedDurationTicks, speedAmplifier))

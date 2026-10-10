@@ -1,5 +1,8 @@
 package kr.maeshil.digriss.event
 
+import kr.maeshil.digriss.Attrs
+import kr.maeshil.digriss.attr
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.manager.DiscordNotifier
 import kr.maeshil.digriss.Sounds
@@ -15,7 +18,6 @@ import org.bukkit.Material
 import org.bukkit.OfflinePlayer
 import org.bukkit.Particle
 import org.bukkit.Sound
-import org.bukkit.attribute.Attribute
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -328,13 +330,13 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         mob.removeWhenFarAway = false
         mob.isPersistent = true
         mob.isGlowing = true // 리소스팩 없이도 멀리서 보이게 빛나는 테두리
-        mob.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.baseValue = health
+        mob.attr(Attrs.MAX_HEALTH)?.baseValue = health
         mob.health = health
-        mob.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = 2.0 // 약 5.4블록 높이
-        mob.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)?.baseValue = bossDamage
-        mob.getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE)?.baseValue = 1.0
-        mob.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.3
-        mob.getAttribute(Attribute.GENERIC_FOLLOW_RANGE)?.baseValue = 40.0
+        mob.attr(Attrs.SCALE)?.baseValue = 2.0 // 약 5.4블록 높이
+        mob.attr(Attrs.ATTACK_DAMAGE)?.baseValue = bossDamage
+        mob.attr(Attrs.KNOCKBACK_RESISTANCE)?.baseValue = 1.0
+        mob.attr(Attrs.MOVEMENT_SPEED)?.baseValue = 0.3
+        mob.attr(Attrs.FOLLOW_RANGE)?.baseValue = 40.0
         mob.addPotionEffect(PotionEffect(PotionEffectType.FIRE_RESISTANCE, Int.MAX_VALUE, 0, false, false))
 
         boss = mob
@@ -375,7 +377,7 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
         val home = bossHome ?: mob.location
         bossBar?.let { b ->
             Bukkit.getOnlinePlayers().forEach { if (it !in b.players) b.addPlayer(it) }
-            val max = mob.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value ?: mob.health
+            val max = mob.attr(Attrs.MAX_HEALTH)?.value ?: mob.health
             val left = ((bossEndsAt - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
             b.setTitle("$bossName §f${mob.health.toInt()} / ${max.toInt()} §8| §7남은 시간 §f${left / 60}:${"%02d".format(left % 60)}")
             b.progress = (mob.health / max).coerceIn(0.0, 1.0)
@@ -397,10 +399,10 @@ class BigEventManager(private val plugin: Digriss) : Listener, CommandExecutor, 
             mob.location.clone().add(0.0, 2.5, 0.0), 12, 1.2, 1.8, 1.2, 0.01)
 
         // 체력 30% 이하 → 분노
-        val max = mob.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value ?: mob.health
+        val max = mob.attr(Attrs.MAX_HEALTH)?.value ?: mob.health
         if (!enraged && mob.health <= max * 0.3) {
             enraged = true
-            mob.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.36
+            mob.attr(Attrs.MOVEMENT_SPEED)?.baseValue = 0.36
             nearbyPlayers(mob, 40.0).forEach { it.sendTitle("", "§4보스가 분노했습니다!", 5, 40, 10) }
             mob.world.playSound(mob.location, Sound.ENTITY_RAVAGER_ROAR, 2f, 0.6f)
         }

@@ -1,5 +1,7 @@
 package kr.maeshil.digriss.job
 
+import kr.maeshil.digriss.Attrs
+import kr.maeshil.digriss.attr
 import kr.maeshil.digriss.effect.SkillEffects
 import kr.maeshil.digriss.Digriss
 import org.bukkit.Bukkit
@@ -50,7 +52,7 @@ object HealerAura {
                 if (healer.isDead || plugin.jobManager.getJob(healer.uniqueId) != JobType.LIFE_PRIEST) continue
                 for (ally in healer.world.getNearbyPlayers(healer.location, RADIUS)) {
                     if (ally.isDead || !plugin.allianceManager.isFriendly(healer, ally)) continue
-                    if (ally.health >= (ally.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH)?.value ?: 20.0)) continue
+                    if (ally.health >= (ally.attr(Attrs.MAX_HEALTH)?.value ?: 20.0)) continue
                     ally.heal(HEAL)
                     SkillEffects.healAuraTick(ally.location)
                 }

@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    // 1.21.1 기준으로 빌드하면 1.21.1 ~ 1.21.4 서버 모두에서 동작 (바뀐 속성 이름은 Attrs.kt에서 서버에 맞게 찾음)
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
@@ -41,7 +42,7 @@ tasks {
         // Configure the Minecraft version for our task.
         // This is the only required configuration besides applying the plugin.
         // Your plugin's jar (or shadowJar if present) will be used automatically.
-        minecraftVersion("1.21.1")
+        minecraftVersion("1.21.4") // 실제 서버 버전 (애니메이션 플러그인이 1.21.4 전용)
         jvmArgs("-Xms2G", "-Xmx2G")
     }
 

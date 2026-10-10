@@ -1,12 +1,14 @@
 package kr.maeshil.digriss.travel
 
+import kr.maeshil.digriss.Attrs
+import kr.maeshil.digriss.attr
+
 import kr.maeshil.digriss.Digriss
 import kr.maeshil.digriss.Sounds
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Particle
 import org.bukkit.Sound
-import org.bukkit.attribute.Attribute
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -95,8 +97,8 @@ class MountManager(private val plugin: Digriss) : Listener, CommandExecutor {
         horse.isCustomNameVisible = false
         horse.inventory.saddle = ItemStack(Material.SADDLE)
         horse.jumpStrength = jump
-        horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = speed
-        horse.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.baseValue = health
+        horse.attr(Attrs.MOVEMENT_SPEED)?.baseValue = speed
+        horse.attr(Attrs.MAX_HEALTH)?.baseValue = health
         horse.health = health
         mounts[player.uniqueId] = horse.uniqueId
         owners[horse.uniqueId] = player.uniqueId

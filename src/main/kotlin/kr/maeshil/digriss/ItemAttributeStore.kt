@@ -11,11 +11,16 @@ import org.bukkit.persistence.PersistentDataType
 
 class ItemAttributeStore(private val plugin: Digriss) {
 
+    // 버전과 상관없는 이름으로 저장 (1.21.3부터 generic.max_health → max_health 로 바뀜)
     private fun attrKey(attribute: Attribute) =
+        NamespacedKey(plugin, "attr_${kr.maeshil.digriss.Attrs.shortKey(attribute)}")
+
+    // 예전(1.21.1)에 저장한 이름. 읽을 때만 씀
+    private fun legacyAttrKey(attribute: Attribute) =
         NamespacedKey(plugin, "attr_${attribute.key.key}")
 
     private fun modifierKey(attribute: Attribute) =
-        NamespacedKey(plugin, "mod_${attribute.key.key}")
+        NamespacedKey(plugin, "mod_${kr.maeshil.digriss.Attrs.shortKey(attribute)}")
 
     fun getEffectiveAttributes(item: ItemStack, slot: EquipmentSlot = EquipmentSlot.HAND): Map<Attribute, Double> {
         val result = mutableMapOf<Attribute, Double>()
@@ -36,7 +41,7 @@ class ItemAttributeStore(private val plugin: Digriss) {
         val container = meta.persistentDataContainer
 
         getEffectiveAttributes(item, slot).forEach { (attribute, value) ->
-            if (!container.has(attrKey(attribute), PersistentDataType.DOUBLE)) {
+            if (!container.has(attrKey(attribute), PersistentDataType.DOUBLE) && !container.has(legacyAttrKey(attribute), PersistentDataType.DOUBLE)) {
                 container.set(attrKey(attribute), PersistentDataType.DOUBLE, value)
             }
         }
@@ -49,9 +54,9 @@ class ItemAttributeStore(private val plugin: Digriss) {
         val container = meta.persistentDataContainer
         val result = mutableMapOf<Attribute, Double>()
 
-        Attribute.values().forEach { attribute ->
-            val key = attrKey(attribute)
-            if (container.has(key, PersistentDataType.DOUBLE)) {
+        kr.maeshil.digriss.Attrs.all().forEach { attribute ->
+            val key = listOf(attrKey(attribute), legacyAttrKey(attribute)).firstOrNull { container.has(it, PersistentDataType.DOUBLE) }
+            if (key != null) {
                 result[attribute] = container.get(key, PersistentDataType.DOUBLE) ?: 0.0
             }
         }
@@ -87,6 +92,7 @@ class ItemAttributeStore(private val plugin: Digriss) {
         val container = meta.persistentDataContainer
 
         container.set(attrKey(target), PersistentDataType.DOUBLE, newValue)
+        if (legacyAttrKey(target) != attrKey(target)) container.remove(legacyAttrKey(target)) // 예전 이름은 정리
 
         // 대상 어트리뷰트의 기존 모디파이어를 모든 슬롯에서 확실히 제거
         removeAllModifiers(meta, target)
